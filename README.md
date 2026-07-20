@@ -17,7 +17,8 @@ force-app/main/default/
                        Portal_Request_Type__c) for the Support/Query screen
   classes/             Apex controllers, domain services, mocked integration
                        boundaries, and their test classes
-  lwc/                 10 Lightning Web Components covering the 6 MVP screens
+  lwc/                 12 Lightning Web Components covering the 6 MVP screens
+                       plus an added calendar-based entry point to Request Staff
   permissionsets/      Alliance_Client_Portal_User — assign to every portal Contact's User
   sharingSets/         Grants same-Account contacts shared read access
   tabs/                Custom object tabs
@@ -29,11 +30,20 @@ force-app/main/default/
 | Screen | Components |
 |---|---|
 | Home dashboard | `portalHomeDashboard` (+ `portalDashboardTile`) |
-| Request staff | `requestStaffForm` (+ `facilityPicker`) |
+| Request staff | `requestStaffForm` (+ `facilityPicker`, `wardPicker`) |
+| Request staff — calendar | `requestStaffCalendar` (embeds `requestStaffForm`) |
 | My requests | `myStaffingRequests` (+ `requestStatusBadge`) |
 | Timesheet approval | `timesheetApprovalList` (+ `timesheetApprovalDetail`) |
 | Invoices | `invoiceList` |
 | Support / query | `supportRequestForm` |
+
+`requestStaffCalendar` is an added convenience screen, not part of the
+original 6-screen deck: a month grid where clicking a day pre-fills Shift
+Date on the same `requestStaffForm`, with a small badge on any day that
+already has requests. It reuses the existing `Staffing_Request__c` object
+and `StaffingRequestController` — no new Apex or objects were needed for it,
+just the calendar UI and a reactive `defaultDate` input added to
+`requestStaffForm`.
 
 ## No Salesforce org is connected here
 
@@ -99,7 +109,7 @@ npm install
 npm run test:unit
 ```
 
-34 Jest tests across all 11 LWCs. This is the only thing in this project
+40 Jest tests across all 12 LWCs. This is the only thing in this project
 that's actually been run and confirmed passing in this environment.
 
 ### Requires a connected org (not verified here)

@@ -1,0 +1,11 @@
+[
+    {
+        "Id": "a02000000000001AAA",
+        "Name": "SR-0001",
+        "Facility__r": { "Name": "Test Hospital" },
+        "Ward__r": { "Name": "Ward A" },
+        "Role__c": "Registered Nurse",
+        "Shift_Date__c": "2026-07-10",
+        "Status__c": "Broadcasted"
+    }
+]

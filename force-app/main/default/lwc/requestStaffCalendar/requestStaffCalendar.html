@@ -1,0 +1,70 @@
+<template>
+    <div class="calendar-screen">
+        <h1 class="calendar-screen__title">Request Staff — Calendar</h1>
+        <div class="calendar-screen__sub">Pick a day to request staff for that shift.</div>
+
+        <div class="calendar">
+            <div class="calendar__nav">
+                <lightning-button-icon
+                    data-action="prev"
+                    icon-name="utility:chevronleft"
+                    alternative-text="Previous month"
+                    onclick={handlePrevMonth}
+                ></lightning-button-icon>
+                <h2 class="calendar__month">{monthLabel}</h2>
+                <lightning-button-icon
+                    data-action="next"
+                    icon-name="utility:chevronright"
+                    alternative-text="Next month"
+                    onclick={handleNextMonth}
+                ></lightning-button-icon>
+                <lightning-button
+                    label="Today"
+                    variant="neutral"
+                    class="calendar__today-button"
+                    onclick={handleToday}
+                ></lightning-button>
+            </div>
+
+            <div class="calendar__weekday-row">
+                <template for:each={weekdayLabels} for:item="label">
+                    <span key={label} class="calendar__weekday">{label}</span>
+                </template>
+            </div>
+
+            <template for:each={calendarWeeks} for:item="week">
+                <div class="calendar__week" key={week.key}>
+                    <template for:each={week.days} for:item="day">
+                        <template if:true={day.isBlank}>
+                            <div key={day.key} class="calendar__day calendar__day_empty"></div>
+                        </template>
+                        <template if:false={day.isBlank}>
+                            <button
+                                key={day.key}
+                                type="button"
+                                class={day.cssClass}
+                                data-date={day.iso}
+                                onclick={handleSelectDay}
+                            >
+                                <span class="calendar__day-number">{day.day}</span>
+                                <template if:true={day.hasRequests}>
+                                    <span class="calendar__day-count">{day.requestCount}</span>
+                                </template>
+                            </button>
+                        </template>
+                    </template>
+                </div>
+            </template>
+        </div>
+
+        <template if:true={hasSelectedDate}>
+            <div class="calendar-screen__form">
+                <h2 class="calendar-screen__form-title">Request Staff for {selectedDateLabel}</h2>
+                <c-request-staff-form
+                    default-date={selectedDate}
+                    onrequestcreated={handleRequestCreated}
+                ></c-request-staff-form>
+            </div>
+        </template>
+    </div>
+</template>

@@ -1,4 +1,4 @@
-import { LightningElement, track } from 'lwc';
+import { LightningElement, api, track } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import createRequest from '@salesforce/apex/StaffingRequestController.createRequest';
 
@@ -38,6 +38,26 @@ export default class RequestStaffForm extends LightningElement {
 
     @track formData = { ...DEFAULT_FORM };
 
+    _defaultDate;
+
+    /**
+     * Set by callers (e.g. requestStaffCalendar) to pre-fill Shift Date.
+     * A setter rather than a plain field so a later change - picking a
+     * different calendar day while this form instance stays mounted -
+     * updates the field live, not just on first render.
+     */
+    @api
+    get defaultDate() {
+        return this._defaultDate;
+    }
+
+    set defaultDate(value) {
+        this._defaultDate = value;
+        if (value) {
+            this.formData = { ...this.formData, shiftDate: value };
+        }
+    }
+
     handleFacilityChange(event) {
         // Wards belong to a single facility, so a wider selection resets any
         // ward chosen for the previous facility.
@@ -73,7 +93,9 @@ export default class RequestStaffForm extends LightningElement {
                 Notes__c: this.formData.notes
             };
             const newRequestId = await createRequest({ newRequest });
-            this.formData = { ...DEFAULT_FORM };
+            // Re-apply defaultDate so a caller (e.g. requestStaffCalendar) can
+            // submit multiple requests for the same selected day in a row.
+            this.formData = { ...DEFAULT_FORM, shiftDate: this._defaultDate };
             this.dispatchEvent(
                 new ShowToastEvent({
                     title: 'Request submitted',

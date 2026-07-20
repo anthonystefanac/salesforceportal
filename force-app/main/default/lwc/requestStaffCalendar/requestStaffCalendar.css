@@ -1,0 +1,126 @@
+.calendar-screen__title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #16325c;
+    margin: 0 0 0.15rem 0;
+}
+
+.calendar-screen__sub {
+    color: #54698d;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.calendar {
+    max-width: 40rem;
+    border: 1px solid #d8dde6;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    background: #ffffff;
+}
+
+.calendar__nav {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.calendar__month {
+    flex: 1;
+    text-align: center;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #16325c;
+    margin: 0;
+}
+
+.calendar__today-button {
+    margin-left: 0.25rem;
+}
+
+.calendar__weekday-row,
+.calendar__week {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.35rem;
+}
+
+.calendar__weekday-row {
+    margin-bottom: 0.35rem;
+}
+
+.calendar__week {
+    margin-bottom: 0.35rem;
+}
+
+.calendar__weekday {
+    text-align: center;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #54698d;
+}
+
+.calendar__day {
+    all: unset;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.15rem;
+    aspect-ratio: 1;
+    border-radius: 0.4rem;
+    cursor: pointer;
+    background: #f7f9fc;
+}
+
+.calendar__day:hover {
+    background: #eef1f6;
+}
+
+.calendar__day_empty {
+    background: transparent;
+    cursor: default;
+}
+
+.calendar__day_today {
+    box-shadow: inset 0 0 0 1px #0b5cab;
+}
+
+.calendar__day_selected {
+    background: #0b5cab;
+}
+
+.calendar__day_selected .calendar__day-number {
+    color: #ffffff;
+}
+
+.calendar__day-number {
+    font-size: 0.9rem;
+    color: #16325c;
+    font-variant-numeric: tabular-nums;
+}
+
+.calendar__day-count {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #ffffff;
+    background: #2e844a;
+    border-radius: 999px;
+    padding: 0 0.4rem;
+    line-height: 1.3;
+}
+
+.calendar-screen__form {
+    margin-top: 1.5rem;
+    max-width: 48rem;
+}
+
+.calendar-screen__form-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #16325c;
+    margin: 0 0 0.75rem 0;
+}

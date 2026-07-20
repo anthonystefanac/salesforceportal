@@ -88,6 +88,34 @@ describe('c-request-staff-form', () => {
         expect(callArg.Ward__c).toBeUndefined();
     });
 
+    it('pre-fills and re-applies Shift Date from the defaultDate api property', async () => {
+        createRequest.mockResolvedValue('a02000000000001AAA');
+
+        const element = createElement('c-request-staff-form', { is: RequestStaffForm });
+        element.defaultDate = '2026-08-14';
+        document.body.appendChild(element);
+
+        const shiftDateInput = element.shadowRoot.querySelector('[data-field="shiftDate"]');
+        expect(shiftDateInput.value).toBe('2026-08-14');
+
+        const submitButton = element.shadowRoot.querySelector('lightning-button');
+        submitButton.click();
+
+        await Promise.resolve();
+        await Promise.resolve();
+
+        expect(createRequest.mock.calls[0][0].newRequest.Shift_Date__c).toBe('2026-08-14');
+        // A caller like requestStaffCalendar may want to submit a second
+        // request for the same day - the date should still be there after reset.
+        expect(shiftDateInput.value).toBe('2026-08-14');
+
+        // Changing the caller's selected day updates the field live, even
+        // though this form instance was never re-created.
+        element.defaultDate = '2026-08-21';
+        await Promise.resolve();
+        expect(shiftDateInput.value).toBe('2026-08-21');
+    });
+
     it('dispatches a success toast and a requestcreated event on success', async () => {
         createRequest.mockResolvedValue('a02000000000001AAA');
 

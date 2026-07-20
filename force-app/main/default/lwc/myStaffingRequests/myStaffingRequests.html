@@ -1,0 +1,45 @@
+<template>
+    <div class="my-requests">
+        <h1 class="my-requests__title">My Requests</h1>
+        <template if:true={hasError}>
+            <p class="slds-text-color_error">Unable to load your requests right now.</p>
+        </template>
+        <template if:false={hasError}>
+            <template if:false={hasRequests}>
+                <p class="my-requests__empty">No staffing requests yet.</p>
+            </template>
+            <template if:true={hasRequests}>
+                <table class="my-requests__table">
+                    <thead>
+                        <tr>
+                            <th>Request</th>
+                            <th>Facility</th>
+                            <th>Role</th>
+                            <th>Shift Date</th>
+                            <th>Status</th>
+                            <th>Broadcasted</th>
+                            <th>Last Update</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template for:each={requests} for:item="request">
+                            <tr key={request.id}>
+                                <td>{request.name}</td>
+                                <td>{request.facilityName}</td>
+                                <td>{request.role}</td>
+                                <td>{request.shiftDate}</td>
+                                <td>
+                                    <c-request-status-badge status={request.status}></c-request-status-badge>
+                                </td>
+                                <td>{request.broadcasted}</td>
+                                <td>
+                                    <lightning-formatted-date-time value={request.lastUpdate}></lightning-formatted-date-time>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </template>
+        </template>
+    </div>
+</template>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label>Invoice</label>
+    <pluralLabel>Invoices</pluralLabel>
+    <nameField>
+        <type>AutoNumber</type>
+        <label>Invoice Record Number</label>
+        <displayFormat>INV-{0000}</displayFormat>
+    </nameField>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <sharingModel>ControlledByParent</sharingModel>
+    <enableActivities>false</enableActivities>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <description>Read-only (Phase 1) record of an invoice synced from 2Cloud9. Master-detail to Account. The PDF itself is attached via standard ContentVersion/ContentDocumentLink, not a custom field.</description>
+</CustomObject>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>External_Timesheet_Id__c</fullName>
+    <label>External Timesheet Id</label>
+    <type>Text</type>
+    <length>60</length>
+    <required>false</required>
+    <externalId>true</externalId>
+    <description>Identifier of the corresponding timesheet record in Bullhorn / Classic Scheduler.</description>
+</CustomField>

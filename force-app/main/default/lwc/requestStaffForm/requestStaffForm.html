@@ -1,0 +1,72 @@
+<template>
+    <div class="request-staff-form">
+        <h1 class="request-staff-form__title">Request Staff</h1>
+        <c-facility-picker onfacilitychange={handleFacilityChange}></c-facility-picker>
+        <lightning-combobox
+            label="Role"
+            data-field="role"
+            options={roleOptions}
+            value={formData.role}
+            onchange={handleFieldChange}
+            required
+        ></lightning-combobox>
+        <lightning-input
+            label="Specialty"
+            data-field="specialty"
+            value={formData.specialty}
+            onchange={handleFieldChange}
+        ></lightning-input>
+        <lightning-input
+            type="date"
+            label="Shift Date"
+            data-field="shiftDate"
+            value={formData.shiftDate}
+            onchange={handleFieldChange}
+            required
+        ></lightning-input>
+        <lightning-input
+            type="time"
+            label="Start Time"
+            data-field="startTime"
+            value={formData.startTime}
+            onchange={handleFieldChange}
+            required
+        ></lightning-input>
+        <lightning-input
+            type="time"
+            label="End Time"
+            data-field="endTime"
+            value={formData.endTime}
+            onchange={handleFieldChange}
+            required
+        ></lightning-input>
+        <lightning-input
+            type="number"
+            label="Quantity"
+            data-field="quantity"
+            value={formData.quantity}
+            onchange={handleFieldChange}
+            min="1"
+            required
+        ></lightning-input>
+        <lightning-combobox
+            label="Priority"
+            data-field="priority"
+            options={priorityOptions}
+            value={formData.priority}
+            onchange={handleFieldChange}
+        ></lightning-combobox>
+        <lightning-textarea
+            label="Notes"
+            data-field="notes"
+            value={formData.notes}
+            onchange={handleFieldChange}
+        ></lightning-textarea>
+        <lightning-button
+            label="Submit Request"
+            variant="brand"
+            onclick={handleSubmit}
+            disabled={isSubmitDisabled}
+        ></lightning-button>
+    </div>
+</template>

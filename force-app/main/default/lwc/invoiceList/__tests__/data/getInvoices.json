@@ -1,0 +1,11 @@
+[
+    {
+        "Id": "a04000000000001AAA",
+        "Name": "INV-0001",
+        "Invoice_Number__c": "2CL-10032",
+        "Invoice_Date__c": "2026-07-01",
+        "Due_Date__c": "2026-07-15",
+        "Amount__c": 4520.5,
+        "Status__c": "Issued"
+    }
+]

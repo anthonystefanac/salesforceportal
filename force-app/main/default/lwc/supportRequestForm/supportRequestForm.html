@@ -1,0 +1,22 @@
+<template>
+    <div class="support-request-form">
+        <h1 class="support-request-form__title">Support / Query</h1>
+        <lightning-record-edit-form
+            object-api-name="Case"
+            onsuccess={handleSuccess}
+            onerror={handleError}
+        >
+            <lightning-messages></lightning-messages>
+            <lightning-input-field field-name="Portal_Request_Type__c"></lightning-input-field>
+            <lightning-input-field field-name="Related_Staffing_Request__c"></lightning-input-field>
+            <lightning-input-field field-name="Subject"></lightning-input-field>
+            <lightning-input-field field-name="Description"></lightning-input-field>
+            <lightning-button
+                class="support-request-form__submit"
+                type="submit"
+                variant="brand"
+                label="Submit Request"
+            ></lightning-button>
+        </lightning-record-edit-form>
+    </div>
+</template>

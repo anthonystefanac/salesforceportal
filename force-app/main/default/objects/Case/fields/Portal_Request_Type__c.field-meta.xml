@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Portal_Request_Type__c</fullName>
+    <label>Portal Request Type</label>
+    <type>Picklist</type>
+    <required>false</required>
+    <description>Distinguishes portal-submitted Cases raised via the Support/Query screen from other Case sources.</description>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>General Query</fullName>
+                <default>true</default>
+                <label>General Query</label>
+            </value>
+            <value>
+                <fullName>Cancellation Request</fullName>
+                <default>false</default>
+                <label>Cancellation Request</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

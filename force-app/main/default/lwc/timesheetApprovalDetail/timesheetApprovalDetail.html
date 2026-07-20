@@ -1,0 +1,35 @@
+<template>
+    <div class="timesheet-detail">
+        <lightning-textarea
+            label="Query Comment (required to query)"
+            value={queryComment}
+            onchange={handleCommentChange}
+        ></lightning-textarea>
+        <div class="timesheet-detail__actions">
+            <lightning-button
+                label="Approve"
+                variant="brand"
+                onclick={handleApprove}
+                disabled={isActionDisabled}
+            ></lightning-button>
+            <lightning-button
+                label="Query"
+                onclick={handleQuery}
+                disabled={isActionDisabled}
+            ></lightning-button>
+        </div>
+        <h2 class="timesheet-detail__history-title">Audit Trail</h2>
+        <template if:true={hasHistory}>
+            <ul class="timesheet-detail__history">
+                <template for:each={history} for:item="entry">
+                    <li key={entry.Id}>
+                        {entry.Shift_Date__c} - {entry.Approval_Status__c} ({entry.Hours_Worked__c} hrs)
+                    </li>
+                </template>
+            </ul>
+        </template>
+        <template if:false={hasHistory}>
+            <p class="timesheet-detail__empty">No history yet.</p>
+        </template>
+    </div>
+</template>

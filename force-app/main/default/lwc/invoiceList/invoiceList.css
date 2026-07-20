@@ -1,0 +1,22 @@
+.invoice-list__title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #16325c;
+    margin: 0 0 1rem 0;
+}
+
+.invoice-list__table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.invoice-list__table th,
+.invoice-list__table td {
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid #e2e6ed;
+}
+
+.invoice-list__empty {
+    color: #54698d;
+}

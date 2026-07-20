@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>External_Invoice_Id__c</fullName>
+    <label>External Invoice Id</label>
+    <type>Text</type>
+    <length>60</length>
+    <required>false</required>
+    <externalId>true</externalId>
+    <description>Identifier of the corresponding invoice record in 2Cloud9.</description>
+</CustomField>

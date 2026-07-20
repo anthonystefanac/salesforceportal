@@ -1,0 +1,16 @@
+[
+    {
+        "Id": "a01000000000001AAA",
+        "Name": "Test Hospital",
+        "Facility_Type__c": "Hospital",
+        "Address_Suburb__c": "Sydney",
+        "Address_State__c": "NSW"
+    },
+    {
+        "Id": "a01000000000002AAA",
+        "Name": "Test Aged Care Facility",
+        "Facility_Type__c": "Aged Care",
+        "Address_Suburb__c": "Parramatta",
+        "Address_State__c": "NSW"
+    }
+]

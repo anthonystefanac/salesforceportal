@@ -1,0 +1,6 @@
+**/jsconfig.json
+**/.eslintrc.json
+**/__tests__/**
+**/*.log
+node_modules/
+coverage/

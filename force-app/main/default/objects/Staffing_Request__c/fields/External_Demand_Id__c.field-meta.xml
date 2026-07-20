@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>External_Demand_Id__c</fullName>
+    <label>External Demand Id</label>
+    <type>Text</type>
+    <length>60</length>
+    <required>false</required>
+    <unique>false</unique>
+    <externalId>true</externalId>
+    <description>Identifier of the corresponding demand record in Bullhorn / Classic Scheduler once the request has been synced by the Workforce Management integration.</description>
+</CustomField>

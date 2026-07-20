@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label>Staffing Request</label>
+    <pluralLabel>Staffing Requests</pluralLabel>
+    <nameField>
+        <type>AutoNumber</type>
+        <label>Staffing Request Number</label>
+        <displayFormat>SR-{0000}</displayFormat>
+    </nameField>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <sharingModel>ControlledByParent</sharingModel>
+    <enableActivities>true</enableActivities>
+    <enableHistory>true</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <description>A single shift/staff demand request submitted by a client through the portal. Master-detail to Facility__c so read access follows the client Account. Status values are the client-safe lifecycle stages exposed in the portal: Submitted, Being Worked, Broadcasted, Filled, Unable to Fill, Cancelled.</description>
+</CustomObject>

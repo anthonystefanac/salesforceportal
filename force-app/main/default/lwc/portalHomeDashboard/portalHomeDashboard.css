@@ -1,0 +1,12 @@
+.dashboard__title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #16325c;
+    margin: 0 0 1rem 0;
+}
+
+.dashboard__tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}

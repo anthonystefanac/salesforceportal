@@ -1,0 +1,24 @@
+.portal-tile {
+    border: 1px solid #d8dde6;
+    border-radius: 0.5rem;
+    padding: 1rem 1.25rem;
+    background: #ffffff;
+}
+
+.portal-tile_warning {
+    border-color: #ffb75d;
+    background: #fff8ef;
+}
+
+.portal-tile__value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #16325c;
+    margin: 0;
+}
+
+.portal-tile__label {
+    font-size: 0.8rem;
+    color: #54698d;
+    margin: 0.25rem 0 0 0;
+}

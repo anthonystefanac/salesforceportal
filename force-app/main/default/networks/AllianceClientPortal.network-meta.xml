@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Placeholder only. Creating the actual Experience Cloud site (this Network
+  record, its paired classic Site record, and the full ExperienceBundle of
+  theme/pages/navigation) is a UI/CLI driven process that Salesforce
+  generates, not something reliably hand-authorable as static XML without a
+  connected org to validate the result against. Create the real site with
+  the "sf org create community wizard" command (name flag: Alliance Client
+  Portal, template flag: Build Your Own LWR, url path prefix flag: portal),
+  or via Setup, Digital Experiences, New. Then pull the org's generated
+  metadata into source control with "sf project retrieve start" scoped to
+  the Network, ExperienceBundle and Site metadata types, which will
+  overwrite this placeholder with the real definition. See README.md,
+  "Experience Cloud site setup" section, for the full walkthrough.
+-->
+<Network xmlns="http://soap.sforce.com/2006/04/metadata">
+    <status>UnderConstruction</status>
+    <tabs>
+        <defaultTab>Staffing_Request__c</defaultTab>
+    </tabs>
+</Network>

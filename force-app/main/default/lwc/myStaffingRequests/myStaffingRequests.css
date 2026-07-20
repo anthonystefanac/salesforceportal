@@ -1,0 +1,22 @@
+.my-requests__title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #16325c;
+    margin: 0 0 1rem 0;
+}
+
+.my-requests__table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.my-requests__table th,
+.my-requests__table td {
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid #e2e6ed;
+}
+
+.my-requests__empty {
+    color: #54698d;
+}

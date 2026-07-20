@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Cancellation_Requested__c</fullName>
+    <label>Cancellation Requested</label>
+    <type>Checkbox</type>
+    <defaultValue>false</defaultValue>
+    <description>Set true when the client raises a cancellation via the Support/Query screen, pending allocator confirmation.</description>
+</CustomField>

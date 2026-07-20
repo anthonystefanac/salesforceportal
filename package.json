@@ -1,0 +1,14 @@
+{
+  "name": "alliance-client-portal",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Alliance Client Portal (Phase 1 MVP) - Salesforce Experience Cloud portal for staffing/shift request, tracking and approval.",
+  "scripts": {
+    "test:unit": "sfdx-lwc-jest",
+    "test:unit:watch": "sfdx-lwc-jest --watch",
+    "test:unit:coverage": "sfdx-lwc-jest --coverage"
+  },
+  "devDependencies": {
+    "@salesforce/sfdx-lwc-jest": "7.9.0"
+  }
+}

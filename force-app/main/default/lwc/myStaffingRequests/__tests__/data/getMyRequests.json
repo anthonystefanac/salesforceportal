@@ -1,0 +1,18 @@
+[
+    {
+        "Id": "a02000000000001AAA",
+        "Name": "SR-0001",
+        "Facility__r": { "Name": "Test Hospital" },
+        "Role__c": "Registered Nurse",
+        "Specialty__c": null,
+        "Shift_Date__c": "2026-08-01",
+        "Start_Time__c": "07:00:00.000Z",
+        "End_Time__c": "15:00:00.000Z",
+        "Quantity__c": 1,
+        "Priority__c": "Medium",
+        "Status__c": "Broadcasted",
+        "Broadcasted_Date__c": "2026-07-25T10:00:00.000Z",
+        "Last_Status_Update__c": "2026-07-25T10:00:00.000Z",
+        "Cancellation_Requested__c": false
+    }
+]

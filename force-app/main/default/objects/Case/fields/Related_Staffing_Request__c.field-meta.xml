@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Related_Staffing_Request__c</fullName>
+    <label>Related Staffing Request</label>
+    <type>Lookup</type>
+    <referenceTo>Staffing_Request__c</referenceTo>
+    <relationshipName>Support_Cases</relationshipName>
+    <relationshipLabel>Support Cases</relationshipLabel>
+    <required>false</required>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>Optional link when a portal query or cancellation request relates to a specific staffing request.</description>
+</CustomField>

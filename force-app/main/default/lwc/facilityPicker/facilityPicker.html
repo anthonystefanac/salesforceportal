@@ -1,0 +1,13 @@
+<template>
+    <lightning-combobox
+        name="facility"
+        label="Facility"
+        placeholder="Select a facility"
+        options={facilities}
+        onchange={handleChange}
+        required
+    ></lightning-combobox>
+    <template if:true={error}>
+        <p class="slds-text-color_error">Unable to load facilities.</p>
+    </template>
+</template>

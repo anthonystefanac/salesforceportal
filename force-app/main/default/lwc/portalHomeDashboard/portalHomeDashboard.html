@@ -1,0 +1,25 @@
+<template>
+    <div class="dashboard">
+        <h1 class="dashboard__title">Home</h1>
+        <template if:false={hasError}>
+            <div class="dashboard__tiles">
+                <c-portal-dashboard-tile
+                    label="Open Requests"
+                    value={openRequestCount}
+                ></c-portal-dashboard-tile>
+                <c-portal-dashboard-tile
+                    label="At-Risk Shifts"
+                    value={atRiskShiftCount}
+                    variant="warning"
+                ></c-portal-dashboard-tile>
+                <c-portal-dashboard-tile
+                    label="Timesheets Awaiting Approval"
+                    value={timesheetsAwaitingApprovalCount}
+                ></c-portal-dashboard-tile>
+            </div>
+        </template>
+        <template if:true={hasError}>
+            <p class="slds-text-color_error">Unable to load your dashboard right now.</p>
+        </template>
+    </div>
+</template>

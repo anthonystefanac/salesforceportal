@@ -4,6 +4,7 @@ import createRequest from '@salesforce/apex/StaffingRequestController.createRequ
 
 const DEFAULT_FORM = {
     facilityId: undefined,
+    wardId: undefined,
     role: undefined,
     specialty: undefined,
     shiftDate: undefined,
@@ -38,7 +39,13 @@ export default class RequestStaffForm extends LightningElement {
     @track formData = { ...DEFAULT_FORM };
 
     handleFacilityChange(event) {
-        this.formData = { ...this.formData, facilityId: event.detail.facilityId };
+        // Wards belong to a single facility, so a wider selection resets any
+        // ward chosen for the previous facility.
+        this.formData = { ...this.formData, facilityId: event.detail.facilityId, wardId: undefined };
+    }
+
+    handleWardChange(event) {
+        this.formData = { ...this.formData, wardId: event.detail.wardId };
     }
 
     handleFieldChange(event) {
@@ -55,6 +62,7 @@ export default class RequestStaffForm extends LightningElement {
         try {
             const newRequest = {
                 Facility__c: this.formData.facilityId,
+                Ward__c: this.formData.wardId,
                 Role__c: this.formData.role,
                 Specialty__c: this.formData.specialty,
                 Shift_Date__c: this.formData.shiftDate,

@@ -99,7 +99,7 @@ npm install
 npm run test:unit
 ```
 
-29 Jest tests across all 10 LWCs. This is the only thing in this project
+34 Jest tests across all 11 LWCs. This is the only thing in this project
 that's actually been run and confirmed passing in this environment.
 
 ### Requires a connected org (not verified here)
@@ -121,9 +121,13 @@ All child objects are Master-Detail to their parent, so read sharing is
 
 - **Facility__c** (MD → Account) — a client site; `Facility_Type__c`,
   address fields, `Active__c`.
-- **Staffing_Request__c** (MD → Facility__c) — the shift/staff demand
-  request. `Status__c` is the client-safe lifecycle: Submitted, Being
-  Worked, Broadcasted, Filled, Unable to Fill, Cancelled.
+- **Ward__c** (MD → Facility__c) — an optional sub-location within a
+  facility (e.g. Riverside Aged Care → Ward A). Not every facility has
+  wards defined; the picker on Request Staff is disabled with a helpful
+  placeholder when the selected facility has none.
+- **Staffing_Request__c** (MD → Facility__c, optional lookup → Ward__c) —
+  the shift/staff demand request. `Status__c` is the client-safe lifecycle:
+  Submitted, Being Worked, Broadcasted, Filled, Unable to Fill, Cancelled.
   `Requested_By_Contact__c` and `External_Demand_Id__c` are intentionally
   not portal-readable — server-set only.
 - **Timesheet__c** (MD → Staffing_Request__c) — `Approval_Status__c` and

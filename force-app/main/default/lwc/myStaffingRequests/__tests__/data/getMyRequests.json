@@ -3,6 +3,7 @@
         "Id": "a02000000000001AAA",
         "Name": "SR-0001",
         "Facility__r": { "Name": "Test Hospital" },
+        "Ward__r": { "Name": "Ward A" },
         "Role__c": "Registered Nurse",
         "Specialty__c": null,
         "Shift_Date__c": "2026-08-01",

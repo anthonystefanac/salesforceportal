@@ -1,8 +1,8 @@
 .request-staff-form {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
-    max-width: 32rem;
+    gap: 1rem;
+    max-width: 48rem;
 }
 
 .request-staff-form__title {
@@ -10,4 +10,20 @@
     font-weight: 700;
     color: #16325c;
     margin: 0 0 0.5rem 0;
+}
+
+.request-staff-form__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem 1.25rem;
+}
+
+.request-staff-form__field_full {
+    grid-column: 1 / -1;
+}
+
+@media (max-width: 40rem) {
+    .request-staff-form__grid {
+        grid-template-columns: 1fr;
+    }
 }

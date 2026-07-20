@@ -35,6 +35,15 @@
         <modifyAllRecords>false</modifyAllRecords>
     </objectPermissions>
     <objectPermissions>
+        <object>Ward__c</object>
+        <allowRead>true</allowRead>
+        <allowCreate>false</allowCreate>
+        <allowEdit>false</allowEdit>
+        <allowDelete>false</allowDelete>
+        <viewAllRecords>false</viewAllRecords>
+        <modifyAllRecords>false</modifyAllRecords>
+    </objectPermissions>
+    <objectPermissions>
         <object>Staffing_Request__c</object>
         <allowRead>true</allowRead>
         <allowCreate>true</allowCreate>
@@ -108,6 +117,15 @@
         <editable>false</editable>
     </fieldPermissions>
 
+    <!-- Ward__c: read-only, used to populate the ward picker. Facility__c is
+         referenced in the picker's WHERE clause, so it needs FLS even though
+         it's never displayed. -->
+    <fieldPermissions>
+        <field>Ward__c.Facility__c</field>
+        <readable>true</readable>
+        <editable>false</editable>
+    </fieldPermissions>
+
     <!-- Staffing_Request__c: creatable fields are what the Request Staff form submits;
          Status__c, Broadcasted_Date__c, Last_Status_Update__c and Cancellation_Requested__c
          are read-only to the portal - only the Workforce Management integration
@@ -116,6 +134,11 @@
          trusted server-side Apex and must never be client-writable or client-readable. -->
     <fieldPermissions>
         <field>Staffing_Request__c.Facility__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Staffing_Request__c.Ward__c</field>
         <readable>true</readable>
         <editable>true</editable>
     </fieldPermissions>
@@ -298,6 +321,10 @@
     </tabSettings>
     <tabSettings>
         <tab>Facility__c</tab>
+        <visibility>DefaultOn</visibility>
+    </tabSettings>
+    <tabSettings>
+        <tab>Ward__c</tab>
         <visibility>DefaultOn</visibility>
     </tabSettings>
 </PermissionSet>

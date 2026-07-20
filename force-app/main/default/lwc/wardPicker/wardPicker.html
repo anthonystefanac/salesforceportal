@@ -1,0 +1,13 @@
+<template>
+    <lightning-combobox
+        name="ward"
+        label="Ward"
+        placeholder={placeholder}
+        options={wards}
+        onchange={handleChange}
+        disabled={isDisabled}
+    ></lightning-combobox>
+    <template if:true={error}>
+        <p class="slds-text-color_error">Unable to load wards.</p>
+    </template>
+</template>

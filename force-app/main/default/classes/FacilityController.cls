@@ -14,4 +14,18 @@ public with sharing class FacilityController {
             ORDER BY Name ASC
         ];
     }
+
+    @AuraEnabled(cacheable=true)
+    public static List<Ward__c> getWardsForFacility(Id facilityId) {
+        if (facilityId == null) {
+            return new List<Ward__c>();
+        }
+        return [
+            SELECT Id, Name
+            FROM Ward__c
+            WHERE Facility__c = :facilityId
+            WITH SECURITY_ENFORCED
+            ORDER BY Name ASC
+        ];
+    }
 }

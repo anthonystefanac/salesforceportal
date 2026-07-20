@@ -32,6 +32,12 @@ public class TestDataFactory {
         return facility;
     }
 
+    public static Ward__c createWard(Id facilityId, String name) {
+        Ward__c ward = new Ward__c(Name = name, Facility__c = facilityId);
+        insert ward;
+        return ward;
+    }
+
     public static Staffing_Request__c createStaffingRequest(Id facilityId, Id contactId) {
         Staffing_Request__c request = new Staffing_Request__c(
             Facility__c = facilityId,

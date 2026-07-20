@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Ward__c</fullName>
+    <label>Ward</label>
+    <type>Lookup</type>
+    <referenceTo>Ward__c</referenceTo>
+    <relationshipName>Staffing_Requests</relationshipName>
+    <relationshipLabel>Staffing Requests</relationshipLabel>
+    <required>false</required>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>Optional sub-location within the selected Facility. Not every facility has wards defined, so this is left optional rather than required.</description>
+</CustomField>

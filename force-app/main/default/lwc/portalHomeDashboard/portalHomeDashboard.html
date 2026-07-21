@@ -16,6 +16,13 @@
                     filter-key="at-risk"
                     ontileclick={handleTileClick}
                 ></c-portal-dashboard-tile>
+                <c-portal-dashboard-tile
+                    label="Overdue Invoices"
+                    value={overdueInvoiceCount}
+                    variant="warning"
+                    filter-key="overdue"
+                    ontileclick={handleTileClick}
+                ></c-portal-dashboard-tile>
             </div>
         </template>
         <template if:true={hasError}>

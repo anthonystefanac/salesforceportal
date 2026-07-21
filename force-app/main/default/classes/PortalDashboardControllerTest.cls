@@ -9,6 +9,7 @@ private class PortalDashboardControllerTest {
 
         System.assertEquals(0, summary.openRequestCount);
         System.assertEquals(0, summary.atRiskShiftCount);
+        System.assertEquals(0, summary.overdueInvoiceCount);
     }
 
     @isTest
@@ -27,6 +28,11 @@ private class PortalDashboardControllerTest {
         filledRequest.Status__c = 'Filled';
         update filledRequest;
 
+        TestDataFactory.createInvoice(acct.Id, 'INV-1001');
+        Invoice__c overdueInvoice = TestDataFactory.createInvoice(acct.Id, 'INV-1002');
+        overdueInvoice.Status__c = 'Overdue';
+        update overdueInvoice;
+
         Id portalProfileId = TestDataFactory.getPortalProfileIdOrNull();
         if (portalProfileId == null) {
             return; // Experience Cloud site/license not yet enabled in this org - see TestDataFactory.
@@ -43,5 +49,6 @@ private class PortalDashboardControllerTest {
         // Unable to Fill is explicitly excluded from "open", so only the Submitted one counts.
         System.assertEquals(1, summary.openRequestCount, 'Only the Submitted request counts as open');
         System.assertEquals(1, summary.atRiskShiftCount, 'The Unable to Fill request is the at-risk shift');
+        System.assertEquals(1, summary.overdueInvoiceCount, 'Only the Overdue invoice counts');
     }
 }

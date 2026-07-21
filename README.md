@@ -47,14 +47,15 @@ and `StaffingRequestController` — no new Apex or objects were needed for it,
 just the calendar UI and a reactive `defaultDate` input added to
 `requestStaffForm`.
 
-The Home dashboard's two tiles are clickable and deep-link into My Requests
-pre-filtered to match (Open Requests / At-Risk Shifts), with a "Show all
-requests" control to clear the filter. This uses `NavigationMixin` with
-`comm__namedPage` and a `state.filter` parameter, which `myStaffingRequests`
-reads back via `@wire(CurrentPageReference)`. **The target page name
-(`MY_REQUESTS_PAGE_NAME` in `portalHomeDashboard.js`) is a placeholder** —
-it must match the actual Experience Builder page's Name once the site is
-built (Setup → the page's own Settings panel), the same kind of gap as the
+The Home dashboard's three tiles are clickable and deep-link into a
+pre-filtered list: Open Requests and At-Risk Shifts go to My Requests,
+Overdue Invoices goes to Invoices — each with a "Show all" control to clear
+the filter. This uses `NavigationMixin` with `comm__namedPage` and a
+`state.filter` parameter, which `myStaffingRequests`/`invoiceList` read back
+via `@wire(CurrentPageReference)`. **The target page names
+(`TILE_NAVIGATION` in `portalHomeDashboard.js`) are placeholders** — each
+must match the actual Experience Builder page's Name once the site is built
+(Setup → the page's own Settings panel), the same kind of gap as the
 Network/ExperienceBundle placeholder described below.
 
 ## No Salesforce org is connected here
@@ -127,7 +128,7 @@ npm install
 npm run test:unit
 ```
 
-41 Jest tests across all 10 LWCs. This is the only thing in this project
+44 Jest tests across all 10 LWCs. This is the only thing in this project
 that's actually been run and confirmed passing in this environment.
 
 ### Requires a connected org (not verified here)

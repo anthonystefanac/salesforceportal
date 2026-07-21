@@ -7,5 +7,23 @@
         "Due_Date__c": "2026-07-15",
         "Amount__c": 4520.5,
         "Status__c": "Issued"
+    },
+    {
+        "Id": "a04000000000002AAA",
+        "Name": "INV-0002",
+        "Invoice_Number__c": "2CL-10019",
+        "Invoice_Date__c": "2026-06-01",
+        "Due_Date__c": "2026-06-15",
+        "Amount__c": 6180.0,
+        "Status__c": "Paid"
+    },
+    {
+        "Id": "a04000000000003AAA",
+        "Name": "INV-0003",
+        "Invoice_Number__c": "2CL-10005",
+        "Invoice_Date__c": "2026-05-01",
+        "Due_Date__c": "2026-05-15",
+        "Amount__c": 3210.0,
+        "Status__c": "Overdue"
     }
 ]

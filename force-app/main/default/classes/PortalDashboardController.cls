@@ -3,6 +3,7 @@ public with sharing class PortalDashboardController {
     public class DashboardSummary {
         @AuraEnabled public Integer openRequestCount;
         @AuraEnabled public Integer atRiskShiftCount;
+        @AuraEnabled public Integer overdueInvoiceCount;
     }
 
     @AuraEnabled(cacheable=true)
@@ -13,6 +14,7 @@ public with sharing class PortalDashboardController {
         if (accountId == null) {
             summary.openRequestCount = 0;
             summary.atRiskShiftCount = 0;
+            summary.overdueInvoiceCount = 0;
             return summary;
         }
 
@@ -33,6 +35,15 @@ public with sharing class PortalDashboardController {
             WITH SECURITY_ENFORCED
         ];
         summary.atRiskShiftCount = (Integer) atRiskShifts[0].get('total');
+
+        List<AggregateResult> overdueInvoices = [
+            SELECT COUNT(Id) total
+            FROM Invoice__c
+            WHERE Account__c = :accountId
+            AND Status__c = 'Overdue'
+            WITH SECURITY_ENFORCED
+        ];
+        summary.overdueInvoiceCount = (Integer) overdueInvoices[0].get('total');
 
         return summary;
     }

@@ -1,12 +1,20 @@
 <template>
     <div class="invoice-list">
         <h1 class="invoice-list__title">Invoices</h1>
+        <template if:true={hasActiveFilter}>
+            <div class="invoice-list__filter-banner">
+                <span>Showing: {activeFilterLabel}</span>
+                <button type="button" class="invoice-list__clear-filter" onclick={handleClearFilter}>
+                    Show all invoices
+                </button>
+            </div>
+        </template>
         <template if:true={hasError}>
             <p class="slds-text-color_error">Unable to load invoices right now.</p>
         </template>
         <template if:false={hasError}>
             <template if:false={hasInvoices}>
-                <p class="invoice-list__empty">No invoices yet.</p>
+                <p class="invoice-list__empty">{emptyStateMessage}</p>
             </template>
             <template if:true={hasInvoices}>
                 <table class="invoice-list__table">

@@ -2,11 +2,15 @@ import { LightningElement, wire } from 'lwc';
 import { NavigationMixin } from 'lightning/navigation';
 import getDashboardSummary from '@salesforce/apex/PortalDashboardController.getDashboardSummary';
 
-// Must match the Experience Builder page's Name for My Requests once the
-// site is built in Setup - that page doesn't exist until then, so this is a
-// placeholder. Confirm/update it after running through the README's
+// Page names must match the Experience Builder pages' Name once the site is
+// built in Setup - those pages don't exist until then, so these are
+// placeholders. Confirm/update them after running through the README's
 // "Experience Cloud site setup" section.
-const MY_REQUESTS_PAGE_NAME = 'My-Requests';
+const TILE_NAVIGATION = {
+    open: { pageName: 'My-Requests', state: { filter: 'open' } },
+    'at-risk': { pageName: 'My-Requests', state: { filter: 'at-risk' } },
+    overdue: { pageName: 'Invoices', state: { filter: 'overdue' } }
+};
 
 export default class PortalHomeDashboard extends NavigationMixin(LightningElement) {
     summary;
@@ -31,15 +35,23 @@ export default class PortalHomeDashboard extends NavigationMixin(LightningElemen
         return this.summary ? this.summary.atRiskShiftCount : 0;
     }
 
+    get overdueInvoiceCount() {
+        return this.summary ? this.summary.overdueInvoiceCount : 0;
+    }
+
     get hasError() {
         return !!this.error;
     }
 
     handleTileClick(event) {
+        const target = TILE_NAVIGATION[event.detail.filterKey];
+        if (!target) {
+            return;
+        }
         this[NavigationMixin.Navigate]({
             type: 'comm__namedPage',
-            attributes: { name: MY_REQUESTS_PAGE_NAME },
-            state: { filter: event.detail.filterKey }
+            attributes: { name: target.pageName },
+            state: target.state
         });
     }
 }

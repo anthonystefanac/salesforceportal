@@ -48,14 +48,16 @@ describe('c-portal-home-dashboard', () => {
 
         return Promise.resolve().then(() => {
             const tiles = element.shadowRoot.querySelectorAll('c-portal-dashboard-tile');
-            expect(tiles).toHaveLength(2);
+            expect(tiles).toHaveLength(3);
             expect(tiles[0].value).toBe(mockSummary.openRequestCount);
             expect(tiles[1].value).toBe(mockSummary.atRiskShiftCount);
             expect(tiles[1].variant).toBe('warning');
+            expect(tiles[2].value).toBe(mockSummary.overdueInvoiceCount);
+            expect(tiles[2].variant).toBe('warning');
         });
     });
 
-    it('navigates to My Requests with the matching filter when a tile is clicked', () => {
+    it('navigates to My Requests with the matching filter when the at-risk tile is clicked', () => {
         const element = createElement('c-portal-home-dashboard', {
             is: PortalHomeDashboard
         });
@@ -70,7 +72,28 @@ describe('c-portal-home-dashboard', () => {
             expect(mockNavigate).toHaveBeenCalledTimes(1);
             const pageReference = mockNavigate.mock.calls[0][0];
             expect(pageReference.type).toBe('comm__namedPage');
+            expect(pageReference.attributes.name).toBe('My-Requests');
             expect(pageReference.state.filter).toBe('at-risk');
+        });
+    });
+
+    it('navigates to Invoices with the overdue filter when the overdue tile is clicked', () => {
+        const element = createElement('c-portal-home-dashboard', {
+            is: PortalHomeDashboard
+        });
+        document.body.appendChild(element);
+
+        getDashboardSummary.emit(mockSummary);
+
+        return Promise.resolve().then(() => {
+            const tiles = element.shadowRoot.querySelectorAll('c-portal-dashboard-tile');
+            tiles[2].dispatchEvent(new CustomEvent('tileclick', { detail: { filterKey: 'overdue' } }));
+
+            expect(mockNavigate).toHaveBeenCalledTimes(1);
+            const pageReference = mockNavigate.mock.calls[0][0];
+            expect(pageReference.type).toBe('comm__namedPage');
+            expect(pageReference.attributes.name).toBe('Invoices');
+            expect(pageReference.state.filter).toBe('overdue');
         });
     });
 

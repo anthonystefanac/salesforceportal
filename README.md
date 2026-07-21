@@ -139,9 +139,18 @@ and wire up navigation matching the 6 screens. Also in Setup:
   type isn't reliably known here. `.forceignore` now excludes it
   automatically so it's never picked up by `sf project deploy start`.
   Configure the equivalent Sharing Set by hand instead, in **Setup →
-  Sharing Settings → Sharing Sets → New**: map `Facility__c.Account__c` and
-  `Invoice__c.Account__c` to `Contact.AccountId` with Read access, granted
-  to the **Alliance Client Portal User** permission set.
+  Sharing Settings → Sharing Sets → New**: map the **Account** object to
+  `Contact.AccountId` with Read access, granted to the **Alliance Client
+  Portal User** permission set. Map Account only, not Facility__c/Invoice__c
+  — those are Master-Detail children of Account, so they have no
+  independently configurable sharing and won't even appear as selectable
+  objects in the Sharing Set UI. A single Account-level Read grant cascades
+  down through the whole Master-Detail chain (Account → Facility__c →
+  Ward__c, and Account → Invoice__c) automatically. While there, also
+  confirm Account's organization-wide default (Setup → Sharing Settings →
+  Organization-Wide Defaults) is **Private** — if it's Public Read Only or
+  wider, portal users would see every client's Account regardless of the
+  Sharing Set.
 
 ## Verification
 

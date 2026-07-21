@@ -9,7 +9,6 @@ private class PortalDashboardControllerTest {
 
         System.assertEquals(0, summary.openRequestCount);
         System.assertEquals(0, summary.atRiskShiftCount);
-        System.assertEquals(0, summary.timesheetsAwaitingApprovalCount);
     }
 
     @isTest
@@ -18,7 +17,7 @@ private class PortalDashboardControllerTest {
         Contact con = TestDataFactory.createContact(acct.Id, 'Portal', 'Tester');
         Facility__c facility = TestDataFactory.createFacility(acct.Id, 'Test Hospital');
 
-        Staffing_Request__c openRequest = TestDataFactory.createStaffingRequest(facility.Id, con.Id);
+        TestDataFactory.createStaffingRequest(facility.Id, con.Id);
 
         Staffing_Request__c unableToFillRequest = TestDataFactory.createStaffingRequest(facility.Id, con.Id);
         unableToFillRequest.Status__c = 'Unable to Fill';
@@ -27,8 +26,6 @@ private class PortalDashboardControllerTest {
         Staffing_Request__c filledRequest = TestDataFactory.createStaffingRequest(facility.Id, con.Id);
         filledRequest.Status__c = 'Filled';
         update filledRequest;
-
-        TestDataFactory.createTimesheet(openRequest.Id, con.Id);
 
         Id portalProfileId = TestDataFactory.getPortalProfileIdOrNull();
         if (portalProfileId == null) {
@@ -43,10 +40,8 @@ private class PortalDashboardControllerTest {
         }
         Test.stopTest();
 
-        // Submitted + Unable to Fill count as open (not Filled/Unable to Fill/Cancelled excluded) -
         // Unable to Fill is explicitly excluded from "open", so only the Submitted one counts.
         System.assertEquals(1, summary.openRequestCount, 'Only the Submitted request counts as open');
         System.assertEquals(1, summary.atRiskShiftCount, 'The Unable to Fill request is the at-risk shift');
-        System.assertEquals(1, summary.timesheetsAwaitingApprovalCount, 'One Pending Review timesheet was created');
     }
 }

@@ -33,11 +33,10 @@ describe('c-portal-home-dashboard', () => {
 
         return Promise.resolve().then(() => {
             const tiles = element.shadowRoot.querySelectorAll('c-portal-dashboard-tile');
-            expect(tiles).toHaveLength(3);
+            expect(tiles).toHaveLength(2);
             expect(tiles[0].value).toBe(mockSummary.openRequestCount);
             expect(tiles[1].value).toBe(mockSummary.atRiskShiftCount);
             expect(tiles[1].variant).toBe('warning');
-            expect(tiles[2].value).toBe(mockSummary.timesheetsAwaitingApprovalCount);
         });
     });
 

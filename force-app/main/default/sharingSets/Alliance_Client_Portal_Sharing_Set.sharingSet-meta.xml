@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <SharingSet xmlns="http://soap.sforce.com/2006/04/metadata">
     <label>Alliance Client Portal Sharing Set</label>
-    <description>Grants every Experience Cloud user assigned the Alliance Client Portal User permission set read access to the Facility and Invoice records belonging to their own Contact's Account. Staffing_Request__c and Timesheet__c need no separate mapping: both are master-detail (Controlled by Parent) down to Facility__c, so this single mapping cascades read access through the whole chain. This is the mechanism that lets multiple contacts at the same client Account see each other's requests, without depending on org-specific portal role names.</description>
+    <description>Grants every Experience Cloud user assigned the Alliance Client Portal User permission set read access to the Facility and Invoice records belonging to their own Contact's Account. Staffing_Request__c (and Ward__c below Facility__c) need no separate mapping: they're master-detail (Controlled by Parent) down to Facility__c, so this single mapping cascades read access through the whole chain. This is the mechanism that lets multiple contacts at the same client Account see each other's requests, without depending on org-specific portal role names.</description>
     <accessMappings>
         <objectField>Facility__c.Account__c</objectField>
         <accessLevel>Read</accessLevel>

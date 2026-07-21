@@ -4,21 +4,24 @@ A Salesforce DX (SFDX) source project implementing the "Alliance Client Portal"
 described in `Alliance_Client_Portal_Phase_1_MVP.pptx`: a Salesforce Experience
 Cloud portal that lets Business NSW/Alliance's staffing clients (hospitals,
 aged care, corporate accounts) **request** shift/staffing demand, **track**
-its fulfilment status, and **approve** timesheets/view invoices — a
-controlled extension of the existing "Project Elevate" ecosystem (Salesforce +
-Bullhorn/Classic Scheduler + 2Cloud9), not a new platform.
+its fulfilment status, and **view invoices** — a controlled extension of the
+existing "Project Elevate" ecosystem (Salesforce + Bullhorn/Classic Scheduler
++ 2Cloud9), not a new platform.
+
+Note: the deck's third MVP job, timesheet approval, was subsequently descoped
+at the user's request and is not part of this build — see "Scope" below.
 
 ## What's in this repo
 
 ```
 force-app/main/default/
-  objects/            Facility__c, Staffing_Request__c, Timesheet__c, Invoice__c,
+  objects/            Facility__c, Ward__c, Staffing_Request__c, Invoice__c,
                        plus Case field extensions (Related_Staffing_Request__c,
                        Portal_Request_Type__c) for the Support/Query screen
   classes/             Apex controllers, domain services, mocked integration
                        boundaries, and their test classes
-  lwc/                 12 Lightning Web Components covering the 6 MVP screens
-                       plus an added calendar-based entry point to Request Staff
+  lwc/                 10 Lightning Web Components covering the current screens,
+                       including an added calendar-based entry point to Request Staff
   permissionsets/      Alliance_Client_Portal_User — assign to every portal Contact's User
   sharingSets/         Grants same-Account contacts shared read access
   tabs/                Custom object tabs
@@ -33,7 +36,6 @@ force-app/main/default/
 | Request staff | `requestStaffForm` (+ `facilityPicker`, `wardPicker`) |
 | Request staff — calendar | `requestStaffCalendar` (embeds `requestStaffForm`) |
 | My requests | `myStaffingRequests` (+ `requestStatusBadge`) |
-| Timesheet approval | `timesheetApprovalList` (+ `timesheetApprovalDetail`) |
 | Invoices | `invoiceList` |
 | Support / query | `supportRequestForm` |
 
@@ -55,6 +57,12 @@ source-format metadata, ready to deploy once you connect an org:
 sf org login web --alias alliance-portal
 sf project deploy start
 ```
+
+If you'd already deployed an earlier version of this repo that included
+`Timesheet__c` (before it was removed), re-running `sf project deploy start`
+won't delete it from the org — Salesforce deploys are additive by default.
+Remove it manually in Setup, or deploy a `destructiveChanges.xml` listing
+`Timesheet__c` and its related metadata.
 
 ### Mocked integrations
 
@@ -109,18 +117,17 @@ npm install
 npm run test:unit
 ```
 
-40 Jest tests across all 12 LWCs. This is the only thing in this project
+34 Jest tests across all 10 LWCs. This is the only thing in this project
 that's actually been run and confirmed passing in this environment.
 
 ### Requires a connected org (not verified here)
 
 - `sf apex run test --test-level RunLocalTests` — all Apex test classes,
   including the `TestDataFactory`-driven portal-user-context tests. Several
-  tests (`StaffingRequestServiceTest`, `TimesheetServiceTest`,
-  `FacilityControllerTest`, etc.) look up an existing Customer Community
-  profile and skip their portal-user assertions gracefully if one isn't
-  enabled yet in the org — run them again after the Experience Cloud site
-  and license are set up to get full coverage.
+  tests (`StaffingRequestServiceTest`, `FacilityControllerTest`, etc.) look up
+  an existing Customer Community profile and skip their portal-user
+  assertions gracefully if one isn't enabled yet in the org — run them again
+  after the Experience Cloud site and license are set up to get full coverage.
 - `sf project deploy validate` — metadata deploy validation.
 - Visual QA of the actual Experience Builder pages.
 
@@ -140,22 +147,23 @@ All child objects are Master-Detail to their parent, so read sharing is
   Submitted, Being Worked, Broadcasted, Filled, Unable to Fill, Cancelled.
   `Requested_By_Contact__c` and `External_Demand_Id__c` are intentionally
   not portal-readable — server-set only.
-- **Timesheet__c** (MD → Staffing_Request__c) — `Approval_Status__c` and
-  `Query_Comment__c` have field history tracking enabled, which supplies the
-  client-facing audit trail. `External_Timesheet_Id__c` is not
-  portal-readable.
 - **Invoice__c** (MD → Account) — read-only in Phase 1.
   `External_Invoice_Id__c` is not portal-readable. The PDF itself is a
   standard `ContentVersion`/`ContentDocumentLink`, not a custom field.
 - **Case** (standard object) — reused for the Support/Query screen via two
   added fields, rather than a new custom object.
 
-## Scope (from the deck — keep this discipline)
+## Scope
 
 **In scope**: client login/access model, submit a single shift/staff
-request, view status + broadcast/fill visibility, approve/query timesheets,
-read-only invoice download, support query/cancellation request.
+request (including via the calendar entry point), view status + broadcast/fill
+visibility, read-only invoice download, support query/cancellation request.
 
 **Out of scope for this phase**: full VMS replacement, full roster planning,
 client-side worker selection, payment gateway, advanced compliance
-dashboards, custom mobile app (responsive web only).
+dashboards, custom mobile app (responsive web only). Timesheet approval was
+also in the original deck's MVP scope (the "Approve" job) but was removed
+from this build at the user's request — `Timesheet__c`, its controller/
+service, and the two timesheet LWCs no longer exist here. Re-adding it later
+would mean restoring that object/Apex/LWC trio and the third Home dashboard
+tile it fed.

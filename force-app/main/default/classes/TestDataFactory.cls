@@ -54,18 +54,6 @@ public class TestDataFactory {
         return request;
     }
 
-    public static Timesheet__c createTimesheet(Id staffingRequestId, Id contactId) {
-        Timesheet__c timesheet = new Timesheet__c(
-            Staffing_Request__c = staffingRequestId,
-            Contact__c = contactId,
-            Shift_Date__c = Date.today(),
-            Hours_Worked__c = 8,
-            Approval_Status__c = 'Pending Review'
-        );
-        insert timesheet;
-        return timesheet;
-    }
-
     public static Invoice__c createInvoice(Id accountId, String invoiceNumber) {
         Invoice__c invoice = new Invoice__c(
             Account__c = accountId,

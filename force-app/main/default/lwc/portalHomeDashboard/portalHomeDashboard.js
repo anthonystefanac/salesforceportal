@@ -24,10 +24,6 @@ export default class PortalHomeDashboard extends LightningElement {
         return this.summary ? this.summary.atRiskShiftCount : 0;
     }
 
-    get timesheetsAwaitingApprovalCount() {
-        return this.summary ? this.summary.timesheetsAwaitingApprovalCount : 0;
-    }
-
     get hasError() {
         return !!this.error;
     }

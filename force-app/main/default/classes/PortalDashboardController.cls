@@ -3,7 +3,6 @@ public with sharing class PortalDashboardController {
     public class DashboardSummary {
         @AuraEnabled public Integer openRequestCount;
         @AuraEnabled public Integer atRiskShiftCount;
-        @AuraEnabled public Integer timesheetsAwaitingApprovalCount;
     }
 
     @AuraEnabled(cacheable=true)
@@ -14,7 +13,6 @@ public with sharing class PortalDashboardController {
         if (accountId == null) {
             summary.openRequestCount = 0;
             summary.atRiskShiftCount = 0;
-            summary.timesheetsAwaitingApprovalCount = 0;
             return summary;
         }
 
@@ -35,15 +33,6 @@ public with sharing class PortalDashboardController {
             WITH SECURITY_ENFORCED
         ];
         summary.atRiskShiftCount = (Integer) atRiskShifts[0].get('total');
-
-        List<AggregateResult> pendingTimesheets = [
-            SELECT COUNT(Id) total
-            FROM Timesheet__c
-            WHERE Staffing_Request__r.Facility__r.Account__c = :accountId
-            AND Approval_Status__c = 'Pending Review'
-            WITH SECURITY_ENFORCED
-        ];
-        summary.timesheetsAwaitingApprovalCount = (Integer) pendingTimesheets[0].get('total');
 
         return summary;
     }

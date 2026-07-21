@@ -4,3 +4,9 @@
 **/*.log
 node_modules/
 coverage/
+
+# The SharingSet schema here hasn't deployed successfully after repeated
+# attempts (see README "Experience Cloud site setup") - excluded so it's
+# never picked up by a bare `sf project deploy start`. Configure the
+# equivalent Sharing Set by hand in Setup instead.
+force-app/main/default/sharingSets/

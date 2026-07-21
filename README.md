@@ -65,9 +65,23 @@ nothing here has been deployed or run against real Salesforce. Everything is
 source-format metadata, ready to deploy once you connect an org:
 
 ```
-sf org login web --alias alliance-portal
-sf project deploy start
+sf org login web --alias alliance-portal --set-default
 ```
+
+Salesforce metadata deploys are all-or-nothing — a single failing component
+rolls back the entire deploy. The `Network` placeholder
+(`force-app/main/default/networks/AllianceClientPortal.network-meta.xml`)
+will fail until the actual Experience Cloud site exists (see "Experience
+Cloud site setup" below), so exclude it from your first deploy:
+
+```
+sf project deploy start --source-dir force-app/main/default/objects force-app/main/default/classes force-app/main/default/lwc force-app/main/default/permissionsets force-app/main/default/tabs
+```
+
+(`.forceignore` already excludes `sharingSets` automatically — see that
+section below for why.) Once the site exists, either keep excluding
+`networks/` this way, or retrieve the real site metadata over the
+placeholder (next section) and deploy everything together.
 
 If you'd already deployed an earlier version of this repo that included
 `Timesheet__c` (before it was removed), re-running `sf project deploy start`
@@ -122,12 +136,12 @@ and wire up navigation matching the 6 screens. Also in Setup:
   has repeatedly failed to deploy with an element-ordering error
   (`permissionSets invalid at this location`) that two attempts at
   reordering didn't resolve — meaning the exact schema for this metadata
-  type isn't reliably known here. Rather than keep guessing, configure the
-  equivalent Sharing Set by hand in **Setup → Sharing Settings → Sharing
-  Sets → New**: map `Facility__c.Account__c` and `Invoice__c.Account__c`
-  to `Contact.AccountId` with Read access, granted to the **Alliance
-  Client Portal User** permission set. Exclude the `sharingSets` folder
-  from your deploy command until/unless this file's schema gets sorted out.
+  type isn't reliably known here. `.forceignore` now excludes it
+  automatically so it's never picked up by `sf project deploy start`.
+  Configure the equivalent Sharing Set by hand instead, in **Setup →
+  Sharing Settings → Sharing Sets → New**: map `Facility__c.Account__c` and
+  `Invoice__c.Account__c` to `Contact.AccountId` with Read access, granted
+  to the **Alliance Client Portal User** permission set.
 
 ## Verification
 

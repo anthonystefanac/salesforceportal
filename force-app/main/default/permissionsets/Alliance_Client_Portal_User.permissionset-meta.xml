@@ -76,12 +76,9 @@
         <modifyAllRecords>false</modifyAllRecords>
     </objectPermissions>
 
-    <!-- Facility__c: read-only, used to populate the facility picker -->
-    <fieldPermissions>
-        <field>Facility__c.Facility_Type__c</field>
-        <readable>true</readable>
-        <editable>false</editable>
-    </fieldPermissions>
+    <!-- Facility__c: read-only, used to populate the facility picker.
+         Facility_Type__c is a required field - like Master-Detail fields,
+         required fields aren't subject to FLS at all, so it needs no entry. -->
     <fieldPermissions>
         <field>Facility__c.Address_Street__c</field>
         <readable>true</readable>
@@ -121,14 +118,12 @@
          and External_Demand_Id__c are intentionally NOT granted: both are set only by
          trusted server-side Apex and must never be client-writable or client-readable. -->
     <!-- Staffing_Request__c.Facility__c is Master-Detail - not subject to FLS,
-         the form's facility picker still populates it fine without an entry here. -->
+         the form's facility picker still populates it fine without an entry here.
+         Role__c, Shift_Date__c, Start_Time__c, End_Time__c, Quantity__c, Priority__c
+         and Status__c are all required fields - also not subject to FLS, so none
+         of them get an entry either, even though the form submits most of them. -->
     <fieldPermissions>
         <field>Staffing_Request__c.Ward__c</field>
-        <readable>true</readable>
-        <editable>true</editable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <field>Staffing_Request__c.Role__c</field>
         <readable>true</readable>
         <editable>true</editable>
     </fieldPermissions>
@@ -138,39 +133,9 @@
         <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
-        <field>Staffing_Request__c.Shift_Date__c</field>
-        <readable>true</readable>
-        <editable>true</editable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <field>Staffing_Request__c.Start_Time__c</field>
-        <readable>true</readable>
-        <editable>true</editable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <field>Staffing_Request__c.End_Time__c</field>
-        <readable>true</readable>
-        <editable>true</editable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <field>Staffing_Request__c.Quantity__c</field>
-        <readable>true</readable>
-        <editable>true</editable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <field>Staffing_Request__c.Priority__c</field>
-        <readable>true</readable>
-        <editable>true</editable>
-    </fieldPermissions>
-    <fieldPermissions>
         <field>Staffing_Request__c.Notes__c</field>
         <readable>true</readable>
         <editable>true</editable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <field>Staffing_Request__c.Status__c</field>
-        <readable>true</readable>
-        <editable>false</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>Staffing_Request__c.Broadcasted_Date__c</field>
@@ -189,35 +154,18 @@
     </fieldPermissions>
 
     <!-- Invoice__c: read-only in Phase 1. External_Invoice_Id__c is NOT granted.
-         Invoice__c.Account__c is Master-Detail - not subject to FLS. -->
-    <fieldPermissions>
-        <field>Invoice__c.Invoice_Number__c</field>
-        <readable>true</readable>
-        <editable>false</editable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <field>Invoice__c.Invoice_Date__c</field>
-        <readable>true</readable>
-        <editable>false</editable>
-    </fieldPermissions>
+         Account__c (Master-Detail) and Invoice_Number__c/Invoice_Date__c/Amount__c/
+         Status__c (all required) aren't subject to FLS - only Due_Date__c is
+         optional and needs an actual entry. -->
     <fieldPermissions>
         <field>Invoice__c.Due_Date__c</field>
         <readable>true</readable>
         <editable>false</editable>
     </fieldPermissions>
-    <fieldPermissions>
-        <field>Invoice__c.Amount__c</field>
-        <readable>true</readable>
-        <editable>false</editable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <field>Invoice__c.Status__c</field>
-        <readable>true</readable>
-        <editable>false</editable>
-    </fieldPermissions>
 
     <!-- Case: used by the Support/Query screen. Subject/Description are the
-         standard fields the record-edit form submits alongside our two custom ones. -->
+         standard fields the record-edit form submits alongside our two custom ones.
+         Status is a required standard field - not subject to FLS, no entry needed. -->
     <fieldPermissions>
         <field>Case.Subject</field>
         <readable>true</readable>
@@ -227,11 +175,6 @@
         <field>Case.Description</field>
         <readable>true</readable>
         <editable>true</editable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <field>Case.Status</field>
-        <readable>true</readable>
-        <editable>false</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>Case.Portal_Request_Type__c</field>

@@ -22,6 +22,15 @@
     </classAccesses>
 
     <objectPermissions>
+        <object>Account</object>
+        <allowRead>true</allowRead>
+        <allowCreate>false</allowCreate>
+        <allowEdit>false</allowEdit>
+        <allowDelete>false</allowDelete>
+        <viewAllRecords>false</viewAllRecords>
+        <modifyAllRecords>false</modifyAllRecords>
+    </objectPermissions>
+    <objectPermissions>
         <object>Facility__c</object>
         <allowRead>true</allowRead>
         <allowCreate>false</allowCreate>

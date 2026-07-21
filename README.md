@@ -122,7 +122,7 @@ or via Setup → Digital Experiences → New. Then pull the generated metadata
 into source control (this overwrites the placeholder):
 
 ```
-sf project retrieve start -m Network -m ExperienceBundle -m Site
+sf project retrieve start -m Network -m ExperienceBundle
 ```
 
 In Experience Builder, add each exposed LWC from the table above to a page

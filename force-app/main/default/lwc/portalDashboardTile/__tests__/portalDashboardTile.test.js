@@ -46,4 +46,38 @@ describe('c-portal-dashboard-tile', () => {
         const tile = element.shadowRoot.querySelector('.portal-tile');
         expect(tile.classList.contains('portal-tile_warning')).toBe(true);
     });
+
+    it('is disabled and non-clickable when no filterKey is given', () => {
+        const element = createElement('c-portal-dashboard-tile', {
+            is: PortalDashboardTile
+        });
+        element.label = 'Open Requests';
+        element.value = 5;
+        document.body.appendChild(element);
+
+        const tile = element.shadowRoot.querySelector('.portal-tile');
+        expect(tile.disabled).toBe(true);
+        expect(tile.classList.contains('portal-tile_clickable')).toBe(false);
+    });
+
+    it('dispatches tileclick with the filterKey when clicked', () => {
+        const element = createElement('c-portal-dashboard-tile', {
+            is: PortalDashboardTile
+        });
+        element.label = 'Open Requests';
+        element.value = 5;
+        element.filterKey = 'open';
+        const handler = jest.fn();
+        element.addEventListener('tileclick', handler);
+        document.body.appendChild(element);
+
+        const tile = element.shadowRoot.querySelector('.portal-tile');
+        expect(tile.disabled).toBe(false);
+        expect(tile.classList.contains('portal-tile_clickable')).toBe(true);
+
+        tile.click();
+
+        expect(handler).toHaveBeenCalledTimes(1);
+        expect(handler.mock.calls[0][0].detail.filterKey).toBe('open');
+    });
 });

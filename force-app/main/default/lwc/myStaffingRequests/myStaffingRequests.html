@@ -1,12 +1,20 @@
 <template>
     <div class="my-requests">
         <h1 class="my-requests__title">My Requests</h1>
+        <template if:true={hasActiveFilter}>
+            <div class="my-requests__filter-banner">
+                <span>Showing: {activeFilterLabel}</span>
+                <button type="button" class="my-requests__clear-filter" onclick={handleClearFilter}>
+                    Show all requests
+                </button>
+            </div>
+        </template>
         <template if:true={hasError}>
             <p class="slds-text-color_error">Unable to load your requests right now.</p>
         </template>
         <template if:false={hasError}>
             <template if:false={hasRequests}>
-                <p class="my-requests__empty">No staffing requests yet.</p>
+                <p class="my-requests__empty">{emptyStateMessage}</p>
             </template>
             <template if:true={hasRequests}>
                 <table class="my-requests__table">

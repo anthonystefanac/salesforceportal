@@ -1,13 +1,35 @@
 .portal-tile {
+    all: unset;
+    box-sizing: border-box;
+    display: block;
+    width: 100%;
     border: 1px solid #d8dde6;
     border-radius: 0.5rem;
     padding: 1rem 1.25rem;
     background: #ffffff;
+    text-align: left;
 }
 
 .portal-tile_warning {
     border-color: #ffb75d;
     background: #fff8ef;
+}
+
+.portal-tile_clickable {
+    cursor: pointer;
+}
+
+.portal-tile_clickable:hover {
+    box-shadow: 0 1px 4px rgba(22, 50, 92, 0.15);
+}
+
+.portal-tile_clickable:focus-visible {
+    outline: 2px solid #0b5cab;
+    outline-offset: 2px;
+}
+
+.portal-tile:disabled {
+    cursor: default;
 }
 
 .portal-tile__value {

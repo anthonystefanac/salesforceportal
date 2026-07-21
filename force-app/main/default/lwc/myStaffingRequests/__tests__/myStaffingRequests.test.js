@@ -1,5 +1,6 @@
 import { createElement } from 'lwc';
 import MyStaffingRequests from 'c/myStaffingRequests';
+import { CurrentPageReference } from 'lightning/navigation';
 import getMyRequests from '@salesforce/apex/StaffingRequestController.getMyRequests';
 
 const mockRequests = require('./data/getMyRequests.json');
@@ -23,7 +24,7 @@ describe('c-my-staffing-requests', () => {
         jest.clearAllMocks();
     });
 
-    it('renders a row with a status badge per request', () => {
+    it('renders a row per request with a status badge, unfiltered by default', () => {
         const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
         document.body.appendChild(element);
 
@@ -31,14 +32,78 @@ describe('c-my-staffing-requests', () => {
 
         return Promise.resolve().then(() => {
             const rows = element.shadowRoot.querySelectorAll('tbody tr');
-            expect(rows).toHaveLength(1);
-
-            const badge = element.shadowRoot.querySelector('c-request-status-badge');
-            expect(badge.status).toBe('Broadcasted');
+            expect(rows).toHaveLength(4);
+            expect(element.shadowRoot.querySelector('.my-requests__filter-banner')).toBeNull();
         });
     });
 
-    it('shows an empty state message when there are no requests', () => {
+    it('shows only open requests when the page reference filter is "open"', () => {
+        const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
+        document.body.appendChild(element);
+
+        CurrentPageReference.emit({ state: { filter: 'open' } });
+        getMyRequests.emit(mockRequests);
+
+        return Promise.resolve().then(() => {
+            const rows = element.shadowRoot.querySelectorAll('tbody tr');
+            // Filled, Unable to Fill and Cancelled are excluded from "open" - only Broadcasted remains.
+            expect(rows).toHaveLength(1);
+            const badge = element.shadowRoot.querySelector('c-request-status-badge');
+            expect(badge.status).toBe('Broadcasted');
+
+            const banner = element.shadowRoot.querySelector('.my-requests__filter-banner');
+            expect(banner.textContent).toContain('Open Requests');
+        });
+    });
+
+    it('shows only at-risk shifts when the page reference filter is "at-risk"', () => {
+        const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
+        document.body.appendChild(element);
+
+        CurrentPageReference.emit({ state: { filter: 'at-risk' } });
+        getMyRequests.emit(mockRequests);
+
+        return Promise.resolve().then(() => {
+            const rows = element.shadowRoot.querySelectorAll('tbody tr');
+            expect(rows).toHaveLength(1);
+            const badge = element.shadowRoot.querySelector('c-request-status-badge');
+            expect(badge.status).toBe('Unable to Fill');
+        });
+    });
+
+    it('clears the filter and shows all requests when "Show all requests" is clicked', () => {
+        const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
+        document.body.appendChild(element);
+
+        CurrentPageReference.emit({ state: { filter: 'open' } });
+        getMyRequests.emit(mockRequests);
+
+        return Promise.resolve().then(() => {
+            const clearButton = element.shadowRoot.querySelector('.my-requests__clear-filter');
+            clearButton.click();
+
+            return Promise.resolve().then(() => {
+                const rows = element.shadowRoot.querySelectorAll('tbody tr');
+                expect(rows).toHaveLength(4);
+                expect(element.shadowRoot.querySelector('.my-requests__filter-banner')).toBeNull();
+            });
+        });
+    });
+
+    it('shows a filter-aware empty state message when the filter matches nothing', () => {
+        const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
+        document.body.appendChild(element);
+
+        CurrentPageReference.emit({ state: { filter: 'at-risk' } });
+        getMyRequests.emit([]);
+
+        return Promise.resolve().then(() => {
+            const empty = element.shadowRoot.querySelector('.my-requests__empty');
+            expect(empty.textContent).toContain('At-Risk Shifts');
+        });
+    });
+
+    it('shows an empty state message when there are no requests and no filter', () => {
         const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
         document.body.appendChild(element);
 

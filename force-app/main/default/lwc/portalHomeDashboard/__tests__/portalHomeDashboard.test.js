@@ -15,6 +15,21 @@ jest.mock(
     { virtual: true }
 );
 
+// The default lightning/navigation stub's Navigate method is a frozen no-op,
+// so it can't be jest.spyOn'd directly - swap in an instrumented mixin instead.
+const mockNavigate = jest.fn();
+jest.mock('lightning/navigation', () => {
+    const Navigate = Symbol('Navigate');
+    const NavigationMixin = (Base) =>
+        class extends Base {
+            [Navigate](pageReference) {
+                mockNavigate(pageReference);
+            }
+        };
+    NavigationMixin.Navigate = Navigate;
+    return { NavigationMixin };
+});
+
 describe('c-portal-home-dashboard', () => {
     afterEach(() => {
         while (document.body.firstChild) {
@@ -37,6 +52,25 @@ describe('c-portal-home-dashboard', () => {
             expect(tiles[0].value).toBe(mockSummary.openRequestCount);
             expect(tiles[1].value).toBe(mockSummary.atRiskShiftCount);
             expect(tiles[1].variant).toBe('warning');
+        });
+    });
+
+    it('navigates to My Requests with the matching filter when a tile is clicked', () => {
+        const element = createElement('c-portal-home-dashboard', {
+            is: PortalHomeDashboard
+        });
+        document.body.appendChild(element);
+
+        getDashboardSummary.emit(mockSummary);
+
+        return Promise.resolve().then(() => {
+            const tiles = element.shadowRoot.querySelectorAll('c-portal-dashboard-tile');
+            tiles[1].dispatchEvent(new CustomEvent('tileclick', { detail: { filterKey: 'at-risk' } }));
+
+            expect(mockNavigate).toHaveBeenCalledTimes(1);
+            const pageReference = mockNavigate.mock.calls[0][0];
+            expect(pageReference.type).toBe('comm__namedPage');
+            expect(pageReference.state.filter).toBe('at-risk');
         });
     });
 

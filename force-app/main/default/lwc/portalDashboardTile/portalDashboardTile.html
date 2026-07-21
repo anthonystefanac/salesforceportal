@@ -1,6 +1,6 @@
 <template>
-    <div class={tileClass}>
+    <button type="button" class={tileClass} onclick={handleClick} disabled={isNotClickable}>
         <p class="portal-tile__value">{value}</p>
         <p class="portal-tile__label">{label}</p>
-    </div>
+    </button>
 </template>

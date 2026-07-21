@@ -47,6 +47,16 @@ and `StaffingRequestController` — no new Apex or objects were needed for it,
 just the calendar UI and a reactive `defaultDate` input added to
 `requestStaffForm`.
 
+The Home dashboard's two tiles are clickable and deep-link into My Requests
+pre-filtered to match (Open Requests / At-Risk Shifts), with a "Show all
+requests" control to clear the filter. This uses `NavigationMixin` with
+`comm__namedPage` and a `state.filter` parameter, which `myStaffingRequests`
+reads back via `@wire(CurrentPageReference)`. **The target page name
+(`MY_REQUESTS_PAGE_NAME` in `portalHomeDashboard.js`) is a placeholder** —
+it must match the actual Experience Builder page's Name once the site is
+built (Setup → the page's own Settings panel), the same kind of gap as the
+Network/ExperienceBundle placeholder described below.
+
 ## No Salesforce org is connected here
 
 This project was built with no org attached to the build environment, so
@@ -117,7 +127,7 @@ npm install
 npm run test:unit
 ```
 
-34 Jest tests across all 10 LWCs. This is the only thing in this project
+41 Jest tests across all 10 LWCs. This is the only thing in this project
 that's actually been run and confirmed passing in this environment.
 
 ### Requires a connected org (not verified here)

@@ -6,11 +6,15 @@
                 <c-portal-dashboard-tile
                     label="Open Requests"
                     value={openRequestCount}
+                    filter-key="open"
+                    ontileclick={handleTileClick}
                 ></c-portal-dashboard-tile>
                 <c-portal-dashboard-tile
                     label="At-Risk Shifts"
                     value={atRiskShiftCount}
                     variant="warning"
+                    filter-key="at-risk"
+                    ontileclick={handleTileClick}
                 ></c-portal-dashboard-tile>
             </div>
         </template>

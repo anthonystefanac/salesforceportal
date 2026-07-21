@@ -10,7 +10,7 @@ const DEFAULT_FORM = {
     shiftDate: undefined,
     startTime: undefined,
     endTime: undefined,
-    quantity: 1,
+    quantity: '1',
     priority: 'Medium',
     notes: undefined
 };
@@ -31,9 +31,16 @@ const PRIORITY_OPTIONS = [
     { label: 'Urgent', value: 'Urgent' }
 ];
 
+const MAX_QUANTITY = 10;
+const QUANTITY_OPTIONS = Array.from({ length: MAX_QUANTITY }, (_, index) => {
+    const value = String(index + 1);
+    return { label: value, value };
+});
+
 export default class RequestStaffForm extends LightningElement {
     roleOptions = ROLE_OPTIONS;
     priorityOptions = PRIORITY_OPTIONS;
+    quantityOptions = QUANTITY_OPTIONS;
     isSubmitting = false;
 
     @track formData = { ...DEFAULT_FORM };
@@ -88,7 +95,7 @@ export default class RequestStaffForm extends LightningElement {
                 Shift_Date__c: this.formData.shiftDate,
                 Start_Time__c: this.formData.startTime,
                 End_Time__c: this.formData.endTime,
-                Quantity__c: this.formData.quantity,
+                Quantity__c: Number(this.formData.quantity),
                 Priority__c: this.formData.priority,
                 Notes__c: this.formData.notes
             };

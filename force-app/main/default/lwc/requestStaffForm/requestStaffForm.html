@@ -57,15 +57,14 @@
                 ></lightning-input>
             </div>
             <div class="request-staff-form__field">
-                <lightning-input
-                    type="number"
+                <lightning-combobox
                     label="Quantity"
                     data-field="quantity"
+                    options={quantityOptions}
                     value={formData.quantity}
                     onchange={handleFieldChange}
-                    min="1"
                     required
-                ></lightning-input>
+                ></lightning-combobox>
             </div>
             <div class="request-staff-form__field">
                 <lightning-combobox

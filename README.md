@@ -128,7 +128,7 @@ npm install
 npm run test:unit
 ```
 
-44 Jest tests across all 10 LWCs. This is the only thing in this project
+45 Jest tests across all 10 LWCs. This is the only thing in this project
 that's actually been run and confirmed passing in this environment.
 
 ### Requires a connected org (not verified here)

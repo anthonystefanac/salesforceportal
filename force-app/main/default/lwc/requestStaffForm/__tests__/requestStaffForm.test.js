@@ -41,7 +41,7 @@ describe('c-request-staff-form', () => {
         setInputValue(element, '[data-field="shiftDate"]', '2026-08-01');
         setInputValue(element, '[data-field="startTime"]', '07:00:00.000');
         setInputValue(element, '[data-field="endTime"]', '15:00:00.000');
-        setInputValue(element, '[data-field="quantity"]', 2);
+        setInputValue(element, '[data-field="quantity"]', '3');
 
         const submitButton = element.shadowRoot.querySelector('lightning-button');
         submitButton.click();
@@ -55,7 +55,28 @@ describe('c-request-staff-form', () => {
         expect(callArg.Ward__c).toBe('a05000000000001AAA');
         expect(callArg.Role__c).toBe('Registered Nurse');
         expect(callArg.Shift_Date__c).toBe('2026-08-01');
-        expect(callArg.Quantity__c).toBe(2);
+        expect(callArg.Quantity__c).toBe(3);
+    });
+
+    it('defaults Quantity to 1, selectable from 1 through 10', async () => {
+        createRequest.mockResolvedValue('a02000000000001AAA');
+
+        const element = createElement('c-request-staff-form', { is: RequestStaffForm });
+        document.body.appendChild(element);
+
+        const quantityField = element.shadowRoot.querySelector('[data-field="quantity"]');
+        expect(quantityField.value).toBe('1');
+        expect(quantityField.options).toHaveLength(10);
+        expect(quantityField.options[0]).toEqual({ label: '1', value: '1' });
+        expect(quantityField.options[9]).toEqual({ label: '10', value: '10' });
+
+        const submitButton = element.shadowRoot.querySelector('lightning-button');
+        submitButton.click();
+
+        await Promise.resolve();
+        await Promise.resolve();
+
+        expect(createRequest.mock.calls[0][0].newRequest.Quantity__c).toBe(1);
     });
 
     it('resets the selected ward when the facility changes', async () => {

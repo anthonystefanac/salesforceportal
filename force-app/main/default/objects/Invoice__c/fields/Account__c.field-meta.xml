@@ -6,7 +6,6 @@
     <referenceTo>Account</referenceTo>
     <relationshipName>Invoices</relationshipName>
     <relationshipLabel>Invoices</relationshipLabel>
-    <required>true</required>
     <writeRequiresMasterRead>false</writeRequiresMasterRead>
     <reparentableMasterDetail>false</reparentableMasterDetail>
 </CustomField>

@@ -6,7 +6,6 @@
     <referenceTo>Account</referenceTo>
     <relationshipName>Facilities</relationshipName>
     <relationshipLabel>Facilities</relationshipLabel>
-    <required>true</required>
     <writeRequiresMasterRead>false</writeRequiresMasterRead>
     <reparentableMasterDetail>false</reparentableMasterDetail>
 </CustomField>

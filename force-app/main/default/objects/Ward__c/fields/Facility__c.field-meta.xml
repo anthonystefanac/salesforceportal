@@ -6,7 +6,6 @@
     <referenceTo>Facility__c</referenceTo>
     <relationshipName>Wards</relationshipName>
     <relationshipLabel>Wards</relationshipLabel>
-    <required>true</required>
     <writeRequiresMasterRead>false</writeRequiresMasterRead>
     <reparentableMasterDetail>false</reparentableMasterDetail>
 </CustomField>

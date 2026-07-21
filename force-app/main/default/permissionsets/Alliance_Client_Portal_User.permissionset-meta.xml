@@ -252,18 +252,18 @@
 
     <tabSettings>
         <tab>Staffing_Request__c</tab>
-        <visibility>DefaultOn</visibility>
+        <visibility>Visible</visibility>
     </tabSettings>
     <tabSettings>
         <tab>Invoice__c</tab>
-        <visibility>DefaultOn</visibility>
+        <visibility>Visible</visibility>
     </tabSettings>
     <tabSettings>
         <tab>Facility__c</tab>
-        <visibility>DefaultOn</visibility>
+        <visibility>Visible</visibility>
     </tabSettings>
     <tabSettings>
         <tab>Ward__c</tab>
-        <visibility>DefaultOn</visibility>
+        <visibility>Visible</visibility>
     </tabSettings>
 </PermissionSet>

@@ -118,6 +118,16 @@ and wire up navigation matching the 6 screens. Also in Setup:
   account-based visibility) and add your portal Contacts as users.
 - Assign the **Alliance Client Portal User** permission set to every portal
   user.
+- **Sharing Set**: `force-app/main/default/sharingSets/Alliance_Client_Portal_Sharing_Set.sharingSet-meta.xml`
+  has repeatedly failed to deploy with an element-ordering error
+  (`permissionSets invalid at this location`) that two attempts at
+  reordering didn't resolve — meaning the exact schema for this metadata
+  type isn't reliably known here. Rather than keep guessing, configure the
+  equivalent Sharing Set by hand in **Setup → Sharing Settings → Sharing
+  Sets → New**: map `Facility__c.Account__c` and `Invoice__c.Account__c`
+  to `Contact.AccountId` with Read access, granted to the **Alliance
+  Client Portal User** permission set. Exclude the `sharingSets` folder
+  from your deploy command until/unless this file's schema gets sorted out.
 
 ## Verification
 

@@ -53,10 +53,11 @@ Overdue Invoices goes to Invoices — each with a "Show all" control to clear
 the filter. This uses `NavigationMixin` with `comm__namedPage` and a
 `state.filter` parameter, which `myStaffingRequests`/`invoiceList` read back
 via `@wire(CurrentPageReference)`. **The target page names
-(`TILE_NAVIGATION` in `portalHomeDashboard.js`) are placeholders** — each
-must match the actual Experience Builder page's Name once the site is built
-(Setup → the page's own Settings panel), the same kind of gap as the
-Network/ExperienceBundle placeholder described below.
+(`TILE_NAVIGATION` in `portalHomeDashboard.js`) are now set to the real
+Experience Builder page API names** (`My_Requests__c`, `Invoices__c`) from
+the live site. If either page is ever recreated or renamed, update
+`TILE_NAVIGATION` to match its new API Name (visible in the page's own
+Settings panel in Experience Builder).
 
 ## No Salesforce org is connected here
 

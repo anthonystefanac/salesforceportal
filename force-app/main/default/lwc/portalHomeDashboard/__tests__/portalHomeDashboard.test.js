@@ -72,7 +72,7 @@ describe('c-portal-home-dashboard', () => {
             expect(mockNavigate).toHaveBeenCalledTimes(1);
             const pageReference = mockNavigate.mock.calls[0][0];
             expect(pageReference.type).toBe('comm__namedPage');
-            expect(pageReference.attributes.name).toBe('My-Requests');
+            expect(pageReference.attributes.name).toBe('My_Requests__c');
             expect(pageReference.state.filter).toBe('at-risk');
         });
     });
@@ -92,7 +92,7 @@ describe('c-portal-home-dashboard', () => {
             expect(mockNavigate).toHaveBeenCalledTimes(1);
             const pageReference = mockNavigate.mock.calls[0][0];
             expect(pageReference.type).toBe('comm__namedPage');
-            expect(pageReference.attributes.name).toBe('Invoices');
+            expect(pageReference.attributes.name).toBe('Invoices__c');
             expect(pageReference.state.filter).toBe('overdue');
         });
     });

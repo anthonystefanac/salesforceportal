@@ -2,14 +2,12 @@ import { LightningElement, wire } from 'lwc';
 import { NavigationMixin } from 'lightning/navigation';
 import getDashboardSummary from '@salesforce/apex/PortalDashboardController.getDashboardSummary';
 
-// Page names must match the Experience Builder pages' Name once the site is
-// built in Setup - those pages don't exist until then, so these are
-// placeholders. Confirm/update them after running through the README's
-// "Experience Cloud site setup" section.
+// Page names match the actual Experience Builder pages' API Name, as built
+// in the org (Setup -> Digital Experiences -> Builder -> page settings).
 const TILE_NAVIGATION = {
-    open: { pageName: 'My-Requests', state: { filter: 'open' } },
-    'at-risk': { pageName: 'My-Requests', state: { filter: 'at-risk' } },
-    overdue: { pageName: 'Invoices', state: { filter: 'overdue' } }
+    open: { pageName: 'My_Requests__c', state: { filter: 'open' } },
+    'at-risk': { pageName: 'My_Requests__c', state: { filter: 'at-risk' } },
+    overdue: { pageName: 'Invoices__c', state: { filter: 'overdue' } }
 };
 
 export default class PortalHomeDashboard extends NavigationMixin(LightningElement) {

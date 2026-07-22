@@ -6,7 +6,7 @@ import getDashboardSummary from '@salesforce/apex/PortalDashboardController.getD
 // in the org (Setup -> Digital Experiences -> Builder -> page settings).
 const TILE_NAVIGATION = {
     open: { pageName: 'My_Requests__c', state: { filter: 'open' } },
-    'at-risk': { pageName: 'My_Requests__c', state: { filter: 'at-risk' } },
+    unfilled: { pageName: 'My_Requests__c', state: { filter: 'unfilled' } },
     overdue: { pageName: 'Invoices__c', state: { filter: 'overdue' } }
 };
 
@@ -29,8 +29,8 @@ export default class PortalHomeDashboard extends NavigationMixin(LightningElemen
         return this.summary ? this.summary.openRequestCount : 0;
     }
 
-    get atRiskShiftCount() {
-        return this.summary ? this.summary.atRiskShiftCount : 0;
+    get unfilledShiftCount() {
+        return this.summary ? this.summary.unfilledShiftCount : 0;
     }
 
     get overdueInvoiceCount() {

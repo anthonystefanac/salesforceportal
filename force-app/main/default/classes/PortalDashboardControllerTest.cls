@@ -8,7 +8,7 @@ private class PortalDashboardControllerTest {
         Test.stopTest();
 
         System.assertEquals(0, summary.openRequestCount);
-        System.assertEquals(0, summary.atRiskShiftCount);
+        System.assertEquals(0, summary.unfilledShiftCount);
         System.assertEquals(0, summary.overdueInvoiceCount);
     }
 
@@ -48,7 +48,7 @@ private class PortalDashboardControllerTest {
 
         // Unable to Fill is explicitly excluded from "open", so only the Submitted one counts.
         System.assertEquals(1, summary.openRequestCount, 'Only the Submitted request counts as open');
-        System.assertEquals(1, summary.atRiskShiftCount, 'The Unable to Fill request is the at-risk shift');
+        System.assertEquals(1, summary.unfilledShiftCount, 'The Unable to Fill request is the unfilled shift');
         System.assertEquals(1, summary.overdueInvoiceCount, 'Only the Overdue invoice counts');
     }
 }

@@ -56,11 +56,11 @@ describe('c-my-staffing-requests', () => {
         });
     });
 
-    it('shows only at-risk shifts when the page reference filter is "at-risk"', () => {
+    it('shows only unfilled shifts when the page reference filter is "unfilled"', () => {
         const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
         document.body.appendChild(element);
 
-        CurrentPageReference.emit({ state: { filter: 'at-risk' } });
+        CurrentPageReference.emit({ state: { filter: 'unfilled' } });
         getMyRequests.emit(mockRequests);
 
         return Promise.resolve().then(() => {
@@ -94,12 +94,12 @@ describe('c-my-staffing-requests', () => {
         const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
         document.body.appendChild(element);
 
-        CurrentPageReference.emit({ state: { filter: 'at-risk' } });
+        CurrentPageReference.emit({ state: { filter: 'unfilled' } });
         getMyRequests.emit([]);
 
         return Promise.resolve().then(() => {
             const empty = element.shadowRoot.querySelector('.my-requests__empty');
-            expect(empty.textContent).toContain('At-Risk Shifts');
+            expect(empty.textContent).toContain('Unfilled Shifts');
         });
     });
 

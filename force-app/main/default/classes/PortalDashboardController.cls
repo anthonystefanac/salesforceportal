@@ -2,7 +2,7 @@ public with sharing class PortalDashboardController {
 
     public class DashboardSummary {
         @AuraEnabled public Integer openRequestCount;
-        @AuraEnabled public Integer atRiskShiftCount;
+        @AuraEnabled public Integer unfilledShiftCount;
         @AuraEnabled public Integer overdueInvoiceCount;
     }
 
@@ -13,7 +13,7 @@ public with sharing class PortalDashboardController {
 
         if (accountId == null) {
             summary.openRequestCount = 0;
-            summary.atRiskShiftCount = 0;
+            summary.unfilledShiftCount = 0;
             summary.overdueInvoiceCount = 0;
             return summary;
         }
@@ -27,14 +27,14 @@ public with sharing class PortalDashboardController {
         ];
         summary.openRequestCount = (Integer) openRequests[0].get('total');
 
-        List<AggregateResult> atRiskShifts = [
+        List<AggregateResult> unfilledShifts = [
             SELECT COUNT(Id) total
             FROM Staffing_Request__c
             WHERE Facility__r.Account__c = :accountId
             AND Status__c = 'Unable to Fill'
             WITH SECURITY_ENFORCED
         ];
-        summary.atRiskShiftCount = (Integer) atRiskShifts[0].get('total');
+        summary.unfilledShiftCount = (Integer) unfilledShifts[0].get('total');
 
         List<AggregateResult> overdueInvoices = [
             SELECT COUNT(Id) total

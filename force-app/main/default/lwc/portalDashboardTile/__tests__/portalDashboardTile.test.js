@@ -38,7 +38,7 @@ describe('c-portal-dashboard-tile', () => {
         const element = createElement('c-portal-dashboard-tile', {
             is: PortalDashboardTile
         });
-        element.label = 'At-Risk Shifts';
+        element.label = 'Unfilled Shifts';
         element.value = 2;
         element.variant = 'warning';
         document.body.appendChild(element);

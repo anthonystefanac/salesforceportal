@@ -48,7 +48,7 @@ just the calendar UI and a reactive `defaultDate` input added to
 `requestStaffForm`.
 
 The Home dashboard's three tiles are clickable and deep-link into a
-pre-filtered list: Open Requests and At-Risk Shifts go to My Requests,
+pre-filtered list: Open Requests and Unfilled Shifts go to My Requests,
 Overdue Invoices goes to Invoices — each with a "Show all" control to clear
 the filter. This uses `NavigationMixin` with `comm__namedPage` and a
 `state.filter` parameter, which `myStaffingRequests`/`invoiceList` read back
@@ -109,7 +109,7 @@ callout implementation once that system is connected — no other code changes.
 
 `StaffingRequestMaintenanceService.markOverdueRequestsUnableToFill()` marks
 any Staffing_Request__c whose Shift Date has passed while still Submitted/
-Being Worked/Broadcasted as **Unable to Fill** — the same status the At-Risk
+Being Worked/Broadcasted as **Unable to Fill** — the same status the Unfilled
 Shifts dashboard tile already counts, so this is what keeps that tile (and
 My Requests) accurate without manual admin cleanup. `StaffingRequestOverdueScheduler`
 is the `Schedulable` wrapper around it.

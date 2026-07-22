@@ -50,14 +50,14 @@ describe('c-portal-home-dashboard', () => {
             const tiles = element.shadowRoot.querySelectorAll('c-portal-dashboard-tile');
             expect(tiles).toHaveLength(3);
             expect(tiles[0].value).toBe(mockSummary.openRequestCount);
-            expect(tiles[1].value).toBe(mockSummary.atRiskShiftCount);
+            expect(tiles[1].value).toBe(mockSummary.unfilledShiftCount);
             expect(tiles[1].variant).toBe('warning');
             expect(tiles[2].value).toBe(mockSummary.overdueInvoiceCount);
             expect(tiles[2].variant).toBe('warning');
         });
     });
 
-    it('navigates to My Requests with the matching filter when the at-risk tile is clicked', () => {
+    it('navigates to My Requests with the matching filter when the unfilled tile is clicked', () => {
         const element = createElement('c-portal-home-dashboard', {
             is: PortalHomeDashboard
         });
@@ -67,13 +67,13 @@ describe('c-portal-home-dashboard', () => {
 
         return Promise.resolve().then(() => {
             const tiles = element.shadowRoot.querySelectorAll('c-portal-dashboard-tile');
-            tiles[1].dispatchEvent(new CustomEvent('tileclick', { detail: { filterKey: 'at-risk' } }));
+            tiles[1].dispatchEvent(new CustomEvent('tileclick', { detail: { filterKey: 'unfilled' } }));
 
             expect(mockNavigate).toHaveBeenCalledTimes(1);
             const pageReference = mockNavigate.mock.calls[0][0];
             expect(pageReference.type).toBe('comm__namedPage');
             expect(pageReference.attributes.name).toBe('My_Requests__c');
-            expect(pageReference.state.filter).toBe('at-risk');
+            expect(pageReference.state.filter).toBe('unfilled');
         });
     });
 

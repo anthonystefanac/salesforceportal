@@ -6,7 +6,7 @@ const NOT_OPEN_STATUSES = ['Filled', 'Unable to Fill', 'Cancelled'];
 
 const FILTER_LABELS = {
     open: 'Open Requests',
-    'at-risk': 'At-Risk Shifts'
+    unfilled: 'Unfilled Shifts'
 };
 
 export default class MyStaffingRequests extends LightningElement {
@@ -45,7 +45,7 @@ export default class MyStaffingRequests extends LightningElement {
         if (this.activeFilter === 'open') {
             return this.allRequests.filter((request) => !NOT_OPEN_STATUSES.includes(request.status));
         }
-        if (this.activeFilter === 'at-risk') {
+        if (this.activeFilter === 'unfilled') {
             return this.allRequests.filter((request) => request.status === 'Unable to Fill');
         }
         return this.allRequests;

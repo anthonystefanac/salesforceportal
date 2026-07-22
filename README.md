@@ -105,6 +105,22 @@ real implementation later is a one-line change, not a rewrite:
 Swap the single `return new Mock...()` line in each factory for a real
 callout implementation once that system is connected — no other code changes.
 
+### Scheduled jobs
+
+`StaffingRequestMaintenanceService.markOverdueRequestsUnableToFill()` marks
+any Staffing_Request__c whose Shift Date has passed while still Submitted/
+Being Worked/Broadcasted as **Unable to Fill** — the same status the At-Risk
+Shifts dashboard tile already counts, so this is what keeps that tile (and
+My Requests) accurate without manual admin cleanup. `StaffingRequestOverdueScheduler`
+is the `Schedulable` wrapper around it.
+
+Deploying these classes does **not** start them running — a scheduled job is
+org runtime state, not metadata. Activate it once per org:
+
+- Setup → Apex Classes → **Schedule Apex** → class `StaffingRequestOverdueScheduler`,
+  frequency Daily, whatever time suits (e.g. just after midnight)
+- or via Anonymous Apex: `System.schedule('Staffing Request Overdue Check', '0 0 2 * * ?', new StaffingRequestOverdueScheduler());`
+
 ### Experience Cloud site setup
 
 The actual Experience Builder site (pages, theme, navigation menu — the

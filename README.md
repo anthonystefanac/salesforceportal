@@ -129,8 +129,16 @@ sf project retrieve start -m Network -m ExperienceBundle
 In Experience Builder, add each exposed LWC from the table above to a page
 and wire up navigation matching the 6 screens. Also in Setup:
 
-- Enable a **Customer Community Plus** license (needed for the Sharing Set's
-  account-based visibility) and add your portal Contacts as users.
+- Add your portal Contacts as users under a **Customer Community** /
+  **Customer Community Login** license (whichever your org has available —
+  Developer Edition orgs typically come with Customer Community Login).
+  **Plus is not required**: the Sharing Set below is specifically the
+  mechanism that grants account-based visibility to these base license
+  tiers, which don't support Roles. On each Contact, use **Enable Customer
+  User** (may need adding to the Contact page layout's Lightning actions if
+  it's not already there) — this also requires the Account's owner to have
+  a Role set in the Role Hierarchy, or it fails with "Portal Account Owner
+  Has No Role".
 - Assign the **Alliance Client Portal User** permission set to every portal
   user.
 - **Sharing Set**: `force-app/main/default/sharingSets/Alliance_Client_Portal_Sharing_Set.sharingSet-meta.xml`

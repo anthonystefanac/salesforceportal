@@ -1,4 +1,5 @@
 import { LightningElement, wire } from 'lwc';
+import { refreshApex } from '@salesforce/apex';
 import { CurrentPageReference } from 'lightning/navigation';
 import getMyRequests from '@salesforce/apex/StaffingRequestController.getMyRequests';
 
@@ -20,8 +21,12 @@ export default class MyStaffingRequests extends LightningElement {
         this.activeFilter = FILTER_LABELS[filter] ? filter : undefined;
     }
 
+    _wiredRequestsResult;
+
     @wire(getMyRequests)
-    wiredRequests({ data, error }) {
+    wiredRequests(result) {
+        this._wiredRequestsResult = result;
+        const { data, error } = result;
         if (data) {
             this.allRequests = data.map((request) => ({
                 id: request.Id,
@@ -38,6 +43,15 @@ export default class MyStaffingRequests extends LightningElement {
         } else if (error) {
             this.error = error;
             this.allRequests = [];
+        }
+    }
+
+    // A cacheable wire can otherwise serve a stale result on a fresh page
+    // navigation - force a real server round-trip every time this component
+    // (re)mounts, e.g. arriving here right after submitting a new request.
+    connectedCallback() {
+        if (this._wiredRequestsResult) {
+            refreshApex(this._wiredRequestsResult);
         }
     }
 

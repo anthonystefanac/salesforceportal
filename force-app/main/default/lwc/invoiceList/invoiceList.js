@@ -1,4 +1,5 @@
 import { LightningElement, wire } from 'lwc';
+import { refreshApex } from '@salesforce/apex';
 import { NavigationMixin, CurrentPageReference } from 'lightning/navigation';
 import getInvoices from '@salesforce/apex/InvoiceController.getInvoices';
 
@@ -17,14 +18,27 @@ export default class InvoiceList extends NavigationMixin(LightningElement) {
         this.activeFilter = FILTER_LABELS[filter] ? filter : undefined;
     }
 
+    _wiredInvoicesResult;
+
     @wire(getInvoices)
-    wiredInvoices({ data, error }) {
+    wiredInvoices(result) {
+        this._wiredInvoicesResult = result;
+        const { data, error } = result;
         if (data) {
             this.allInvoices = data;
             this.error = undefined;
         } else if (error) {
             this.error = error;
             this.allInvoices = [];
+        }
+    }
+
+    // A cacheable wire can otherwise serve a stale result on a fresh page
+    // navigation - force a real server round-trip every time this component
+    // (re)mounts.
+    connectedCallback() {
+        if (this._wiredInvoicesResult) {
+            refreshApex(this._wiredInvoicesResult);
         }
     }
 

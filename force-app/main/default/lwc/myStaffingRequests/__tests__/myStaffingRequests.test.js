@@ -65,6 +65,8 @@ describe('c-my-staffing-requests', () => {
             expect(cells[4].textContent).toBe('—');
             expect(cells[8].textContent).toBe('1');
             expect(cells[9].textContent).toBe('Medium');
+            // ..., Status, Broadcasted, Cancellation Requested, Last Update
+            expect(cells[12].textContent).toBe('No');
         });
     });
 

@@ -219,14 +219,12 @@ describe('c-request-staff-form', () => {
         expect(shiftDateInput.value).toBe('2026-08-21');
     });
 
-    it('dispatches a success toast and a requestcreated event on success', async () => {
+    it('dispatches a success toast on successful submission', async () => {
         createRequest.mockResolvedValue('a02000000000001AAA');
 
         const element = createElement('c-request-staff-form', { is: RequestStaffForm });
         const toastHandler = jest.fn();
-        const createdHandler = jest.fn();
         element.addEventListener('lightning__showtoast', toastHandler);
-        element.addEventListener('requestcreated', createdHandler);
         document.body.appendChild(element);
 
         const submitButton = element.shadowRoot.querySelector('lightning-button');
@@ -237,8 +235,6 @@ describe('c-request-staff-form', () => {
 
         expect(toastHandler).toHaveBeenCalledTimes(1);
         expect(toastHandler.mock.calls[0][0].detail.variant).toBe('success');
-        expect(createdHandler).toHaveBeenCalledTimes(1);
-        expect(createdHandler.mock.calls[0][0].detail.requestId).toBe('a02000000000001AAA');
     });
 
     it('shows an error toast when submission fails', async () => {

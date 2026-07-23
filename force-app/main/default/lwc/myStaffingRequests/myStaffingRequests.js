@@ -66,6 +66,7 @@ export default class MyStaffingRequests extends LightningElement {
                 priority: request.Priority__c,
                 status: request.Status__c,
                 broadcasted: request.Broadcasted_Date__c ? 'Yes' : 'No',
+                cancellationRequested: request.Cancellation_Requested__c ? 'Yes' : 'No',
                 lastUpdate: request.Last_Status_Update__c
             }));
             this.error = undefined;

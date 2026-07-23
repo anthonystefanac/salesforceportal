@@ -130,7 +130,7 @@ export default class RequestStaffForm extends LightningElement {
                 Priority__c: this.formData.priority,
                 Notes__c: this.formData.notes
             };
-            const newRequestId = await createRequest({ newRequest });
+            await createRequest({ newRequest });
             // Re-apply defaultDate so a caller (e.g. requestStaffCalendar) can
             // submit multiple requests for the same selected day in a row.
             this.formData = { ...DEFAULT_FORM, shiftDate: this._defaultDate };
@@ -140,9 +140,6 @@ export default class RequestStaffForm extends LightningElement {
                     message: 'Your staffing request has been submitted.',
                     variant: 'success'
                 })
-            );
-            this.dispatchEvent(
-                new CustomEvent('requestcreated', { detail: { requestId: newRequestId } })
             );
         } catch (error) {
             this.dispatchEvent(

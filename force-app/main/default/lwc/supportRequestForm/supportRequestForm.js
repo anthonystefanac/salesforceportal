@@ -77,7 +77,9 @@ export default class SupportRequestForm extends NavigationMixin(LightningElement
     }
 
     handleRequestTypeChange(event) {
-        this.formData = { ...this.formData, requestType: event.detail.value };
+        // Changing Request Type resets any Related Request already picked,
+        // rather than carrying a possibly-stale selection across types.
+        this.formData = { ...this.formData, requestType: event.detail.value, relatedRequestId: undefined };
     }
 
     handleRelatedRequestChange(event) {

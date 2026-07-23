@@ -35,11 +35,14 @@ export default class MyStaffingRequests extends LightningElement {
     allRequests = [];
     error;
     activeFilter;
+    dateFilter;
 
     @wire(CurrentPageReference)
     setCurrentPageReference(pageReference) {
-        const filter = pageReference && pageReference.state && pageReference.state.filter;
+        const state = pageReference && pageReference.state;
+        const filter = state && state.filter;
         this.activeFilter = FILTER_LABELS[filter] ? filter : undefined;
+        this.dateFilter = (state && state.shiftDate) || undefined;
     }
 
     _wiredRequestsResult;
@@ -82,6 +85,9 @@ export default class MyStaffingRequests extends LightningElement {
     }
 
     get requests() {
+        if (this.dateFilter) {
+            return this.allRequests.filter((request) => request.shiftDate === this.dateFilter);
+        }
         if (this.activeFilter === 'open') {
             return this.allRequests.filter((request) => !NOT_OPEN_STATUSES.includes(request.status));
         }
@@ -92,10 +98,13 @@ export default class MyStaffingRequests extends LightningElement {
     }
 
     get hasActiveFilter() {
-        return !!this.activeFilter;
+        return !!this.activeFilter || !!this.dateFilter;
     }
 
     get activeFilterLabel() {
+        if (this.dateFilter) {
+            return `Shift Date: ${this.dateFilter}`;
+        }
         return this.activeFilter ? FILTER_LABELS[this.activeFilter] : '';
     }
 
@@ -115,5 +124,6 @@ export default class MyStaffingRequests extends LightningElement {
 
     handleClearFilter() {
         this.activeFilter = undefined;
+        this.dateFilter = undefined;
     }
 }

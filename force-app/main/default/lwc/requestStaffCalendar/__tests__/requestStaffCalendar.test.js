@@ -122,7 +122,7 @@ describe('c-request-staff-calendar', () => {
         });
     });
 
-    it('lists the existing bookings for a selected day', () => {
+    it('lists the existing bookings for a selected day, quantity before role', () => {
         const element = createElement('c-request-staff-calendar', { is: RequestStaffCalendar });
         document.body.appendChild(element);
 
@@ -136,6 +136,7 @@ describe('c-request-staff-calendar', () => {
                 Name: 'SR-0001',
                 Facility__r: { Name: 'Test Hospital' },
                 Ward__r: { Name: 'Ward A' },
+                Quantity__c: 2,
                 Role__c: 'Registered Nurse',
                 Shift_Date__c: iso,
                 Status__c: 'Broadcasted'
@@ -149,10 +150,49 @@ describe('c-request-staff-calendar', () => {
             return Promise.resolve().then(() => {
                 const bookings = element.shadowRoot.querySelectorAll('.calendar-screen__booking');
                 expect(bookings).toHaveLength(1);
-                expect(bookings[0].textContent).toContain('Registered Nurse');
+                const roleText = bookings[0].querySelector('.calendar-screen__booking-role').textContent;
+                expect(roleText.indexOf('2')).toBeLessThan(roleText.indexOf('Registered Nurse'));
                 expect(bookings[0].textContent).toContain('Test Hospital');
                 expect(bookings[0].textContent).toContain('Ward A');
                 expect(element.shadowRoot.querySelector('.calendar-screen__empty')).toBeNull();
+            });
+        });
+    });
+
+    it('navigates to My Requests filtered to that shift date when a booking is clicked', () => {
+        const element = createElement('c-request-staff-calendar', { is: RequestStaffCalendar });
+        document.body.appendChild(element);
+
+        const today = new Date();
+        const dayTen = new Date(today.getFullYear(), today.getMonth(), 10);
+        const iso = toIso(dayTen);
+
+        getMyRequests.emit([
+            {
+                Id: 'a02000000000001AAA',
+                Name: 'SR-0001',
+                Facility__r: { Name: 'Test Hospital' },
+                Ward__r: { Name: 'Ward A' },
+                Quantity__c: 2,
+                Role__c: 'Registered Nurse',
+                Shift_Date__c: iso,
+                Status__c: 'Broadcasted'
+            }
+        ]);
+
+        return Promise.resolve().then(() => {
+            const dayButton = element.shadowRoot.querySelector(`button[data-date="${iso}"]`);
+            dayButton.click();
+
+            return Promise.resolve().then(() => {
+                const booking = element.shadowRoot.querySelector('.calendar-screen__booking');
+                booking.click();
+
+                expect(mockNavigate).toHaveBeenCalledTimes(1);
+                const pageReference = mockNavigate.mock.calls[0][0];
+                expect(pageReference.type).toBe('comm__namedPage');
+                expect(pageReference.attributes.name).toBe('My_Requests__c');
+                expect(pageReference.state.shiftDate).toBe(iso);
             });
         });
     });

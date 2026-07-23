@@ -9,6 +9,10 @@ const WEEKDAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 // confirmed for portalHomeDashboard's TILE_NAVIGATION.
 const REQUEST_STAFF_PAGE_NAME = 'Request_Staff__c';
 
+// Real, confirmed page API name - same one portalHomeDashboard's
+// TILE_NAVIGATION uses.
+const MY_REQUESTS_PAGE_NAME = 'My_Requests__c';
+
 function toIso(year, month, day) {
     const mm = String(month + 1).padStart(2, '0');
     const dd = String(day).padStart(2, '0');
@@ -41,6 +45,7 @@ export default class RequestStaffCalendar extends NavigationMixin(LightningEleme
                         id: request.Id,
                         facilityName: request.Facility__r ? request.Facility__r.Name : '',
                         wardName: request.Ward__r ? request.Ward__r.Name : '—',
+                        quantity: request.Quantity__c,
                         role: request.Role__c,
                         status: request.Status__c
                     });
@@ -164,6 +169,14 @@ export default class RequestStaffCalendar extends NavigationMixin(LightningEleme
             type: 'comm__namedPage',
             attributes: { name: REQUEST_STAFF_PAGE_NAME },
             state: { defaultDate: this.selectedDate }
+        });
+    }
+
+    handleBookingClick() {
+        this[NavigationMixin.Navigate]({
+            type: 'comm__namedPage',
+            attributes: { name: MY_REQUESTS_PAGE_NAME },
+            state: { shiftDate: this.selectedDate }
         });
     }
 }

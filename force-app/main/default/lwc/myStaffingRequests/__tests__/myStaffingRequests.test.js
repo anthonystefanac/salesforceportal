@@ -102,6 +102,23 @@ describe('c-my-staffing-requests', () => {
         });
     });
 
+    it('shows only requests matching the shiftDate carried in page state', () => {
+        const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
+        document.body.appendChild(element);
+
+        CurrentPageReference.emit({ state: { shiftDate: '2026-07-29' } });
+        getMyRequests.emit(mockRequests);
+
+        return Promise.resolve().then(() => {
+            const rows = element.shadowRoot.querySelectorAll('tbody tr');
+            expect(rows).toHaveLength(1);
+            expect(rows[0].textContent).toContain('SR-0002');
+
+            const banner = element.shadowRoot.querySelector('.my-requests__filter-banner');
+            expect(banner.textContent).toContain('Shift Date: 2026-07-29');
+        });
+    });
+
     it('clears the filter and shows all requests when "Show all requests" is clicked', () => {
         const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
         document.body.appendChild(element);

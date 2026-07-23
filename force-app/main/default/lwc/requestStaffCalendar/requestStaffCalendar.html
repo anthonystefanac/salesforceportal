@@ -71,12 +71,20 @@
                 <template if:true={hasSelectedDateRequests}>
                     <ul class="calendar-screen__bookings">
                         <template for:each={selectedDateRequests} for:item="booking">
-                            <li key={booking.id} class="calendar-screen__booking">
-                                <span class="calendar-screen__booking-role">{booking.role}</span>
-                                <span class="calendar-screen__booking-facility"
-                                    >{booking.facilityName} · {booking.wardName}</span
+                            <li key={booking.id}>
+                                <button
+                                    type="button"
+                                    class="calendar-screen__booking"
+                                    onclick={handleBookingClick}
                                 >
-                                <c-request-status-badge status={booking.status}></c-request-status-badge>
+                                    <span class="calendar-screen__booking-role"
+                                        >{booking.quantity} × {booking.role}</span
+                                    >
+                                    <span class="calendar-screen__booking-facility"
+                                        >{booking.facilityName} · {booking.wardName}</span
+                                    >
+                                    <c-request-status-badge status={booking.status}></c-request-status-badge>
+                                </button>
                             </li>
                         </template>
                     </ul>

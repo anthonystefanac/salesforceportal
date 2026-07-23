@@ -67,6 +67,15 @@ public with sharing class SupportRequestService {
             + 'Facility: ' + (relatedRequest.Facility__r != null ? relatedRequest.Facility__r.Name : '') + '\n'
             + 'Ward: ' + (relatedRequest.Ward__r != null ? relatedRequest.Ward__r.Name : 'N/A') + '\n'
             + 'Role: ' + relatedRequest.Role__c + '\n'
-            + 'Start Time: ' + (relatedRequest.Start_Time__c != null ? relatedRequest.Start_Time__c.format() : '') + '\n';
+            + 'Start Time: ' + formatTime(relatedRequest.Start_Time__c) + '\n';
+    }
+
+    // Apex's Time class has no .format() method (unlike Date/Datetime), so
+    // build a simple HH:MM string from its hour()/minute() accessors.
+    private static String formatTime(Time value) {
+        if (value == null) {
+            return '';
+        }
+        return String.valueOf(value.hour()).leftPad(2, '0') + ':' + String.valueOf(value.minute()).leftPad(2, '0');
     }
 }

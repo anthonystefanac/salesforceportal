@@ -105,6 +105,17 @@ export default class RequestStaffForm extends LightningElement {
     }
 
     async handleSubmit() {
+        if (this.formData.startTime && this.formData.startTime === this.formData.endTime) {
+            this.dispatchEvent(
+                new ShowToastEvent({
+                    title: 'Unable to submit request',
+                    message: 'End time cannot be the same as start time.',
+                    variant: 'error'
+                })
+            );
+            return;
+        }
+
         this.isSubmitting = true;
         try {
             const newRequest = {

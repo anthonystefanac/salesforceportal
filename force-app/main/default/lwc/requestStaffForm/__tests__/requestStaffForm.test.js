@@ -145,6 +145,29 @@ describe('c-request-staff-form', () => {
         expect(shiftDateInput.value).toBe('2026-09-03');
     });
 
+    it('blocks submission with an error toast when End Time equals Start Time', async () => {
+        const element = createElement('c-request-staff-form', { is: RequestStaffForm });
+        const toastHandler = jest.fn();
+        element.addEventListener('lightning__showtoast', toastHandler);
+        document.body.appendChild(element);
+
+        setInputValue(element, '[data-field="startTime"]', '08:30:00.000');
+        await Promise.resolve();
+        setInputValue(element, '[data-field="endTime"]', '08:30:00.000');
+        await Promise.resolve();
+
+        const submitButton = element.shadowRoot.querySelector('lightning-button');
+        submitButton.click();
+
+        await Promise.resolve();
+        await Promise.resolve();
+
+        expect(toastHandler).toHaveBeenCalledTimes(1);
+        expect(toastHandler.mock.calls[0][0].detail.variant).toBe('error');
+        expect(toastHandler.mock.calls[0][0].detail.message).toBe('End time cannot be the same as start time.');
+        expect(createRequest).not.toHaveBeenCalled();
+    });
+
     it('pre-fills and re-applies Shift Date from the defaultDate api property', async () => {
         createRequest.mockResolvedValue('a02000000000001AAA');
 

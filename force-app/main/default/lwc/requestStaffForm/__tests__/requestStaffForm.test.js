@@ -145,6 +145,29 @@ describe('c-request-staff-form', () => {
         expect(shiftDateInput.value).toBe('2026-09-03');
     });
 
+    it('blocks submission when Start Time is picked and End Time is left at its auto-filled value', async () => {
+        const element = createElement('c-request-staff-form', { is: RequestStaffForm });
+        const toastHandler = jest.fn();
+        element.addEventListener('lightning__showtoast', toastHandler);
+        document.body.appendChild(element);
+
+        // Only Start Time is touched - End Time is never explicitly set by
+        // the user, it's left at whatever the auto-fill applied.
+        setInputValue(element, '[data-field="startTime"]', '08:30:00.000');
+        await Promise.resolve();
+
+        const submitButton = element.shadowRoot.querySelector('lightning-button');
+        submitButton.click();
+
+        await Promise.resolve();
+        await Promise.resolve();
+
+        expect(toastHandler).toHaveBeenCalledTimes(1);
+        expect(toastHandler.mock.calls[0][0].detail.variant).toBe('error');
+        expect(toastHandler.mock.calls[0][0].detail.message).toBe('End time cannot be the same as start time.');
+        expect(createRequest).not.toHaveBeenCalled();
+    });
+
     it('blocks submission with an error toast when End Time equals Start Time', async () => {
         const element = createElement('c-request-staff-form', { is: RequestStaffForm });
         const toastHandler = jest.fn();

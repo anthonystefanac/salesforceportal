@@ -40,12 +40,8 @@
                                 <td>{request.wardName}</td>
                                 <td>{request.role}</td>
                                 <td>{request.shiftDate}</td>
-                                <td>
-                                    <lightning-formatted-time value={request.startTime}></lightning-formatted-time>
-                                </td>
-                                <td>
-                                    <lightning-formatted-time value={request.endTime}></lightning-formatted-time>
-                                </td>
+                                <td>{request.startTime}</td>
+                                <td>{request.endTime}</td>
                                 <td>
                                     <c-request-status-badge status={request.status}></c-request-status-badge>
                                 </td>

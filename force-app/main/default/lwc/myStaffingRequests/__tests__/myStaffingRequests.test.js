@@ -37,6 +37,21 @@ describe('c-my-staffing-requests', () => {
         });
     });
 
+    it('formats Start Time/End Time from milliseconds-since-midnight into HH:MM', () => {
+        const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
+        document.body.appendChild(element);
+
+        getMyRequests.emit(mockRequests);
+
+        return Promise.resolve().then(() => {
+            const firstRow = element.shadowRoot.querySelector('tbody tr');
+            const cells = firstRow.querySelectorAll('td');
+            // Request, Facility, Ward, Role, Shift Date, Start Time, End Time, ...
+            expect(cells[5].textContent).toBe('07:00');
+            expect(cells[6].textContent).toBe('15:00');
+        });
+    });
+
     it('shows only open requests when the page reference filter is "open"', () => {
         const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
         document.body.appendChild(element);

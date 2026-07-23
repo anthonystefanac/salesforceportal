@@ -24,6 +24,10 @@
         <apexClass>SupportRequestController</apexClass>
         <enabled>true</enabled>
     </classAccesses>
+    <classAccesses>
+        <apexClass>PortalUserBadgeController</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
 
     <objectPermissions>
         <object>Account</object>

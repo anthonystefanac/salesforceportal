@@ -1,0 +1,105 @@
+.portal-user-badge {
+    position: relative;
+    display: inline-block;
+}
+
+.portal-user-badge__trigger {
+    all: unset;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    cursor: pointer;
+    padding: 0.35rem 0.6rem;
+    border-radius: 0.6rem;
+    transition: background-color 150ms ease;
+}
+
+.portal-user-badge__trigger:hover {
+    background-color: #f7f9fc;
+}
+
+.portal-user-badge__trigger:focus-visible {
+    outline: 2px solid #0b5cab;
+    outline-offset: 2px;
+}
+
+.portal-user-badge__avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    background: #eaf2fc;
+    color: #08417a;
+    font-weight: 700;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+
+.portal-user-badge__meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    line-height: 1.3;
+    text-align: left;
+}
+
+.portal-user-badge__name {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #16325c;
+}
+
+.portal-user-badge__account {
+    font-size: 0.75rem;
+    color: #6b7d99;
+}
+
+.portal-user-badge__chevron {
+    flex-shrink: 0;
+    color: #6b7d99;
+}
+
+.portal-user-badge__menu {
+    position: absolute;
+    top: calc(100% + 0.4rem);
+    right: 0;
+    min-width: 12rem;
+    background: #ffffff;
+    border: 1px solid #e4e8f0;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 2px rgba(22, 50, 92, 0.05), 0 6px 16px rgba(22, 50, 92, 0.06);
+    padding: 0.4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    z-index: 10;
+}
+
+.portal-user-badge__menu-item {
+    all: unset;
+    box-sizing: border-box;
+    display: block;
+    width: 100%;
+    padding: 0.55rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.85rem;
+    color: #16325c;
+    cursor: pointer;
+    transition: background-color 150ms ease;
+}
+
+.portal-user-badge__menu-item:hover {
+    background-color: #f7f9fc;
+}
+
+.portal-user-badge__menu-item:focus-visible {
+    outline: 2px solid #0b5cab;
+    outline-offset: 2px;
+}
+
+.portal-user-badge__menu-item_danger {
+    color: #97101f;
+}

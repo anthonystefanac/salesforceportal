@@ -20,9 +20,10 @@ force-app/main/default/
                        Portal_Request_Type__c) for the Support/Query screen
   classes/             Apex controllers, domain services, mocked integration
                        boundaries, and their test classes
-  lwc/                 11 Lightning Web Components covering the current screens
+  lwc/                 12 Lightning Web Components covering the current screens
                        (plus timeFormatUtils, a shared non-visual helper module),
                        including an added Calendar screen for reviewing bookings by day
+                       and a header user/account badge (portalUserBadge)
   permissionsets/      Alliance_Client_Portal_User — assign to every portal Contact's User
   sharingSets/         Grants same-Account contacts shared read access
   tabs/                Custom object tabs
@@ -209,6 +210,17 @@ and wire up navigation matching the 6 screens. Also in Setup:
   Organization-Wide Defaults) is **Private** — if it's Public Read Only or
   wider, portal users would see every client's Account regardless of the
   Sharing Set.
+- **Header — logged-in user/account badge**: `portalUserBadge` shows an
+  initials avatar, the current user's name, and their Account name (e.g.
+  "Riverside Aged Care Group"), with a dropdown offering **View Profile**
+  and **Log Out** — the same two items the standard Profile Menu component
+  exposes by default, so this component can fully replace it rather than
+  sit alongside it. In Experience Builder, open the site Header, remove the
+  standard Profile Menu component if present, and drag `portalUserBadge` in
+  from the Custom Components section instead. It's backed by
+  `PortalUserBadgeController.getCurrentUserBadge()`, which resolves the
+  Account name via the existing `PortalUserContext` helper (the same
+  Contact → Account lookup every other controller already uses).
 
 ## Verification
 

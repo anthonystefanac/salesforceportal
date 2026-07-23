@@ -42,22 +42,27 @@ force-app/main/default/
 `requestStaffCalendar` (nav label "Calendar") is an added convenience
 screen, not part of the original 6-screen deck: a month grid showing a
 badge on any day with existing requests. Clicking a day shows that day's
-bookings (Role, Facility/Ward, Status) plus a **Request Staff** button that
-navigates to the Request Staff page with the date carried in `state`, rather
-than embedding the request form on this page — Calendar is for reviewing
-what's already booked on a day, Request Staff is where you actually submit
-one. It reuses the existing `Staffing_Request__c` object and
-`StaffingRequestController` — no new Apex or objects were needed for it.
+bookings (Quantity + Role, Facility/Ward, Status) plus a **Request Staff**
+button that navigates to the Request Staff page with the date carried in
+`state`, rather than embedding the request form on this page — Calendar is
+for reviewing what's already booked on a day, Request Staff is where you
+actually submit one. Each booking itself is also clickable, navigating to My
+Requests filtered to that shift date. It reuses the existing
+`Staffing_Request__c` object and `StaffingRequestController` — no new Apex or
+objects were needed for it.
 
-The Home dashboard's three tiles, and the Calendar's Request Staff button,
-are clickable/navigable and deep-link across pages: Open Requests and
-Unfilled Shifts go to My Requests, Overdue Invoices goes to Invoices, and a
-selected Calendar day goes to Request Staff with that date pre-filled —
-each of the first two with a "Show all" control to clear the filter. This
-uses `NavigationMixin` with `comm__namedPage` and a `state` parameter, which
-the destination component reads back via `@wire(CurrentPageReference)`
-(`myStaffingRequests`/`invoiceList` read `state.filter`; `requestStaffForm`
-reads `state.defaultDate`). **The target page names are set to the real
+The Home dashboard's three tiles, the Calendar's Request Staff button, and
+each Calendar booking are all clickable/navigable and deep-link across
+pages: Open Requests and Unfilled Shifts go to My Requests, Overdue Invoices
+goes to Invoices, a selected Calendar day goes to Request Staff with that
+date pre-filled, and a Calendar booking goes to My Requests filtered to its
+shift date — each filtered destination has a "Show all" control to clear the
+filter. This uses `NavigationMixin` with `comm__namedPage` and a `state`
+parameter, which the destination component reads back via
+`@wire(CurrentPageReference)` (`myStaffingRequests` reads both
+`state.filter` and `state.shiftDate`; `invoiceList` reads `state.filter`;
+`requestStaffForm` reads `state.defaultDate`). **The target page names are
+set to the real
 Experience Builder page API names** (`My_Requests__c`, `Invoices__c` in
 `TILE_NAVIGATION` inside `portalHomeDashboard.js`) confirmed from the live
 site, **except `Request_Staff__c`** (`REQUEST_STAFF_PAGE_NAME` in

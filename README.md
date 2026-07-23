@@ -21,7 +21,7 @@ force-app/main/default/
   classes/             Apex controllers, domain services, mocked integration
                        boundaries, and their test classes
   lwc/                 10 Lightning Web Components covering the current screens,
-                       including an added calendar-based entry point to Request Staff
+                       including an added Calendar screen for reviewing bookings by day
   permissionsets/      Alliance_Client_Portal_User — assign to every portal Contact's User
   sharingSets/         Grants same-Account contacts shared read access
   tabs/                Custom object tabs
@@ -34,30 +34,37 @@ force-app/main/default/
 |---|---|
 | Home dashboard | `portalHomeDashboard` (+ `portalDashboardTile`) |
 | Request staff | `requestStaffForm` (+ `facilityPicker`, `wardPicker`) |
-| Request staff — calendar | `requestStaffCalendar` (embeds `requestStaffForm`) |
 | My requests | `myStaffingRequests` (+ `requestStatusBadge`) |
+| Calendar | `requestStaffCalendar` (+ `requestStatusBadge`) |
 | Invoices | `invoiceList` |
 | Support / query | `supportRequestForm` |
 
-`requestStaffCalendar` is an added convenience screen, not part of the
-original 6-screen deck: a month grid where clicking a day pre-fills Shift
-Date on the same `requestStaffForm`, with a small badge on any day that
-already has requests. It reuses the existing `Staffing_Request__c` object
-and `StaffingRequestController` — no new Apex or objects were needed for it,
-just the calendar UI and a reactive `defaultDate` input added to
-`requestStaffForm`.
+`requestStaffCalendar` (nav label "Calendar") is an added convenience
+screen, not part of the original 6-screen deck: a month grid showing a
+badge on any day with existing requests. Clicking a day shows that day's
+bookings (Role, Facility/Ward, Status) plus a **Request Staff** button that
+navigates to the Request Staff page with the date carried in `state`, rather
+than embedding the request form on this page — Calendar is for reviewing
+what's already booked on a day, Request Staff is where you actually submit
+one. It reuses the existing `Staffing_Request__c` object and
+`StaffingRequestController` — no new Apex or objects were needed for it.
 
-The Home dashboard's three tiles are clickable and deep-link into a
-pre-filtered list: Open Requests and Unfilled Shifts go to My Requests,
-Overdue Invoices goes to Invoices — each with a "Show all" control to clear
-the filter. This uses `NavigationMixin` with `comm__namedPage` and a
-`state.filter` parameter, which `myStaffingRequests`/`invoiceList` read back
-via `@wire(CurrentPageReference)`. **The target page names
-(`TILE_NAVIGATION` in `portalHomeDashboard.js`) are now set to the real
-Experience Builder page API names** (`My_Requests__c`, `Invoices__c`) from
-the live site. If either page is ever recreated or renamed, update
-`TILE_NAVIGATION` to match its new API Name (visible in the page's own
-Settings panel in Experience Builder).
+The Home dashboard's three tiles, and the Calendar's Request Staff button,
+are clickable/navigable and deep-link across pages: Open Requests and
+Unfilled Shifts go to My Requests, Overdue Invoices goes to Invoices, and a
+selected Calendar day goes to Request Staff with that date pre-filled —
+each of the first two with a "Show all" control to clear the filter. This
+uses `NavigationMixin` with `comm__namedPage` and a `state` parameter, which
+the destination component reads back via `@wire(CurrentPageReference)`
+(`myStaffingRequests`/`invoiceList` read `state.filter`; `requestStaffForm`
+reads `state.defaultDate`). **The target page names are set to the real
+Experience Builder page API names** (`My_Requests__c`, `Invoices__c` in
+`TILE_NAVIGATION` inside `portalHomeDashboard.js`) confirmed from the live
+site, **except `Request_Staff__c`** (`REQUEST_STAFF_PAGE_NAME` in
+`requestStaffCalendar.js`), which is still a placeholder — confirm/update it
+the same way the other two were, from the Request Staff page's own Settings
+panel in Experience Builder once that page exists. If any of these pages is
+ever recreated or renamed, update the matching constant to its new API Name.
 
 ## No Salesforce org is connected here
 

@@ -1,5 +1,6 @@
-import { LightningElement, api, track } from 'lwc';
+import { LightningElement, api, track, wire } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+import { CurrentPageReference } from 'lightning/navigation';
 import createRequest from '@salesforce/apex/StaffingRequestController.createRequest';
 
 const DEFAULT_FORM = {
@@ -62,6 +63,17 @@ export default class RequestStaffForm extends LightningElement {
         this._defaultDate = value;
         if (value) {
             this.formData = { ...this.formData, shiftDate: value };
+        }
+    }
+
+    // The Calendar screen no longer embeds this form directly - it navigates
+    // here with the chosen date in page state instead, so pick it up the
+    // same way myStaffingRequests/invoiceList read their filter state.
+    @wire(CurrentPageReference)
+    setCurrentPageReference(pageReference) {
+        const dateFromState = pageReference && pageReference.state && pageReference.state.defaultDate;
+        if (dateFromState) {
+            this.defaultDate = dateFromState;
         }
     }
 

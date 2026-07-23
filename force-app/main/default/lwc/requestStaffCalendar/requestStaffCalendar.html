@@ -1,7 +1,9 @@
 <template>
     <div class="calendar-screen">
-        <h1 class="calendar-screen__title">Request Staff — Calendar</h1>
-        <div class="calendar-screen__sub">Pick a day to request staff for that shift.</div>
+        <h1 class="calendar-screen__title">Calendar</h1>
+        <div class="calendar-screen__sub">
+            See your requested bookings by day, or jump to Request Staff for a specific date.
+        </div>
 
         <div class="calendar">
             <div class="calendar__nav">
@@ -58,12 +60,30 @@
         </div>
 
         <template if:true={hasSelectedDate}>
-            <div class="calendar-screen__form">
-                <h2 class="calendar-screen__form-title">Request Staff for {selectedDateLabel}</h2>
-                <c-request-staff-form
-                    default-date={selectedDate}
-                    onrequestcreated={handleRequestCreated}
-                ></c-request-staff-form>
+            <div class="calendar-screen__day-detail">
+                <h2 class="calendar-screen__day-detail-title">{selectedDateLabel}</h2>
+                <lightning-button
+                    label="Request Staff"
+                    variant="brand"
+                    onclick={handleRequestStaffClick}
+                ></lightning-button>
+
+                <template if:true={hasSelectedDateRequests}>
+                    <ul class="calendar-screen__bookings">
+                        <template for:each={selectedDateRequests} for:item="booking">
+                            <li key={booking.id} class="calendar-screen__booking">
+                                <span class="calendar-screen__booking-role">{booking.role}</span>
+                                <span class="calendar-screen__booking-facility"
+                                    >{booking.facilityName} · {booking.wardName}</span
+                                >
+                                <c-request-status-badge status={booking.status}></c-request-status-badge>
+                            </li>
+                        </template>
+                    </ul>
+                </template>
+                <template if:false={hasSelectedDateRequests}>
+                    <p class="calendar-screen__empty">No requests for this day yet.</p>
+                </template>
             </div>
         </template>
     </div>

@@ -113,14 +113,50 @@
     line-height: 1.3;
 }
 
-.calendar-screen__form {
+.calendar-screen__day-detail {
     margin-top: 1.5rem;
     max-width: 48rem;
 }
 
-.calendar-screen__form-title {
+.calendar-screen__day-detail-title {
     font-size: 1.15rem;
     font-weight: 700;
     color: #16325c;
     margin: 0 0 0.75rem 0;
+}
+
+.calendar-screen__bookings {
+    list-style: none;
+    margin: 1rem 0 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.calendar-screen__booking {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border: 1px solid #d8dde6;
+    border-radius: 0.4rem;
+    padding: 0.6rem 0.85rem;
+    background: #ffffff;
+}
+
+.calendar-screen__booking-role {
+    font-weight: 700;
+    color: #16325c;
+}
+
+.calendar-screen__booking-facility {
+    color: #54698d;
+    font-size: 0.85rem;
+    flex: 1;
+}
+
+.calendar-screen__empty {
+    color: #54698d;
+    font-size: 0.85rem;
+    margin-top: 1rem;
 }

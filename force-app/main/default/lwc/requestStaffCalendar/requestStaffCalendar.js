@@ -1,8 +1,13 @@
 import { LightningElement, wire } from 'lwc';
-import { refreshApex } from '@salesforce/apex';
+import { NavigationMixin } from 'lightning/navigation';
 import getMyRequests from '@salesforce/apex/StaffingRequestController.getMyRequests';
 
 const WEEKDAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+// Placeholder until the Request Staff page exists in Experience Builder -
+// confirm/update this the same way My_Requests__c and Invoices__c were
+// confirmed for portalHomeDashboard's TILE_NAVIGATION.
+const REQUEST_STAFF_PAGE_NAME = 'Request_Staff__c';
 
 function toIso(year, month, day) {
     const mm = String(month + 1).padStart(2, '0');
@@ -10,13 +15,12 @@ function toIso(year, month, day) {
     return `${year}-${mm}-${dd}`;
 }
 
-export default class RequestStaffCalendar extends LightningElement {
+export default class RequestStaffCalendar extends NavigationMixin(LightningElement) {
     weekdayLabels = WEEKDAY_LABELS;
     currentYear;
     currentMonth;
     selectedDate;
-    requestCountsByDate = {};
-    wiredRequestsResult;
+    requestsByDate = {};
 
     connectedCallback() {
         const today = new Date();
@@ -25,15 +29,23 @@ export default class RequestStaffCalendar extends LightningElement {
     }
 
     @wire(getMyRequests)
-    wiredRequests(result) {
-        this.wiredRequestsResult = result;
-        if (result.data) {
-            this.requestCountsByDate = result.data.reduce((counts, request) => {
+    wiredRequests({ data }) {
+        if (data) {
+            this.requestsByDate = data.reduce((byDate, request) => {
                 const iso = request.Shift_Date__c;
                 if (iso) {
-                    counts[iso] = (counts[iso] || 0) + 1;
+                    if (!byDate[iso]) {
+                        byDate[iso] = [];
+                    }
+                    byDate[iso].push({
+                        id: request.Id,
+                        facilityName: request.Facility__r ? request.Facility__r.Name : '',
+                        wardName: request.Ward__r ? request.Ward__r.Name : '—',
+                        role: request.Role__c,
+                        status: request.Status__c
+                    });
                 }
-                return counts;
+                return byDate;
             }, {});
         }
     }
@@ -62,6 +74,14 @@ export default class RequestStaffCalendar extends LightningElement {
         return !!this.selectedDate;
     }
 
+    get selectedDateRequests() {
+        return this.selectedDate ? this.requestsByDate[this.selectedDate] || [] : [];
+    }
+
+    get hasSelectedDateRequests() {
+        return this.selectedDateRequests.length > 0;
+    }
+
     get calendarWeeks() {
         const year = this.currentYear;
         const month = this.currentMonth;
@@ -77,7 +97,7 @@ export default class RequestStaffCalendar extends LightningElement {
         }
         for (let day = 1; day <= daysInMonth; day++) {
             const iso = toIso(year, month, day);
-            const requestCount = this.requestCountsByDate[iso] || 0;
+            const requestCount = (this.requestsByDate[iso] || []).length;
             let cssClass = 'calendar__day';
             if (iso === todayIso) {
                 cssClass += ' calendar__day_today';
@@ -139,7 +159,11 @@ export default class RequestStaffCalendar extends LightningElement {
         this.selectedDate = event.currentTarget.dataset.date;
     }
 
-    handleRequestCreated() {
-        return refreshApex(this.wiredRequestsResult);
+    handleRequestStaffClick() {
+        this[NavigationMixin.Navigate]({
+            type: 'comm__namedPage',
+            attributes: { name: REQUEST_STAFF_PAGE_NAME },
+            state: { defaultDate: this.selectedDate }
+        });
     }
 }

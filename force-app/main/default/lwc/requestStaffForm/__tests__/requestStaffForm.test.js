@@ -1,5 +1,6 @@
 import { createElement } from 'lwc';
 import RequestStaffForm from 'c/requestStaffForm';
+import { CurrentPageReference } from 'lightning/navigation';
 import createRequest from '@salesforce/apex/StaffingRequestController.createRequest';
 
 jest.mock(
@@ -131,6 +132,17 @@ describe('c-request-staff-form', () => {
 
         const endTimeInput = element.shadowRoot.querySelector('[data-field="endTime"]');
         expect(endTimeInput.value).toBe('16:00:00.000');
+    });
+
+    it('pre-fills Shift Date from the defaultDate carried in page navigation state', async () => {
+        const element = createElement('c-request-staff-form', { is: RequestStaffForm });
+        document.body.appendChild(element);
+
+        CurrentPageReference.emit({ state: { defaultDate: '2026-09-03' } });
+        await Promise.resolve();
+
+        const shiftDateInput = element.shadowRoot.querySelector('[data-field="shiftDate"]');
+        expect(shiftDateInput.value).toBe('2026-09-03');
     });
 
     it('pre-fills and re-applies Shift Date from the defaultDate api property', async () => {

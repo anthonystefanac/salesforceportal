@@ -20,7 +20,8 @@ force-app/main/default/
                        Portal_Request_Type__c) for the Support/Query screen
   classes/             Apex controllers, domain services, mocked integration
                        boundaries, and their test classes
-  lwc/                 10 Lightning Web Components covering the current screens,
+  lwc/                 11 Lightning Web Components covering the current screens
+                       (plus timeFormatUtils, a shared non-visual helper module),
                        including an added Calendar screen for reviewing bookings by day
   permissionsets/      Alliance_Client_Portal_User — assign to every portal Contact's User
   sharingSets/         Grants same-Account contacts shared read access
@@ -51,18 +52,19 @@ Requests filtered to that shift date. It reuses the existing
 `Staffing_Request__c` object and `StaffingRequestController` — no new Apex or
 objects were needed for it.
 
-The Home dashboard's three tiles, the Calendar's Request Staff button, and
-each Calendar booking are all clickable/navigable and deep-link across
-pages: Open Requests and Unfilled Shifts go to My Requests, Overdue Invoices
-goes to Invoices, a selected Calendar day goes to Request Staff with that
-date pre-filled, and a Calendar booking goes to My Requests filtered to its
-shift date — each filtered destination has a "Show all" control to clear the
-filter. This uses `NavigationMixin` with `comm__namedPage` and a `state`
-parameter, which the destination component reads back via
-`@wire(CurrentPageReference)` (`myStaffingRequests` reads both
-`state.filter` and `state.shiftDate`; `invoiceList` reads `state.filter`;
-`requestStaffForm` reads `state.defaultDate`). **The target page names are
-set to the real
+The Home dashboard's three tiles, the Calendar's Request Staff button, each
+Calendar booking, and Support's post-submit confirmation are all
+clickable/navigable and deep-link across pages: Open Requests and Unfilled
+Shifts go to My Requests, Overdue Invoices goes to Invoices, a selected
+Calendar day goes to Request Staff with that date pre-filled, a Calendar
+booking goes to My Requests filtered to its shift date, and a submitted
+Support request offers a "View My Requests" button — each filtered
+destination has a "Show all" control to clear the filter. This uses
+`NavigationMixin` with `comm__namedPage` and a `state` parameter, which the
+destination component reads back via `@wire(CurrentPageReference)`
+(`myStaffingRequests` reads both `state.filter` and `state.shiftDate`;
+`invoiceList` reads `state.filter`; `requestStaffForm` reads
+`state.defaultDate`). **The target page names are set to the real
 Experience Builder page API names** (`My_Requests__c`, `Invoices__c` in
 `TILE_NAVIGATION` inside `portalHomeDashboard.js`) confirmed from the live
 site, **except `Request_Staff__c`** (`REQUEST_STAFF_PAGE_NAME` in
@@ -70,6 +72,25 @@ site, **except `Request_Staff__c`** (`REQUEST_STAFF_PAGE_NAME` in
 the same way the other two were, from the Request Staff page's own Settings
 panel in Experience Builder once that page exists. If any of these pages is
 ever recreated or renamed, update the matching constant to its new API Name.
+
+`supportRequestForm` (Support/Query) no longer submits through a bare
+`lightning-record-edit-form` — it's now a custom Apex-backed form (matching
+`requestStaffForm`'s pattern) via `SupportRequestController.createCase()` /
+`SupportRequestService.submitNewCase()`, so it can do three things a plain
+record-edit-form couldn't:
+- **Live related-request detail**: picking a Related Request (populated from
+  the same `getMyRequests()` data already used elsewhere) shows that
+  request's Date, Facility, Ward, Role, and Start Time inline — no extra
+  Apex call, since the data's already loaded client-side.
+- **Reliable post-submit confirmation**: an inline confirmation panel (not
+  just a toast, which can be unreliable on some LWR sites) with **View My
+  Requests** and **Submit Another Request** buttons.
+- **Confirmation email**: `SupportRequestService` emails the submitting
+  Contact (via `Messaging.SingleEmailMessage.setTargetObjectId`) with the
+  Case's Subject/Request Type and, when a Related Request was picked, that
+  request's Date/Facility/Ward/Role/Start Time. Email failures are caught
+  and logged rather than blocking the Case from being created — confirmation
+  email is a nice-to-have, not the core function.
 
 ## No Salesforce org is connected here
 

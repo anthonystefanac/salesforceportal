@@ -1,22 +1,91 @@
 <template>
     <div class="support-request-form">
         <h1 class="support-request-form__title">Support / Query</h1>
-        <lightning-record-edit-form
-            object-api-name="Case"
-            onsuccess={handleSuccess}
-            onerror={handleError}
-        >
-            <lightning-messages></lightning-messages>
-            <lightning-input-field field-name="Portal_Request_Type__c"></lightning-input-field>
-            <lightning-input-field field-name="Related_Staffing_Request__c"></lightning-input-field>
-            <lightning-input-field field-name="Subject"></lightning-input-field>
-            <lightning-input-field field-name="Description"></lightning-input-field>
+
+        <template if:true={submitted}>
+            <div class="support-request-form__confirmation">
+                <p class="support-request-form__confirmation-message">
+                    Your request has been submitted. Our team will follow up shortly.
+                </p>
+                <div class="support-request-form__confirmation-actions">
+                    <lightning-button
+                        label="View My Requests"
+                        variant="brand"
+                        onclick={handleViewMyRequests}
+                    ></lightning-button>
+                    <lightning-button
+                        label="Submit Another Request"
+                        variant="neutral"
+                        onclick={handleSubmitAnother}
+                    ></lightning-button>
+                </div>
+            </div>
+        </template>
+
+        <template if:false={submitted}>
+            <div class="support-request-form__fields">
+                <lightning-combobox
+                    label="Request Type"
+                    options={requestTypeOptions}
+                    value={formData.requestType}
+                    onchange={handleRequestTypeChange}
+                ></lightning-combobox>
+
+                <lightning-combobox
+                    label="Related Request"
+                    placeholder="None"
+                    options={relatedRequestOptions}
+                    value={formData.relatedRequestId}
+                    onchange={handleRelatedRequestChange}
+                ></lightning-combobox>
+
+                <template if:true={hasSelectedRelatedRequest}>
+                    <div class="support-request-form__related-detail">
+                        <div>
+                            <span class="support-request-form__related-label">Date:</span>
+                            {selectedRelatedRequestShiftDate}
+                        </div>
+                        <div>
+                            <span class="support-request-form__related-label">Facility:</span>
+                            {selectedRelatedRequestFacility}
+                        </div>
+                        <div>
+                            <span class="support-request-form__related-label">Ward:</span>
+                            {selectedRelatedRequestWard}
+                        </div>
+                        <div>
+                            <span class="support-request-form__related-label">Role:</span>
+                            {selectedRelatedRequestRole}
+                        </div>
+                        <div>
+                            <span class="support-request-form__related-label">Start Time:</span>
+                            {selectedRelatedRequestStartTime}
+                        </div>
+                    </div>
+                </template>
+
+                <lightning-input
+                    label="Subject"
+                    data-field="subject"
+                    value={formData.subject}
+                    onchange={handleFieldChange}
+                    required
+                ></lightning-input>
+
+                <lightning-textarea
+                    label="Description"
+                    data-field="description"
+                    value={formData.description}
+                    onchange={handleFieldChange}
+                ></lightning-textarea>
+            </div>
             <lightning-button
                 class="support-request-form__submit"
-                type="submit"
                 variant="brand"
                 label="Submit Request"
+                onclick={handleSubmit}
+                disabled={isSubmitDisabled}
             ></lightning-button>
-        </lightning-record-edit-form>
+        </template>
     </div>
 </template>

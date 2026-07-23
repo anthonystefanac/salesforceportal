@@ -1,6 +1,7 @@
 import { LightningElement, wire } from 'lwc';
 import { refreshApex } from '@salesforce/apex';
 import { CurrentPageReference } from 'lightning/navigation';
+import { formatTime } from 'c/timeFormatUtils';
 import getMyRequests from '@salesforce/apex/StaffingRequestController.getMyRequests';
 
 const NOT_OPEN_STATUSES = ['Filled', 'Unable to Fill', 'Cancelled'];
@@ -9,27 +10,6 @@ const FILTER_LABELS = {
     open: 'Open Requests',
     unfilled: 'Unfilled Shifts'
 };
-
-// Apex Time fields come back over the wire as milliseconds since midnight
-// (a number, not a time string), so format it ourselves rather than relying
-// on lightning-formatted-time's expected input shape.
-function formatTime(value) {
-    if (value === null || value === undefined || value === '') {
-        return '';
-    }
-    if (typeof value === 'string' && value.includes(':')) {
-        const [hours, minutes] = value.split(':');
-        return `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}`;
-    }
-    const totalMillis = Number(value);
-    if (Number.isNaN(totalMillis)) {
-        return '';
-    }
-    const totalMinutes = Math.floor(totalMillis / 60000);
-    const hours = Math.floor(totalMinutes / 60) % 24;
-    const minutes = totalMinutes % 60;
-    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-}
 
 export default class MyStaffingRequests extends LightningElement {
     allRequests = [];

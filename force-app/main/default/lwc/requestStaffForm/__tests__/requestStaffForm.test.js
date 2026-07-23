@@ -109,6 +109,30 @@ describe('c-request-staff-form', () => {
         expect(callArg.Ward__c).toBeUndefined();
     });
 
+    it('defaults End Time to Start Time while End Time is still unset', async () => {
+        const element = createElement('c-request-staff-form', { is: RequestStaffForm });
+        document.body.appendChild(element);
+
+        setInputValue(element, '[data-field="startTime"]', '08:30:00.000');
+        await Promise.resolve();
+
+        const endTimeInput = element.shadowRoot.querySelector('[data-field="endTime"]');
+        expect(endTimeInput.value).toBe('08:30:00.000');
+    });
+
+    it('does not override an End Time the user already chose', async () => {
+        const element = createElement('c-request-staff-form', { is: RequestStaffForm });
+        document.body.appendChild(element);
+
+        setInputValue(element, '[data-field="endTime"]', '16:00:00.000');
+        await Promise.resolve();
+        setInputValue(element, '[data-field="startTime"]', '08:30:00.000');
+        await Promise.resolve();
+
+        const endTimeInput = element.shadowRoot.querySelector('[data-field="endTime"]');
+        expect(endTimeInput.value).toBe('16:00:00.000');
+    });
+
     it('pre-fills and re-applies Shift Date from the defaultDate api property', async () => {
         createRequest.mockResolvedValue('a02000000000001AAA');
 

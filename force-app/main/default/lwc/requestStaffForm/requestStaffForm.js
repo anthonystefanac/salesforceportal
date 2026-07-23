@@ -77,7 +77,15 @@ export default class RequestStaffForm extends LightningElement {
 
     handleFieldChange(event) {
         const field = event.target.dataset.field;
-        this.formData = { ...this.formData, [field]: event.target.value };
+        const value = event.target.value;
+        const updates = { [field]: value };
+        // Pre-fill End Time with the new Start Time as a starting point, but
+        // only while End Time hasn't been set yet - don't clobber a value
+        // the user already chose.
+        if (field === 'startTime' && !this.formData.endTime) {
+            updates.endTime = value;
+        }
+        this.formData = { ...this.formData, ...updates };
     }
 
     get isSubmitDisabled() {

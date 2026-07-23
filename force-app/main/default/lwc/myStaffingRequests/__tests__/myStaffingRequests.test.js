@@ -46,9 +46,25 @@ describe('c-my-staffing-requests', () => {
         return Promise.resolve().then(() => {
             const firstRow = element.shadowRoot.querySelector('tbody tr');
             const cells = firstRow.querySelectorAll('td');
-            // Request, Facility, Ward, Role, Shift Date, Start Time, End Time, ...
-            expect(cells[5].textContent).toBe('07:00');
-            expect(cells[6].textContent).toBe('15:00');
+            // Request, Facility, Ward, Role, Specialty, Shift Date, Start Time, End Time, ...
+            expect(cells[6].textContent).toBe('07:00');
+            expect(cells[7].textContent).toBe('15:00');
+        });
+    });
+
+    it('shows Specialty, Quantity, and Priority columns, with a placeholder for a blank Specialty', () => {
+        const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
+        document.body.appendChild(element);
+
+        getMyRequests.emit(mockRequests);
+
+        return Promise.resolve().then(() => {
+            const firstRow = element.shadowRoot.querySelector('tbody tr');
+            const cells = firstRow.querySelectorAll('td');
+            // Request, Facility, Ward, Role, Specialty, Shift Date, Start Time, End Time, Quantity, Priority, ...
+            expect(cells[4].textContent).toBe('—');
+            expect(cells[8].textContent).toBe('1');
+            expect(cells[9].textContent).toBe('Medium');
         });
     });
 

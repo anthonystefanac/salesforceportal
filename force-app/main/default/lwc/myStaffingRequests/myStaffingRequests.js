@@ -55,9 +55,12 @@ export default class MyStaffingRequests extends LightningElement {
                 facilityName: request.Facility__r ? request.Facility__r.Name : '',
                 wardName: request.Ward__r ? request.Ward__r.Name : '—',
                 role: request.Role__c,
+                specialty: request.Specialty__c || '—',
                 shiftDate: request.Shift_Date__c,
                 startTime: formatTime(request.Start_Time__c),
                 endTime: formatTime(request.End_Time__c),
+                quantity: request.Quantity__c,
+                priority: request.Priority__c,
                 status: request.Status__c,
                 broadcasted: request.Broadcasted_Date__c ? 'Yes' : 'No',
                 lastUpdate: request.Last_Status_Update__c

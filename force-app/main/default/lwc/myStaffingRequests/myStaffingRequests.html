@@ -24,9 +24,12 @@
                             <th>Facility</th>
                             <th>Ward</th>
                             <th>Role</th>
+                            <th>Specialty</th>
                             <th>Shift Date</th>
                             <th>Start Time</th>
                             <th>End Time</th>
+                            <th>Quantity</th>
+                            <th>Priority</th>
                             <th>Status</th>
                             <th>Broadcasted</th>
                             <th>Last Update</th>
@@ -39,9 +42,12 @@
                                 <td>{request.facilityName}</td>
                                 <td>{request.wardName}</td>
                                 <td>{request.role}</td>
+                                <td>{request.specialty}</td>
                                 <td>{request.shiftDate}</td>
                                 <td>{request.startTime}</td>
                                 <td>{request.endTime}</td>
+                                <td>{request.quantity}</td>
+                                <td>{request.priority}</td>
                                 <td>
                                     <c-request-status-badge status={request.status}></c-request-status-badge>
                                 </td>

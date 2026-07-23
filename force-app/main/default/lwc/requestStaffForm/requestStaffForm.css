@@ -6,10 +6,22 @@
 }
 
 .request-staff-form__title {
-    font-size: 1.5rem;
+    font-size: 1.75rem;
     font-weight: 700;
     color: #16325c;
-    margin: 0 0 0.5rem 0;
+    margin: 0 0 1.25rem 0;
+    letter-spacing: -0.01em;
+}
+
+.request-staff-form__panel {
+    background: #ffffff;
+    border: 1px solid #e4e8f0;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 2px rgba(22, 50, 92, 0.05), 0 6px 16px rgba(22, 50, 92, 0.06);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
 }
 
 .request-staff-form__grid {

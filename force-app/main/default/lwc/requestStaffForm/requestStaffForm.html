@@ -1,6 +1,7 @@
 <template>
     <div class="request-staff-form">
         <h1 class="request-staff-form__title">Request Staff</h1>
+        <div class="request-staff-form__panel">
         <div class="request-staff-form__grid">
             <div class="request-staff-form__field request-staff-form__field_full">
                 <c-facility-picker onfacilitychange={handleFacilityChange}></c-facility-picker>
@@ -90,5 +91,6 @@
             onclick={handleSubmit}
             disabled={isSubmitDisabled}
         ></lightning-button>
+        </div>
     </div>
 </template>

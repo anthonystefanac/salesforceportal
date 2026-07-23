@@ -14,9 +14,13 @@
         </template>
         <template if:false={hasError}>
             <template if:false={hasRequests}>
-                <p class="my-requests__empty">{emptyStateMessage}</p>
+                <div class="my-requests__panel">
+                    <p class="my-requests__empty">{emptyStateMessage}</p>
+                </div>
             </template>
             <template if:true={hasRequests}>
+                <div class="my-requests__panel">
+                <div class="my-requests__table-wrap">
                 <table class="my-requests__table">
                     <thead>
                         <tr>
@@ -61,6 +65,8 @@
                         </template>
                     </tbody>
                 </table>
+                </div>
+                </div>
             </template>
         </template>
     </div>

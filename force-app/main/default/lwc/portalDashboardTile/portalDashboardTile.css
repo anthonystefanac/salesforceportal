@@ -3,16 +3,18 @@
     box-sizing: border-box;
     display: block;
     width: 100%;
-    border: 1px solid #d8dde6;
-    border-radius: 0.5rem;
-    padding: 1rem 1.25rem;
+    border: 1px solid #e4e8f0;
+    border-radius: 0.75rem;
+    padding: 1.25rem 1.5rem;
     background: #ffffff;
     text-align: left;
+    box-shadow: 0 1px 2px rgba(22, 50, 92, 0.05), 0 6px 16px rgba(22, 50, 92, 0.06);
+    transition: box-shadow 150ms ease, transform 150ms ease;
 }
 
 .portal-tile_warning {
-    border-color: #ffb75d;
-    background: #fff8ef;
+    border-color: #f6d9ad;
+    background: linear-gradient(180deg, #fffaf1 0%, #fff8ef 100%);
 }
 
 .portal-tile_clickable {
@@ -20,7 +22,8 @@
 }
 
 .portal-tile_clickable:hover {
-    box-shadow: 0 1px 4px rgba(22, 50, 92, 0.15);
+    box-shadow: 0 2px 4px rgba(22, 50, 92, 0.08), 0 10px 24px rgba(22, 50, 92, 0.12);
+    transform: translateY(-2px);
 }
 
 .portal-tile_clickable:focus-visible {
@@ -33,14 +36,19 @@
 }
 
 .portal-tile__value {
-    font-size: 2rem;
+    font-size: 2.25rem;
     font-weight: 700;
     color: #16325c;
     margin: 0;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
 }
 
 .portal-tile__label {
     font-size: 0.8rem;
-    color: #54698d;
-    margin: 0.25rem 0 0 0;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #6b7d99;
+    margin: 0.4rem 0 0 0;
 }

@@ -14,9 +14,13 @@
         </template>
         <template if:false={hasError}>
             <template if:false={hasInvoices}>
-                <p class="invoice-list__empty">{emptyStateMessage}</p>
+                <div class="invoice-list__panel">
+                    <p class="invoice-list__empty">{emptyStateMessage}</p>
+                </div>
             </template>
             <template if:true={hasInvoices}>
+                <div class="invoice-list__panel">
+                <div class="invoice-list__table-wrap">
                 <table class="invoice-list__table">
                     <thead>
                         <tr>
@@ -53,6 +57,8 @@
                         </template>
                     </tbody>
                 </table>
+                </div>
+                </div>
             </template>
         </template>
     </div>

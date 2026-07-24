@@ -103,3 +103,24 @@
 .portal-user-badge__menu-item_danger {
     color: #97101f;
 }
+
+.portal-user-badge__menu-item_disabled {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    color: #a8b3c7;
+    cursor: default;
+}
+
+.portal-user-badge__menu-item_disabled:hover {
+    background-color: transparent;
+}
+
+.portal-user-badge__menu-item-tag {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #a8b3c7;
+}

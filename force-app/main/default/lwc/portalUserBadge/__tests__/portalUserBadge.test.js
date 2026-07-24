@@ -14,31 +14,10 @@ jest.mock(
 );
 
 jest.mock(
-    '@salesforce/user/Id',
-    () => ({ __esModule: true, default: '005000000000000AAA' }),
-    { virtual: true }
-);
-
-jest.mock(
     '@salesforce/community/basePath',
     () => ({ __esModule: true, default: '/portal' }),
     { virtual: true }
 );
-
-// The default lightning/navigation stub's Navigate method is a frozen no-op,
-// so it can't be jest.spyOn'd directly - swap in an instrumented mixin instead.
-const mockNavigate = jest.fn();
-jest.mock('lightning/navigation', () => {
-    const Navigate = Symbol('Navigate');
-    const NavigationMixin = (Base) =>
-        class extends Base {
-            [Navigate](pageReference) {
-                mockNavigate(pageReference);
-            }
-        };
-    NavigationMixin.Navigate = Navigate;
-    return { NavigationMixin };
-});
 
 const mockBadge = {
     userName: 'Jordan Michaels',
@@ -112,7 +91,7 @@ describe('c-portal-user-badge', () => {
         expect(element.shadowRoot.querySelector('.portal-user-badge__menu')).toBeNull();
     });
 
-    it('navigates to the standard User record page when View Profile is clicked', () => {
+    it('renders View Profile as a disabled "coming soon" item', () => {
         const element = createElement('c-portal-user-badge', { is: PortalUserBadge });
         document.body.appendChild(element);
 
@@ -122,15 +101,10 @@ describe('c-portal-user-badge', () => {
             element.shadowRoot.querySelector('.portal-user-badge__trigger').click();
 
             return Promise.resolve().then(() => {
-                element.shadowRoot
-                    .querySelectorAll('.portal-user-badge__menu-item')[0]
-                    .click();
-
-                expect(mockNavigate).toHaveBeenCalledTimes(1);
-                const pageReference = mockNavigate.mock.calls[0][0];
-                expect(pageReference.type).toBe('standard__recordPage');
-                expect(pageReference.attributes.objectApiName).toBe('User');
-                expect(pageReference.attributes.actionName).toBe('view');
+                const viewProfile = element.shadowRoot.querySelectorAll(
+                    '.portal-user-badge__menu-item'
+                )[0];
+                expect(viewProfile.disabled).toBe(true);
             });
         });
     });

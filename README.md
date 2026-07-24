@@ -212,12 +212,15 @@ and wire up navigation matching the 6 screens. Also in Setup:
   Sharing Set.
 - **Header — logged-in user/account badge**: `portalUserBadge` shows an
   initials avatar, the current user's name, and their Account name (e.g.
-  "Riverside Aged Care Group"), with a dropdown offering **View Profile**
-  and **Log Out** — the same two items the standard Profile Menu component
-  exposes by default, so this component can fully replace it rather than
-  sit alongside it. In Experience Builder, open the site Header, remove the
-  standard Profile Menu component if present, and drag `portalUserBadge` in
-  from the Custom Components section instead. It's backed by
+  "Riverside Aged Care Group"), with a dropdown offering **Log Out** (fully
+  functional) and **View Profile** (shown disabled, tagged "Coming soon" —
+  standard Salesforce record-page navigation for the User object didn't
+  resolve correctly on the live site, so it's disabled rather than shipped
+  broken; re-enabling it means finding the right target page for this org's
+  site and restoring the `NavigationMixin` call this component used to make).
+  In Experience Builder, open the site Header, remove the standard Profile
+  Menu component if present, and drag `portalUserBadge` in from the Custom
+  Components section instead. It's backed by
   `PortalUserBadgeController.getCurrentUserBadge()`, which resolves the
   Account name via the existing `PortalUserContext` helper (the same
   Contact → Account lookup every other controller already uses).

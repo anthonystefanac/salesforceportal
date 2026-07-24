@@ -22,8 +22,9 @@
         </button>
         <template if:true={isMenuOpen}>
             <div class="portal-user-badge__menu">
-                <button type="button" class="portal-user-badge__menu-item" onclick={handleViewProfile}>
+                <button type="button" class="portal-user-badge__menu-item portal-user-badge__menu-item_disabled" disabled>
                     View Profile
+                    <span class="portal-user-badge__menu-item-tag">Coming soon</span>
                 </button>
                 <button
                     type="button"

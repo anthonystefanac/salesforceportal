@@ -1,10 +1,8 @@
 import { LightningElement, wire } from 'lwc';
-import { NavigationMixin } from 'lightning/navigation';
-import userId from '@salesforce/user/Id';
 import basePath from '@salesforce/community/basePath';
 import getCurrentUserBadge from '@salesforce/apex/PortalUserBadgeController.getCurrentUserBadge';
 
-export default class PortalUserBadge extends NavigationMixin(LightningElement) {
+export default class PortalUserBadge extends LightningElement {
     userName;
     accountName;
     isMenuOpen = false;
@@ -71,18 +69,6 @@ export default class PortalUserBadge extends NavigationMixin(LightningElement) {
     closeMenu() {
         this.isMenuOpen = false;
         document.removeEventListener('click', this.boundHandleDocumentClick);
-    }
-
-    handleViewProfile() {
-        this.closeMenu();
-        this[NavigationMixin.Navigate]({
-            type: 'standard__recordPage',
-            attributes: {
-                recordId: userId,
-                objectApiName: 'User',
-                actionName: 'view'
-            }
-        });
     }
 
     handleLogout() {

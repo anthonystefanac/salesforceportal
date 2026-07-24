@@ -59,6 +59,34 @@ describe('c-request-staff-form', () => {
         expect(callArg.Quantity__c).toBe(3);
     });
 
+    it('shows a visible saving state while the request is being submitted', async () => {
+        let resolveCreate;
+        createRequest.mockReturnValue(
+            new Promise((resolve) => {
+                resolveCreate = resolve;
+            })
+        );
+
+        const element = createElement('c-request-staff-form', { is: RequestStaffForm });
+        document.body.appendChild(element);
+
+        const submitButton = element.shadowRoot.querySelector('lightning-button');
+        submitButton.click();
+        await Promise.resolve();
+
+        expect(submitButton.label).toBe('Submitting…');
+        expect(submitButton.disabled).toBe(true);
+        expect(element.shadowRoot.querySelector('lightning-spinner')).not.toBeNull();
+
+        resolveCreate('a02000000000001AAA');
+        await Promise.resolve();
+        await Promise.resolve();
+
+        expect(submitButton.label).toBe('Submit Request');
+        expect(submitButton.disabled).toBe(false);
+        expect(element.shadowRoot.querySelector('lightning-spinner')).toBeNull();
+    });
+
     it('defaults Quantity to 1, selectable from 1 through 10', async () => {
         createRequest.mockResolvedValue('a02000000000001AAA');
 

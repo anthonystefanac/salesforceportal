@@ -76,6 +76,10 @@ export default class SupportRequestForm extends NavigationMixin(LightningElement
         return this.isSubmitting;
     }
 
+    get submitButtonLabel() {
+        return this.isSubmitting ? 'Submitting…' : 'Submit Request';
+    }
+
     handleRequestTypeChange(event) {
         // Changing Request Type resets any Related Request already picked,
         // rather than carrying a possibly-stale selection across types.

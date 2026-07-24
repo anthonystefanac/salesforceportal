@@ -79,13 +79,22 @@
                     onchange={handleFieldChange}
                 ></lightning-textarea>
             </div>
-            <lightning-button
-                class="support-request-form__submit"
-                variant="brand"
-                label="Submit Request"
-                onclick={handleSubmit}
-                disabled={isSubmitDisabled}
-            ></lightning-button>
+            <div class="support-request-form__submit-row">
+                <lightning-button
+                    class="support-request-form__submit"
+                    variant="brand"
+                    label={submitButtonLabel}
+                    onclick={handleSubmit}
+                    disabled={isSubmitDisabled}
+                ></lightning-button>
+                <template if:true={isSubmitting}>
+                    <lightning-spinner
+                        size="small"
+                        alternative-text="Submitting request"
+                        class="support-request-form__spinner"
+                    ></lightning-spinner>
+                </template>
+            </div>
         </template>
     </div>
 </template>

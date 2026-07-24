@@ -164,6 +164,32 @@ describe('c-support-request-form', () => {
         expect(element.shadowRoot.querySelector('.support-request-form__fields')).toBeNull();
     });
 
+    it('shows a visible saving state while the request is being submitted', async () => {
+        let resolveCreate;
+        createCase.mockReturnValue(
+            new Promise((resolve) => {
+                resolveCreate = resolve;
+            })
+        );
+
+        const element = createElement('c-support-request-form', { is: SupportRequestForm });
+        document.body.appendChild(element);
+
+        const submitButton = element.shadowRoot.querySelector('.support-request-form__submit');
+        submitButton.click();
+        await Promise.resolve();
+
+        expect(submitButton.label).toBe('Submitting…');
+        expect(submitButton.disabled).toBe(true);
+        expect(element.shadowRoot.querySelector('lightning-spinner')).not.toBeNull();
+
+        resolveCreate('500000000000001AAA');
+        await Promise.resolve();
+        await Promise.resolve();
+
+        expect(element.shadowRoot.querySelector('lightning-spinner')).toBeNull();
+    });
+
     it('navigates to My Requests when "View My Requests" is clicked after submitting', async () => {
         createCase.mockResolvedValue('500000000000001AAA');
 

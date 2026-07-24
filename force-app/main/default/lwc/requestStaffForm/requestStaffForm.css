@@ -34,6 +34,11 @@
     grid-column: 1 / -1;
 }
 
+.request-staff-form__submit-row {
+    position: relative;
+    display: inline-block;
+}
+
 @media (max-width: 40rem) {
     .request-staff-form__grid {
         grid-template-columns: 1fr;

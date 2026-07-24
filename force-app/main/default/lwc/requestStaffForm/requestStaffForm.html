@@ -85,12 +85,21 @@
                 ></lightning-textarea>
             </div>
         </div>
-        <lightning-button
-            label="Submit Request"
-            variant="brand"
-            onclick={handleSubmit}
-            disabled={isSubmitDisabled}
-        ></lightning-button>
+        <div class="request-staff-form__submit-row">
+            <lightning-button
+                label={submitButtonLabel}
+                variant="brand"
+                onclick={handleSubmit}
+                disabled={isSubmitDisabled}
+            ></lightning-button>
+            <template if:true={isSubmitting}>
+                <lightning-spinner
+                    size="small"
+                    alternative-text="Submitting request"
+                    class="request-staff-form__spinner"
+                ></lightning-spinner>
+            </template>
+        </div>
         </div>
     </div>
 </template>

@@ -104,6 +104,10 @@ export default class RequestStaffForm extends LightningElement {
         return this.isSubmitting;
     }
 
+    get submitButtonLabel() {
+        return this.isSubmitting ? 'Submitting…' : 'Submit Request';
+    }
+
     async handleSubmit() {
         if (this.formData.startTime && this.formData.startTime === this.formData.endTime) {
             this.dispatchEvent(

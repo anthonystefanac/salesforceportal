@@ -23,7 +23,9 @@
     padding: 1.5rem;
 }
 
-.support-request-form__submit {
+.support-request-form__submit-row {
+    position: relative;
+    display: inline-block;
     margin-top: 1rem;
 }
 

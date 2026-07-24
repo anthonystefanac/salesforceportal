@@ -19,7 +19,9 @@ force-app/main/default/
                        plus Case field extensions (Related_Staffing_Request__c,
                        Portal_Request_Type__c) for the Support/Query screen
   classes/             Apex controllers, domain services, mocked integration
-                       boundaries, and their test classes
+                       boundaries, notification service, and their test classes
+  triggers/            StaffingRequestTrigger — fires the submit/status-change
+                       notification emails (see "Notifications" below)
   lwc/                 12 Lightning Web Components covering the current screens
                        (plus timeFormatUtils, a shared non-visual helper module),
                        including an added Calendar screen for reviewing bookings by day
@@ -73,6 +75,15 @@ site, **except `Request_Staff__c`** (`REQUEST_STAFF_PAGE_NAME` in
 the same way the other two were, from the Request Staff page's own Settings
 panel in Experience Builder once that page exists. If any of these pages is
 ever recreated or renamed, update the matching constant to its new API Name.
+
+`myStaffingRequests` and `invoiceList` both have a search box (matches
+request/facility/ward/role/specialty/status, or invoice number/status) and
+sortable column headers (click to sort ascending, click again to toggle
+descending) — both are client-side, layered on top of the existing deep-link
+filters, so no new Apex was needed. `requestStaffForm` and
+`supportRequestForm`'s Submit buttons now show a "Submitting…" label plus a
+small spinner while their Apex call is in flight, instead of only a
+(easy-to-miss) disabled state.
 
 `supportRequestForm` (Support/Query) no longer submits through a bare
 `lightning-record-edit-form` — it's now a custom Apex-backed form (matching
@@ -154,6 +165,29 @@ org runtime state, not metadata. Activate it once per org:
 - Setup → Apex Classes → **Schedule Apex** → class `StaffingRequestOverdueScheduler`,
   frequency Daily, whatever time suits (e.g. just after midnight)
 - or via Anonymous Apex: `System.schedule('Staffing Request Overdue Check', '0 0 2 * * ?', new StaffingRequestOverdueScheduler());`
+
+### Notifications
+
+`StaffingRequestTrigger` (after insert, after update on `Staffing_Request__c`)
+emails the requesting Contact:
+- when a request is first submitted, and
+- whenever its Status changes to **Filled**, **Unable to Fill**, or
+  **Cancelled**.
+
+This is trigger-based rather than called inline from the Apex that
+creates/updates these records, specifically so it also catches status
+changes made directly on the record — e.g. an internal user marking a
+request Filled or Cancelled by hand in Salesforce, which today has no other
+code path at all (there's no real Bullhorn integration yet to do this
+automatically). It also means the scheduled overdue job above triggers the
+Unable to Fill email automatically, with no extra code. All the actual email
+logic lives in `StaffingRequestNotificationService`; email failures are
+caught and logged rather than blocking the record change, matching
+`SupportRequestService`'s existing pattern. Every request in one batched
+change (e.g. the overdue job resolving several requests in one run) is sent
+via a single `Messaging.sendEmail` call, not one per record — Apex allows
+only 10 calls to that method per transaction, so batching avoids hitting
+that limit as request volume grows.
 
 ### Experience Cloud site setup
 

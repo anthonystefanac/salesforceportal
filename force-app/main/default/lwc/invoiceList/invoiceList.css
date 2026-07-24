@@ -37,6 +37,27 @@
     white-space: nowrap;
 }
 
+.invoice-list__th {
+    cursor: pointer;
+    user-select: none;
+    transition: color 150ms ease;
+}
+
+.invoice-list__th:hover {
+    color: #16325c;
+}
+
+.invoice-list__th_sorted {
+    color: #08417a;
+}
+
+.invoice-list__sort-indicator {
+    display: inline-block;
+    margin-left: 0.3rem;
+    font-size: 0.65rem;
+    color: #0b5cab;
+}
+
 .invoice-list__table td {
     text-align: left;
     padding: 0.85rem 1rem;
@@ -86,4 +107,9 @@
 .invoice-list__clear-filter:focus-visible {
     outline: 2px solid #0b5cab;
     outline-offset: 2px;
+}
+
+.invoice-list__search {
+    max-width: 26rem;
+    margin-bottom: 1.25rem;
 }

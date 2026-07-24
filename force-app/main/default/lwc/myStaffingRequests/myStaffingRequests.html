@@ -13,6 +13,16 @@
             <p class="slds-text-color_error">Unable to load your requests right now.</p>
         </template>
         <template if:false={hasError}>
+            <div class="my-requests__search">
+                <lightning-input
+                    type="search"
+                    label="Search requests"
+                    variant="label-hidden"
+                    placeholder="Search by request, facility, ward, role, specialty, or status"
+                    value={searchTerm}
+                    onchange={handleSearchChange}
+                ></lightning-input>
+            </div>
             <template if:false={hasRequests}>
                 <div class="my-requests__panel">
                     <p class="my-requests__empty">{emptyStateMessage}</p>
@@ -24,20 +34,17 @@
                 <table class="my-requests__table">
                     <thead>
                         <tr>
-                            <th>Request</th>
-                            <th>Facility</th>
-                            <th>Ward</th>
-                            <th>Role</th>
-                            <th>Specialty</th>
-                            <th>Shift Date</th>
-                            <th>Start Time</th>
-                            <th>End Time</th>
-                            <th>Quantity</th>
-                            <th>Priority</th>
-                            <th>Status</th>
-                            <th>Broadcasted</th>
-                            <th>Cancellation Requested</th>
-                            <th>Last Update</th>
+                            <template for:each={columns} for:item="column">
+                                <th
+                                    key={column.key}
+                                    class={column.cssClass}
+                                    data-field={column.key}
+                                    onclick={handleSort}
+                                    aria-sort={column.ariaSort}
+                                >
+                                    {column.label}<span class="my-requests__sort-indicator">{column.indicator}</span>
+                                </th>
+                            </template>
                         </tr>
                     </thead>
                     <tbody>

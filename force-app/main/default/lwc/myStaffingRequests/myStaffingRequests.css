@@ -35,6 +35,24 @@
     letter-spacing: 0.04em;
     border-bottom: 1px solid #e4e8f0;
     white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    transition: color 150ms ease;
+}
+
+.my-requests__table th:hover {
+    color: #16325c;
+}
+
+.my-requests__th_sorted {
+    color: #08417a;
+}
+
+.my-requests__sort-indicator {
+    display: inline-block;
+    margin-left: 0.3rem;
+    font-size: 0.65rem;
+    color: #0b5cab;
 }
 
 .my-requests__table td {
@@ -86,4 +104,9 @@
 .my-requests__clear-filter:focus-visible {
     outline: 2px solid #0b5cab;
     outline-offset: 2px;
+}
+
+.my-requests__search {
+    max-width: 26rem;
+    margin-bottom: 1.25rem;
 }

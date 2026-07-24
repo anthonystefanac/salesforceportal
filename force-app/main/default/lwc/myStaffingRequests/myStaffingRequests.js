@@ -11,11 +11,33 @@ const FILTER_LABELS = {
     unfilled: 'Unfilled Shifts'
 };
 
+const COLUMNS = [
+    { key: 'name', label: 'Request' },
+    { key: 'facilityName', label: 'Facility' },
+    { key: 'wardName', label: 'Ward' },
+    { key: 'role', label: 'Role' },
+    { key: 'specialty', label: 'Specialty' },
+    { key: 'shiftDate', label: 'Shift Date' },
+    { key: 'startTime', label: 'Start Time' },
+    { key: 'endTime', label: 'End Time' },
+    { key: 'quantity', label: 'Quantity' },
+    { key: 'priority', label: 'Priority' },
+    { key: 'status', label: 'Status' },
+    { key: 'broadcasted', label: 'Broadcasted' },
+    { key: 'cancellationRequested', label: 'Cancellation Requested' },
+    { key: 'lastUpdate', label: 'Last Update' }
+];
+
+const SEARCH_FIELDS = ['name', 'facilityName', 'wardName', 'role', 'specialty', 'status'];
+
 export default class MyStaffingRequests extends LightningElement {
     allRequests = [];
     error;
     activeFilter;
     dateFilter;
+    searchTerm = '';
+    sortField;
+    sortDirection = 'asc';
 
     @wire(CurrentPageReference)
     setCurrentPageReference(pageReference) {
@@ -65,7 +87,7 @@ export default class MyStaffingRequests extends LightningElement {
         }
     }
 
-    get requests() {
+    get filteredRequests() {
         if (this.dateFilter) {
             return this.allRequests.filter((request) => request.shiftDate === this.dateFilter);
         }
@@ -76,6 +98,54 @@ export default class MyStaffingRequests extends LightningElement {
             return this.allRequests.filter((request) => request.status === 'Unable to Fill');
         }
         return this.allRequests;
+    }
+
+    get requests() {
+        const term = this.searchTerm.trim().toLowerCase();
+        const searched = term
+            ? this.filteredRequests.filter((request) =>
+                  SEARCH_FIELDS.some((field) => {
+                      const value = request[field];
+                      return value && String(value).toLowerCase().includes(term);
+                  })
+              )
+            : this.filteredRequests;
+
+        if (!this.sortField) {
+            return searched;
+        }
+        const field = this.sortField;
+        const direction = this.sortDirection === 'desc' ? -1 : 1;
+        return [...searched].sort((a, b) => {
+            const valueA = a[field];
+            const valueB = b[field];
+            if (valueA == null && valueB == null) {
+                return 0;
+            }
+            if (valueA == null) {
+                return -1 * direction;
+            }
+            if (valueB == null) {
+                return 1 * direction;
+            }
+            if (typeof valueA === 'number' && typeof valueB === 'number') {
+                return (valueA - valueB) * direction;
+            }
+            return String(valueA).localeCompare(String(valueB)) * direction;
+        });
+    }
+
+    get columns() {
+        return COLUMNS.map((column) => {
+            const isSorted = this.sortField === column.key;
+            const direction = isSorted ? this.sortDirection : undefined;
+            return {
+                ...column,
+                cssClass: isSorted ? 'my-requests__th my-requests__th_sorted' : 'my-requests__th',
+                ariaSort: isSorted ? (direction === 'desc' ? 'descending' : 'ascending') : 'none',
+                indicator: isSorted ? (direction === 'desc' ? '▼' : '▲') : ''
+            };
+        });
     }
 
     get hasActiveFilter() {
@@ -94,6 +164,9 @@ export default class MyStaffingRequests extends LightningElement {
     }
 
     get emptyStateMessage() {
+        if (this.searchTerm.trim()) {
+            return `No requests match "${this.searchTerm.trim()}".`;
+        }
         return this.hasActiveFilter
             ? `No requests match "${this.activeFilterLabel}".`
             : 'No staffing requests yet.';
@@ -106,5 +179,22 @@ export default class MyStaffingRequests extends LightningElement {
     handleClearFilter() {
         this.activeFilter = undefined;
         this.dateFilter = undefined;
+    }
+
+    handleSearchChange(event) {
+        this.searchTerm = event.target.value || '';
+    }
+
+    handleSort(event) {
+        const field = event.currentTarget.dataset.field;
+        if (!field) {
+            return;
+        }
+        if (this.sortField === field) {
+            this.sortDirection = this.sortDirection === 'desc' ? 'asc' : 'desc';
+        } else {
+            this.sortField = field;
+            this.sortDirection = 'asc';
+        }
     }
 }

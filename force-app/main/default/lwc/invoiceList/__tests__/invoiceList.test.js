@@ -116,6 +116,71 @@ describe('c-invoice-list', () => {
         });
     });
 
+    it('filters rows by search term across invoice number and status', () => {
+        const element = createElement('c-invoice-list', { is: InvoiceList });
+        document.body.appendChild(element);
+
+        getInvoices.emit(mockInvoices);
+
+        return Promise.resolve().then(() => {
+            const searchInput = element.shadowRoot.querySelector('lightning-input');
+            searchInput.value = '10019';
+            searchInput.dispatchEvent(new CustomEvent('change'));
+
+            return Promise.resolve().then(() => {
+                const rows = element.shadowRoot.querySelectorAll('tbody tr');
+                expect(rows).toHaveLength(1);
+                expect(rows[0].textContent).toContain('2CL-10019');
+            });
+        });
+    });
+
+    it('shows a search-aware empty state message when the search term matches nothing', () => {
+        const element = createElement('c-invoice-list', { is: InvoiceList });
+        document.body.appendChild(element);
+
+        getInvoices.emit(mockInvoices);
+
+        return Promise.resolve().then(() => {
+            const searchInput = element.shadowRoot.querySelector('lightning-input');
+            searchInput.value = 'no-such-invoice';
+            searchInput.dispatchEvent(new CustomEvent('change'));
+
+            return Promise.resolve().then(() => {
+                const empty = element.shadowRoot.querySelector('.invoice-list__empty');
+                expect(empty.textContent).toContain('no-such-invoice');
+            });
+        });
+    });
+
+    it('sorts by a clicked column, toggling direction on a second click', () => {
+        const element = createElement('c-invoice-list', { is: InvoiceList });
+        document.body.appendChild(element);
+
+        getInvoices.emit(mockInvoices);
+
+        return Promise.resolve().then(() => {
+            const amountHeader = Array.from(element.shadowRoot.querySelectorAll('th')).find((th) =>
+                th.textContent.includes('Amount')
+            );
+            amountHeader.click();
+
+            return Promise.resolve().then(() => {
+                let rows = element.shadowRoot.querySelectorAll('tbody tr');
+                expect(rows[0].textContent).toContain('2CL-10005'); // 3210.00, lowest
+                expect(rows[2].textContent).toContain('2CL-10019'); // 6180.00, highest
+
+                amountHeader.click();
+
+                return Promise.resolve().then(() => {
+                    rows = element.shadowRoot.querySelectorAll('tbody tr');
+                    expect(rows[0].textContent).toContain('2CL-10019');
+                    expect(rows[2].textContent).toContain('2CL-10005');
+                });
+            });
+        });
+    });
+
     it('shows an empty state message when there are no invoices', () => {
         const element = createElement('c-invoice-list', { is: InvoiceList });
         document.body.appendChild(element);

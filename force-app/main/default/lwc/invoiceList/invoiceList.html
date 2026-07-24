@@ -13,6 +13,16 @@
             <p class="slds-text-color_error">Unable to load invoices right now.</p>
         </template>
         <template if:false={hasError}>
+            <div class="invoice-list__search">
+                <lightning-input
+                    type="search"
+                    label="Search invoices"
+                    variant="label-hidden"
+                    placeholder="Search by invoice number or status"
+                    value={searchTerm}
+                    onchange={handleSearchChange}
+                ></lightning-input>
+            </div>
             <template if:false={hasInvoices}>
                 <div class="invoice-list__panel">
                     <p class="invoice-list__empty">{emptyStateMessage}</p>
@@ -24,11 +34,17 @@
                 <table class="invoice-list__table">
                     <thead>
                         <tr>
-                            <th>Invoice Number</th>
-                            <th>Invoice Date</th>
-                            <th>Due Date</th>
-                            <th>Amount</th>
-                            <th>Status</th>
+                            <template for:each={columns} for:item="column">
+                                <th
+                                    key={column.key}
+                                    class={column.cssClass}
+                                    data-field={column.key}
+                                    onclick={handleSort}
+                                    aria-sort={column.ariaSort}
+                                >
+                                    {column.label}<span class="invoice-list__sort-indicator">{column.indicator}</span>
+                                </th>
+                            </template>
                             <th></th>
                         </tr>
                     </thead>

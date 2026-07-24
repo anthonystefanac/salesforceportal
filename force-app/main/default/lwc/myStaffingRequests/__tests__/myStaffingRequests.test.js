@@ -166,6 +166,71 @@ describe('c-my-staffing-requests', () => {
         });
     });
 
+    it('filters rows by search term across request, facility, ward, role, specialty, and status', () => {
+        const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
+        document.body.appendChild(element);
+
+        getMyRequests.emit(mockRequests);
+
+        return Promise.resolve().then(() => {
+            const searchInput = element.shadowRoot.querySelector('lightning-input');
+            searchInput.value = 'Enrolled';
+            searchInput.dispatchEvent(new CustomEvent('change'));
+
+            return Promise.resolve().then(() => {
+                const rows = element.shadowRoot.querySelectorAll('tbody tr');
+                expect(rows).toHaveLength(1);
+                expect(rows[0].textContent).toContain('SR-0003');
+            });
+        });
+    });
+
+    it('shows a search-aware empty state message when the search term matches nothing', () => {
+        const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
+        document.body.appendChild(element);
+
+        getMyRequests.emit(mockRequests);
+
+        return Promise.resolve().then(() => {
+            const searchInput = element.shadowRoot.querySelector('lightning-input');
+            searchInput.value = 'no-such-request';
+            searchInput.dispatchEvent(new CustomEvent('change'));
+
+            return Promise.resolve().then(() => {
+                const empty = element.shadowRoot.querySelector('.my-requests__empty');
+                expect(empty.textContent).toContain('no-such-request');
+            });
+        });
+    });
+
+    it('sorts by a clicked column, toggling direction on a second click', () => {
+        const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
+        document.body.appendChild(element);
+
+        getMyRequests.emit(mockRequests);
+
+        return Promise.resolve().then(() => {
+            const shiftDateHeader = Array.from(element.shadowRoot.querySelectorAll('th')).find(
+                (th) => th.textContent.includes('Shift Date')
+            );
+            shiftDateHeader.click();
+
+            return Promise.resolve().then(() => {
+                let rows = element.shadowRoot.querySelectorAll('tbody tr');
+                expect(rows[0].textContent).toContain('SR-0004'); // 2026-07-22, earliest
+                expect(rows[3].textContent).toContain('SR-0001'); // 2026-08-01, latest
+
+                shiftDateHeader.click();
+
+                return Promise.resolve().then(() => {
+                    rows = element.shadowRoot.querySelectorAll('tbody tr');
+                    expect(rows[0].textContent).toContain('SR-0001');
+                    expect(rows[3].textContent).toContain('SR-0004');
+                });
+            });
+        });
+    });
+
     it('shows an error message when the wire adapter errors', () => {
         const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
         document.body.appendChild(element);

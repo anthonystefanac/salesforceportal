@@ -90,25 +90,26 @@ describe('c-portal-user-badge', () => {
         });
     });
 
-    it('opens the menu on trigger click and closes it on an outside click', () => {
+    it('opens the menu on trigger click and closes it on an outside click', async () => {
         const element = createElement('c-portal-user-badge', { is: PortalUserBadge });
         document.body.appendChild(element);
 
         getCurrentUserBadge.emit(mockBadge);
+        await Promise.resolve();
 
-        return Promise.resolve().then(() => {
-            element.shadowRoot.querySelector('.portal-user-badge__trigger').click();
+        element.shadowRoot.querySelector('.portal-user-badge__trigger').click();
+        await Promise.resolve();
 
-            return Promise.resolve().then(() => {
-                expect(element.shadowRoot.querySelector('.portal-user-badge__menu')).not.toBeNull();
+        expect(element.shadowRoot.querySelector('.portal-user-badge__menu')).not.toBeNull();
 
-                document.body.click();
+        // The outside-click listener is attached via a deferred setTimeout
+        // (see portalUserBadge.js), so let that macrotask run before
+        // simulating the outside click.
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        document.body.click();
+        await Promise.resolve();
 
-                return Promise.resolve().then(() => {
-                    expect(element.shadowRoot.querySelector('.portal-user-badge__menu')).toBeNull();
-                });
-            });
-        });
+        expect(element.shadowRoot.querySelector('.portal-user-badge__menu')).toBeNull();
     });
 
     it('navigates to the standard User record page when View Profile is clicked', () => {

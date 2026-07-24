@@ -17,10 +17,7 @@ export default class PortalUserBadge extends NavigationMixin(LightningElement) {
         }
     }
 
-    connectedCallback() {
-        this.boundHandleDocumentClick = this.handleDocumentClick.bind(this);
-        document.addEventListener('click', this.boundHandleDocumentClick);
-    }
+    boundHandleDocumentClick = this.handleDocumentClick.bind(this);
 
     disconnectedCallback() {
         document.removeEventListener('click', this.boundHandleDocumentClick);
@@ -46,24 +43,38 @@ export default class PortalUserBadge extends NavigationMixin(LightningElement) {
         return this.isMenuOpen ? 'true' : 'false';
     }
 
-    handleDocumentClick(event) {
-        if (!this.isMenuOpen) {
-            return;
-        }
-        // event.target is retargeted to the host by shadow DOM, so compare
-        // against the full dispatch path instead to detect outside clicks.
-        const wrapper = this.template.querySelector('.portal-user-badge');
-        if (wrapper && !event.composedPath().includes(wrapper)) {
-            this.isMenuOpen = false;
-        }
+    handleDocumentClick() {
+        this.closeMenu();
     }
 
     handleToggleMenu() {
-        this.isMenuOpen = !this.isMenuOpen;
+        if (this.isMenuOpen) {
+            this.closeMenu();
+        } else {
+            this.openMenu();
+        }
+    }
+
+    openMenu() {
+        this.isMenuOpen = true;
+        // Defer attaching the listener so the click that opened the menu -
+        // still bubbling up to document as this runs - doesn't immediately
+        // close it again. Node-identity checks (e.g. composedPath().includes)
+        // aren't reliable here because Lightning Web Security proxies DOM
+        // references, so this timing-based approach is used instead.
+        // eslint-disable-next-line @lwc/lwc/no-async-operation
+        setTimeout(() => {
+            document.addEventListener('click', this.boundHandleDocumentClick);
+        }, 0);
+    }
+
+    closeMenu() {
+        this.isMenuOpen = false;
+        document.removeEventListener('click', this.boundHandleDocumentClick);
     }
 
     handleViewProfile() {
-        this.isMenuOpen = false;
+        this.closeMenu();
         this[NavigationMixin.Navigate]({
             type: 'standard__recordPage',
             attributes: {
@@ -75,7 +86,7 @@ export default class PortalUserBadge extends NavigationMixin(LightningElement) {
     }
 
     handleLogout() {
-        this.isMenuOpen = false;
+        this.closeMenu();
         window.location.href = `${basePath}/secur/logout.jsp`;
     }
 }

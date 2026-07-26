@@ -100,6 +100,9 @@ export default class RequestStaffForm extends LightningElement {
         this.formData = { ...this.formData, ...updates };
     }
 
+    bannerMessage;
+    bannerVariant;
+
     get isSubmitDisabled() {
         return this.isSubmitting;
     }
@@ -108,8 +111,21 @@ export default class RequestStaffForm extends LightningElement {
         return this.isSubmitting ? 'Submitting…' : 'Submit Request';
     }
 
+    get hasBanner() {
+        return !!this.bannerMessage;
+    }
+
+    get bannerClass() {
+        return this.bannerVariant === 'success'
+            ? 'request-staff-form__banner request-staff-form__banner_success'
+            : 'request-staff-form__banner request-staff-form__banner_error';
+    }
+
     async handleSubmit() {
+        this.bannerMessage = undefined;
+
         if (this.formData.startTime && this.formData.startTime === this.formData.endTime) {
+            this.showBanner('error', 'End time cannot be the same as start time.');
             this.dispatchEvent(
                 new ShowToastEvent({
                     title: 'Unable to submit request',
@@ -138,6 +154,7 @@ export default class RequestStaffForm extends LightningElement {
             // Re-apply defaultDate so a caller (e.g. requestStaffCalendar) can
             // submit multiple requests for the same selected day in a row.
             this.formData = { ...DEFAULT_FORM, shiftDate: this._defaultDate };
+            this.showBanner('success', 'Your staffing request has been submitted.');
             this.dispatchEvent(
                 new ShowToastEvent({
                     title: 'Request submitted',
@@ -146,15 +163,28 @@ export default class RequestStaffForm extends LightningElement {
                 })
             );
         } catch (error) {
+            const message = (error && error.body && error.body.message) || 'An unexpected error occurred.';
+            this.showBanner('error', message);
             this.dispatchEvent(
                 new ShowToastEvent({
                     title: 'Unable to submit request',
-                    message: (error && error.body && error.body.message) || 'An unexpected error occurred.',
+                    message,
                     variant: 'error'
                 })
             );
         } finally {
             this.isSubmitting = false;
         }
+    }
+
+    // The toast dispatches above are kept alongside this banner in case
+    // ShowToastEvent does render in some context this component ends up in,
+    // but this banner is the guaranteed feedback: Experience Cloud LWR
+    // sites (this portal's site type) don't render platform toasts at all,
+    // which is why a blocked submit could otherwise look like it silently
+    // did nothing.
+    showBanner(variant, message) {
+        this.bannerVariant = variant;
+        this.bannerMessage = message;
     }
 }

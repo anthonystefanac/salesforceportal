@@ -255,5 +255,33 @@ describe('c-support-request-form', () => {
         expect(toastHandler.mock.calls[0][0].detail.variant).toBe('error');
         expect(toastHandler.mock.calls[0][0].detail.message).toBe('Missing required field');
         expect(element.shadowRoot.querySelector('.support-request-form__fields')).not.toBeNull();
+
+        // The toast above isn't guaranteed to render on every site type this
+        // component could be used on (Experience Cloud LWR sites in
+        // particular don't render platform toasts at all) - this inline
+        // banner is the guaranteed feedback.
+        const banner = element.shadowRoot.querySelector('.support-request-form__banner');
+        expect(banner.textContent).toBe('Missing required field');
+    });
+
+    it('clears a previous error banner when a new submit attempt starts', async () => {
+        createCase.mockRejectedValueOnce({ body: { message: 'Missing required field' } });
+
+        const element = createElement('c-support-request-form', { is: SupportRequestForm });
+        document.body.appendChild(element);
+
+        const submitButton = element.shadowRoot.querySelector('.support-request-form__submit');
+        submitButton.click();
+        await Promise.resolve();
+        await Promise.resolve();
+        await Promise.resolve();
+
+        expect(element.shadowRoot.querySelector('.support-request-form__banner')).not.toBeNull();
+
+        createCase.mockResolvedValueOnce('500000000000001AAA');
+        submitButton.click();
+        await Promise.resolve();
+
+        expect(element.shadowRoot.querySelector('.support-request-form__banner')).toBeNull();
     });
 });

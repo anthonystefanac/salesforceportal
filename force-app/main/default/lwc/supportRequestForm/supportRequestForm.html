@@ -23,6 +23,9 @@
         </template>
 
         <template if:false={submitted}>
+            <template if:true={hasError}>
+                <div class="support-request-form__banner">{errorMessage}</div>
+            </template>
             <div class="support-request-form__fields">
                 <lightning-combobox
                     label="Request Type"

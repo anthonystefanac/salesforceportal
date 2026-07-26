@@ -72,12 +72,18 @@ export default class SupportRequestForm extends NavigationMixin(LightningElement
         return this.selectedRelatedRequest ? formatTime(this.selectedRelatedRequest.Start_Time__c) : '';
     }
 
+    errorMessage;
+
     get isSubmitDisabled() {
         return this.isSubmitting;
     }
 
     get submitButtonLabel() {
         return this.isSubmitting ? 'Submitting…' : 'Submit Request';
+    }
+
+    get hasError() {
+        return !!this.errorMessage;
     }
 
     handleRequestTypeChange(event) {
@@ -96,6 +102,7 @@ export default class SupportRequestForm extends NavigationMixin(LightningElement
     }
 
     async handleSubmit() {
+        this.errorMessage = undefined;
         this.isSubmitting = true;
         try {
             const newCase = {
@@ -115,10 +122,15 @@ export default class SupportRequestForm extends NavigationMixin(LightningElement
                 })
             );
         } catch (error) {
+            // The toast below isn't guaranteed to render on every site type
+            // this component could be used on (Experience Cloud LWR sites in
+            // particular don't render platform toasts at all) - errorMessage
+            // drives a guaranteed inline banner instead.
+            this.errorMessage = (error && error.body && error.body.message) || 'An unexpected error occurred.';
             this.dispatchEvent(
                 new ShowToastEvent({
                     title: 'Unable to submit request',
-                    message: (error && error.body && error.body.message) || 'An unexpected error occurred.',
+                    message: this.errorMessage,
                     variant: 'error'
                 })
             );

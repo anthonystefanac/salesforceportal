@@ -39,6 +39,23 @@
     display: inline-block;
 }
 
+.request-staff-form__banner {
+    border-radius: 0.6rem;
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.request-staff-form__banner_error {
+    background: #fde3e3;
+    color: #97101f;
+}
+
+.request-staff-form__banner_success {
+    background: #e6f6ec;
+    color: #1e6b3c;
+}
+
 @media (max-width: 40rem) {
     .request-staff-form__grid {
         grid-template-columns: 1fr;

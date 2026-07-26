@@ -217,6 +217,13 @@ describe('c-request-staff-form', () => {
         expect(toastHandler.mock.calls[0][0].detail.variant).toBe('error');
         expect(toastHandler.mock.calls[0][0].detail.message).toBe('End time cannot be the same as start time.');
         expect(createRequest).not.toHaveBeenCalled();
+
+        // The toast above isn't guaranteed to render on every site type this
+        // component could be used on (Experience Cloud LWR sites in
+        // particular don't render platform toasts at all) - this inline
+        // banner is the guaranteed feedback.
+        const banner = element.shadowRoot.querySelector('.request-staff-form__banner_error');
+        expect(banner.textContent).toBe('End time cannot be the same as start time.');
     });
 
     it('pre-fills and re-applies Shift Date from the defaultDate api property', async () => {
@@ -263,6 +270,9 @@ describe('c-request-staff-form', () => {
 
         expect(toastHandler).toHaveBeenCalledTimes(1);
         expect(toastHandler.mock.calls[0][0].detail.variant).toBe('success');
+
+        const banner = element.shadowRoot.querySelector('.request-staff-form__banner_success');
+        expect(banner.textContent).toBe('Your staffing request has been submitted.');
     });
 
     it('shows an error toast when submission fails', async () => {
@@ -283,5 +293,30 @@ describe('c-request-staff-form', () => {
         expect(toastHandler).toHaveBeenCalledTimes(1);
         expect(toastHandler.mock.calls[0][0].detail.variant).toBe('error');
         expect(toastHandler.mock.calls[0][0].detail.message).toBe('Validation failed');
+
+        const banner = element.shadowRoot.querySelector('.request-staff-form__banner_error');
+        expect(banner.textContent).toBe('Validation failed');
+    });
+
+    it('clears a previous banner when a new submit attempt starts', async () => {
+        createRequest.mockRejectedValueOnce({ body: { message: 'Validation failed' } });
+
+        const element = createElement('c-request-staff-form', { is: RequestStaffForm });
+        document.body.appendChild(element);
+
+        const submitButton = element.shadowRoot.querySelector('lightning-button');
+        submitButton.click();
+        await Promise.resolve();
+        await Promise.resolve();
+        await Promise.resolve();
+
+        expect(element.shadowRoot.querySelector('.request-staff-form__banner_error')).not.toBeNull();
+
+        createRequest.mockResolvedValueOnce('a02000000000001AAA');
+        submitButton.click();
+        await Promise.resolve();
+
+        expect(element.shadowRoot.querySelector('.request-staff-form__banner_error')).toBeNull();
+        expect(element.shadowRoot.querySelector('.request-staff-form__banner_success')).toBeNull();
     });
 });

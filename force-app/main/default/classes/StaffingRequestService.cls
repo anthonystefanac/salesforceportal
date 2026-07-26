@@ -15,7 +15,17 @@ public with sharing class StaffingRequestService {
 
         sanitizedRequest.Requested_By_Contact__c = PortalUserContext.getCurrentContactId();
         sanitizedRequest.Status__c = 'Submitted';
-        insert sanitizedRequest;
+
+        try {
+            insert sanitizedRequest;
+        } catch (DmlException dmlError) {
+            // Surfaces StaffingRequestValidationService's addError() message
+            // to the LWC cleanly - an uncaught DmlException instead reaches
+            // the client as a generic, unhelpful "Script-thrown exception".
+            AuraHandledException friendlyError = new AuraHandledException(dmlError.getDmlMessage(0));
+            friendlyError.setMessage(dmlError.getDmlMessage(0));
+            throw friendlyError;
+        }
 
         IWorkforceManagementService wfmService = WorkforceManagementServiceFactory.getService();
         sanitizedRequest.External_Demand_Id__c = wfmService.submitDemandRequest(sanitizedRequest);

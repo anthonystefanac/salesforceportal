@@ -19,9 +19,10 @@ force-app/main/default/
                        plus Case field extensions (Related_Staffing_Request__c,
                        Portal_Request_Type__c) for the Support/Query screen
   classes/             Apex controllers, domain services, mocked integration
-                       boundaries, notification service, and their test classes
-  triggers/            StaffingRequestTrigger — fires the submit/status-change
-                       notification emails (see "Notifications" below)
+                       boundaries, notification/validation services, and their test classes
+  triggers/            StaffingRequestTrigger — fires the Start/End Time
+                       validation and the submit/status-change notification
+                       emails (see "Data validation" / "Notifications" below)
   lwc/                 12 Lightning Web Components covering the current screens
                        (plus timeFormatUtils, a shared non-visual helper module),
                        including an added Calendar screen for reviewing bookings by day
@@ -80,10 +81,27 @@ ever recreated or renamed, update the matching constant to its new API Name.
 request/facility/ward/role/specialty/status, or invoice number/status) and
 sortable column headers (click to sort ascending, click again to toggle
 descending) — both are client-side, layered on top of the existing deep-link
-filters, so no new Apex was needed. `requestStaffForm` and
-`supportRequestForm`'s Submit buttons now show a "Submitting…" label plus a
-small spinner while their Apex call is in flight, instead of only a
-(easy-to-miss) disabled state.
+filters, so no new Apex was needed. `myStaffingRequests` also paginates at 10
+rows per page (Previous/Next, with a "Showing X–Y of Z" summary) — the table
+had no upper bound before this, and a client's request history only grows
+over time. Changing the search term, the sort column, or the active filter
+all reset back to page 1. `requestStaffForm` and `supportRequestForm`'s
+Submit buttons now show a "Submitting…" label plus a small spinner while
+their Apex call is in flight, instead of only a (easy-to-miss) disabled
+state.
+
+**Error/success feedback doesn't rely solely on toasts.** Both forms
+originally surfaced validation and Apex errors only via
+`lightning/platformShowToastEvent`. That's a problem here specifically
+because **Experience Cloud LWR sites (this portal's site type) don't render
+platform toasts at all** — so a blocked submission (e.g. the End Time/Start
+Time check below) looked like it silently did nothing, with no visible
+explanation. Both forms now also show a guaranteed inline banner (an
+error-red or success-green message rendered directly in the component,
+cleared at the start of the next submit attempt) alongside the existing
+toast dispatches — the toasts are left in place in case this component is
+ever reused somewhere toasts do render, but the banner is what a user on
+this site will actually see.
 
 `supportRequestForm` (Support/Query) no longer submits through a bare
 `lightning-record-edit-form` — it's now a custom Apex-backed form (matching
@@ -165,6 +183,32 @@ org runtime state, not metadata. Activate it once per org:
 - Setup → Apex Classes → **Schedule Apex** → class `StaffingRequestOverdueScheduler`,
   frequency Daily, whatever time suits (e.g. just after midnight)
 - or via Anonymous Apex: `System.schedule('Staffing Request Overdue Check', '0 0 2 * * ?', new StaffingRequestOverdueScheduler());`
+
+### Data validation
+
+`requestStaffForm` blocks submitting a request whose Start Time and End Time
+are identical — but that check only ever lived in the LWC's JavaScript, so
+anything that bypasses the form (Data Loader, a direct edit in Salesforce, a
+future integration) could still save an invalid pair. `StaffingRequestTrigger`
+(before insert, before update on `Staffing_Request__c`) now enforces the same
+rule server-side via `StaffingRequestValidationService`, so the client-side
+check is a fast first pass and this is the real backstop.
+
+**This does not require touching any existing data.** The validation only
+runs on records being inserted or updated, so it doesn't retroactively scan
+or flag anything already in the org — an existing request with equal
+Start/End times (e.g. leftover test data) is left exactly as-is. It only
+becomes relevant the next time that specific record is saved again, and even
+then it's not blanket-blocked: a save that leaves both times exactly as they
+already were (an unrelated field being edited) is still let through; only a
+save that actively introduces or keeps changing into an equal pair is
+rejected. So there's nothing to clean up before this deploys, and old
+records won't suddenly become uneditable.
+
+`StaffingRequestService.submitNewRequest` catches the resulting `DmlException`
+and rethrows it as an `AuraHandledException` with the same friendly message,
+so the LWC's `error.body.message` shows "End Time cannot be the same as
+Start Time." rather than Salesforce's raw, verbose DML exception text.
 
 ### Notifications
 
@@ -268,7 +312,7 @@ npm install
 npm run test:unit
 ```
 
-45 Jest tests across all 10 LWCs. This is the only thing in this project
+78 Jest tests across all 12 LWCs. This is the only thing in this project
 that's actually been run and confirmed passing in this environment.
 
 ### Requires a connected org (not verified here)

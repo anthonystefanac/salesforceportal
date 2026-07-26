@@ -73,6 +73,26 @@
                     </tbody>
                 </table>
                 </div>
+                <div class="my-requests__pagination">
+                    <span class="my-requests__pagination-summary">{paginationSummary}</span>
+                    <template if:true={hasMultiplePages}>
+                        <div class="my-requests__pagination-controls">
+                            <lightning-button-icon
+                                icon-name="utility:chevronleft"
+                                alternative-text="Previous page"
+                                disabled={isFirstPage}
+                                onclick={handlePreviousPage}
+                            ></lightning-button-icon>
+                            <span class="my-requests__pagination-page">Page {safeCurrentPage} of {totalPages}</span>
+                            <lightning-button-icon
+                                icon-name="utility:chevronright"
+                                alternative-text="Next page"
+                                disabled={isLastPage}
+                                onclick={handleNextPage}
+                            ></lightning-button-icon>
+                        </div>
+                    </template>
+                </div>
                 </div>
             </template>
         </template>

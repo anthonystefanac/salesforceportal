@@ -29,6 +29,7 @@ const COLUMNS = [
 ];
 
 const SEARCH_FIELDS = ['name', 'facilityName', 'wardName', 'role', 'specialty', 'status'];
+const PAGE_SIZE = 10;
 
 export default class MyStaffingRequests extends LightningElement {
     allRequests = [];
@@ -38,6 +39,7 @@ export default class MyStaffingRequests extends LightningElement {
     searchTerm = '';
     sortField;
     sortDirection = 'asc';
+    currentPage = 1;
 
     @wire(CurrentPageReference)
     setCurrentPageReference(pageReference) {
@@ -45,6 +47,7 @@ export default class MyStaffingRequests extends LightningElement {
         const filter = state && state.filter;
         this.activeFilter = FILTER_LABELS[filter] ? filter : undefined;
         this.dateFilter = (state && state.shiftDate) || undefined;
+        this.currentPage = 1;
     }
 
     _wiredRequestsResult;
@@ -100,7 +103,7 @@ export default class MyStaffingRequests extends LightningElement {
         return this.allRequests;
     }
 
-    get requests() {
+    get sortedRequests() {
         const term = this.searchTerm.trim().toLowerCase();
         const searched = term
             ? this.filteredRequests.filter((request) =>
@@ -133,6 +136,41 @@ export default class MyStaffingRequests extends LightningElement {
             }
             return String(valueA).localeCompare(String(valueB)) * direction;
         });
+    }
+
+    get totalPages() {
+        return Math.max(1, Math.ceil(this.sortedRequests.length / PAGE_SIZE));
+    }
+
+    get safeCurrentPage() {
+        return Math.min(this.currentPage, this.totalPages);
+    }
+
+    get requests() {
+        const start = (this.safeCurrentPage - 1) * PAGE_SIZE;
+        return this.sortedRequests.slice(start, start + PAGE_SIZE);
+    }
+
+    get hasMultiplePages() {
+        return this.totalPages > 1;
+    }
+
+    get isFirstPage() {
+        return this.safeCurrentPage <= 1;
+    }
+
+    get isLastPage() {
+        return this.safeCurrentPage >= this.totalPages;
+    }
+
+    get paginationSummary() {
+        const total = this.sortedRequests.length;
+        if (total === 0) {
+            return '';
+        }
+        const start = (this.safeCurrentPage - 1) * PAGE_SIZE + 1;
+        const end = Math.min(start + PAGE_SIZE - 1, total);
+        return `Showing ${start}–${end} of ${total}`;
     }
 
     get columns() {
@@ -179,10 +217,12 @@ export default class MyStaffingRequests extends LightningElement {
     handleClearFilter() {
         this.activeFilter = undefined;
         this.dateFilter = undefined;
+        this.currentPage = 1;
     }
 
     handleSearchChange(event) {
         this.searchTerm = event.target.value || '';
+        this.currentPage = 1;
     }
 
     handleSort(event) {
@@ -195,6 +235,19 @@ export default class MyStaffingRequests extends LightningElement {
         } else {
             this.sortField = field;
             this.sortDirection = 'asc';
+        }
+        this.currentPage = 1;
+    }
+
+    handlePreviousPage() {
+        if (!this.isFirstPage) {
+            this.currentPage = this.safeCurrentPage - 1;
+        }
+    }
+
+    handleNextPage() {
+        if (!this.isLastPage) {
+            this.currentPage = this.safeCurrentPage + 1;
         }
     }
 }

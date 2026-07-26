@@ -231,6 +231,89 @@ describe('c-my-staffing-requests', () => {
         });
     });
 
+    it('paginates at 10 rows per page and steps through pages', () => {
+        const manyRequests = Array.from({ length: 23 }, (_, index) => ({
+            ...mockRequests[0],
+            Id: `a02000000000${String(index + 100).padStart(3, '0')}AAA`,
+            Name: `SR-${String(index + 100).padStart(4, '0')}`
+        }));
+
+        const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
+        document.body.appendChild(element);
+
+        getMyRequests.emit(manyRequests);
+
+        return Promise.resolve().then(() => {
+            expect(element.shadowRoot.querySelectorAll('tbody tr')).toHaveLength(10);
+            expect(element.shadowRoot.querySelector('.my-requests__pagination-summary').textContent).toBe(
+                'Showing 1–10 of 23'
+            );
+            expect(element.shadowRoot.querySelector('.my-requests__pagination-page').textContent).toBe(
+                'Page 1 of 3'
+            );
+
+            const [prevButton, nextButton] = element.shadowRoot.querySelectorAll('lightning-button-icon');
+            expect(prevButton.disabled).toBe(true);
+            expect(nextButton.disabled).toBe(false);
+
+            nextButton.click();
+
+            return Promise.resolve().then(() => {
+                expect(element.shadowRoot.querySelectorAll('tbody tr')).toHaveLength(10);
+                expect(element.shadowRoot.querySelector('.my-requests__pagination-page').textContent).toBe(
+                    'Page 2 of 3'
+                );
+
+                nextButton.click();
+
+                return Promise.resolve().then(() => {
+                    expect(element.shadowRoot.querySelectorAll('tbody tr')).toHaveLength(3);
+                    expect(element.shadowRoot.querySelector('.my-requests__pagination-page').textContent).toBe(
+                        'Page 3 of 3'
+                    );
+                    expect(nextButton.disabled).toBe(true);
+                });
+            });
+        });
+    });
+
+    it('resets to page 1 when the search term changes', () => {
+        const manyRequests = Array.from({ length: 15 }, (_, index) => ({
+            ...mockRequests[0],
+            Id: `a02000000000${String(index + 200).padStart(3, '0')}AAA`,
+            Name: `SR-${String(index + 200).padStart(4, '0')}`,
+            Role__c: index === 12 ? 'Enrolled Nurse' : 'Registered Nurse'
+        }));
+
+        const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
+        document.body.appendChild(element);
+
+        getMyRequests.emit(manyRequests);
+
+        return Promise.resolve().then(() => {
+            const [, nextButton] = element.shadowRoot.querySelectorAll('lightning-button-icon');
+            nextButton.click();
+
+            return Promise.resolve().then(() => {
+                expect(element.shadowRoot.querySelector('.my-requests__pagination-page').textContent).toBe(
+                    'Page 2 of 2'
+                );
+
+                const searchInput = element.shadowRoot.querySelector('lightning-input');
+                searchInput.value = 'Enrolled';
+                searchInput.dispatchEvent(new CustomEvent('change'));
+
+                return Promise.resolve().then(() => {
+                    const rows = element.shadowRoot.querySelectorAll('tbody tr');
+                    expect(rows).toHaveLength(1);
+                    expect(
+                        element.shadowRoot.querySelector('.my-requests__pagination-summary').textContent
+                    ).toBe('Showing 1–1 of 1');
+                });
+            });
+        });
+    });
+
     it('shows an error message when the wire adapter errors', () => {
         const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
         document.body.appendChild(element);

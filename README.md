@@ -133,28 +133,26 @@ this site will actually see.
 `supportRequestForm` (Support/Query) no longer submits through a bare
 `lightning-record-edit-form` — it's now a custom Apex-backed form (matching
 `requestStaffForm`'s pattern) via `SupportRequestController.createCase()` /
-`SupportRequestService.submitNewCase()`, so it can do three things a plain
-record-edit-form couldn't:
-- **Live related-request detail**: picking a Related Request (populated from
-  the same `getMyRequests()` data already used elsewhere) shows that
-  request's Date, Facility, Ward, Role, and Start Time inline — no extra
-  Apex call, since the data's already loaded client-side.
-- **Reliable post-submit confirmation**: an inline confirmation panel (not
-  just a toast, which can be unreliable on some LWR sites) with **View My
-  Requests** and **Submit Another Request** buttons.
-- **Confirmation email**: `SupportRequestService` emails the submitting
-  Contact (via `Messaging.SingleEmailMessage.setTargetObjectId`) with the
-  Case's Subject/Request Type and, when a Related Request was picked, that
-  request's Date/Facility/Ward/Role/Start Time. Email failures are caught
-  and logged rather than blocking the Case from being created — confirmation
-  email is a nice-to-have, not the core function.
+`SupportRequestService.submitNewCase()`, giving it a **reliable post-submit
+confirmation** (an inline confirmation panel, not just a toast, which can be
+unreliable on some LWR sites) with **View My Requests** and **Submit
+Another Request** buttons, plus a **confirmation email**
+(`SupportRequestService` emails the submitting Contact via
+`Messaging.SingleEmailMessage.setTargetObjectId` with the Case's
+Subject/Request Type; email failures are caught and logged rather than
+blocking the Case from being created — confirmation email is a nice-to-have,
+not the core function).
 
-`supportRequestForm` no longer offers a Request Type picker — it only ever
-submits `Portal_Request_Type__c = 'General Query'` now. Cancellation
-requests moved to a per-row action on My Requests (above); the
-`Portal_Request_Type__c` picklist value `Cancellation Request` still exists
-(that row action still creates Cases with it), it's just no longer a choice
-a user picks from this form.
+`supportRequestForm` no longer offers a Request Type picker or a Related
+Request picker — it's now just Subject/Description, and only ever submits
+`Portal_Request_Type__c = 'General Query'`. Both removals reflect the same
+shift: cancellation requests moved to a per-row action on My Requests
+(above), which is also where the Related Request context naturally lives
+now (the row you clicked *is* the related request), so a general Support
+query no longer needs to reference one. The `Portal_Request_Type__c`
+picklist value `Cancellation Request` and the `Case.Related_Staffing_Request__c`
+field both still exist and are still used — just by that My Requests row
+action, not by anything a user picks on this form.
 
 ### Reporting
 
@@ -175,6 +173,19 @@ disabled when there's nothing to download. Defaults to Last 7 Days on load.
 This screen is read-only (no search/sort/pagination/actions) — it's meant
 for pulling a data extract for a date range, not day-to-day request
 management, which is what My Requests is for.
+
+The download itself uses a `data:` URI (`<a download href="data:text/csv...">`),
+**not** the more common `Blob` + `URL.createObjectURL("blob:...")` pattern —
+that was the first approach, but it didn't actually download anything on
+this site: the link just navigated to a blank page instead of saving a
+file. Same root cause family as the toast issue elsewhere in this doc — this
+site's CSP/Lightning Web Security sandboxing doesn't treat `blob:` URLs the
+way a plain web app would. A `data:` URI sidesteps it: the whole file is
+encoded directly into the `href`, with no separate object-URL lifecycle (and
+so no possible early-revocation race) involved. If a future change to this
+screen ever needs Blob-based downloads again (e.g. for a binary file type
+`data:` URIs handle poorly), test it on the actual site early — don't
+assume the textbook browser pattern works here.
 
 **This is a brand new page, so it needs a manual Experience Builder step**
 the same way Calendar did when it was added: create a new page in
@@ -386,7 +397,7 @@ npm install
 npm run test:unit
 ```
 
-92 Jest tests across all 13 LWCs. This is the only thing in this project
+91 Jest tests across all 13 LWCs. This is the only thing in this project
 that's actually been run and confirmed passing in this environment.
 
 ### Requires a connected org (not verified here)

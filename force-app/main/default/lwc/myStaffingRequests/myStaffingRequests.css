@@ -28,6 +28,7 @@
     width: 100%;
     border-collapse: collapse;
     font-size: 0.9rem;
+    table-layout: fixed;
 }
 
 .my-requests__table th {
@@ -44,6 +45,75 @@
     cursor: pointer;
     user-select: none;
     transition: color 150ms ease;
+}
+
+/* Fixed per-column widths, matched with staffingRequestReporting.css by
+   column position, so the shared columns line up the same way on both
+   screens instead of each table auto-sizing to its own content/column
+   count. Column 16 (Actions) has no counterpart on Reporting. */
+.my-requests__table th:nth-child(1),
+.my-requests__table td:nth-child(1) {
+    width: 6rem;
+}
+.my-requests__table th:nth-child(2),
+.my-requests__table td:nth-child(2) {
+    width: 12rem;
+}
+.my-requests__table th:nth-child(3),
+.my-requests__table td:nth-child(3) {
+    width: 10rem;
+}
+.my-requests__table th:nth-child(4),
+.my-requests__table td:nth-child(4) {
+    width: 9rem;
+}
+.my-requests__table th:nth-child(5),
+.my-requests__table td:nth-child(5) {
+    width: 7rem;
+}
+.my-requests__table th:nth-child(6),
+.my-requests__table td:nth-child(6) {
+    width: 7.5rem;
+}
+.my-requests__table th:nth-child(7),
+.my-requests__table td:nth-child(7) {
+    width: 7.5rem;
+}
+.my-requests__table th:nth-child(8),
+.my-requests__table td:nth-child(8) {
+    width: 6.5rem;
+}
+.my-requests__table th:nth-child(9),
+.my-requests__table td:nth-child(9) {
+    width: 6.5rem;
+}
+.my-requests__table th:nth-child(10),
+.my-requests__table td:nth-child(10) {
+    width: 6.5rem;
+}
+.my-requests__table th:nth-child(11),
+.my-requests__table td:nth-child(11) {
+    width: 10.5rem;
+}
+.my-requests__table th:nth-child(12),
+.my-requests__table td:nth-child(12) {
+    width: 6.5rem;
+}
+.my-requests__table th:nth-child(13),
+.my-requests__table td:nth-child(13) {
+    width: 8rem;
+}
+.my-requests__table th:nth-child(14),
+.my-requests__table td:nth-child(14) {
+    width: 13.5rem;
+}
+.my-requests__table th:nth-child(15),
+.my-requests__table td:nth-child(15) {
+    width: 9rem;
+}
+.my-requests__table th:nth-child(16),
+.my-requests__table td:nth-child(16) {
+    width: 3.5rem;
 }
 
 .my-requests__table th:hover {

@@ -79,6 +79,7 @@
     width: 100%;
     border-collapse: collapse;
     font-size: 0.9rem;
+    table-layout: fixed;
 }
 
 .reporting__table th {
@@ -94,12 +95,75 @@
     white-space: nowrap;
 }
 
+/* Fixed per-column widths, matched with myStaffingRequests.css by column
+   position, so the shared columns line up the same way on both screens
+   instead of each table auto-sizing to its own content/column count. */
+.reporting__table th:nth-child(1),
+.reporting__table td:nth-child(1) {
+    width: 6rem;
+}
+.reporting__table th:nth-child(2),
+.reporting__table td:nth-child(2) {
+    width: 12rem;
+}
+.reporting__table th:nth-child(3),
+.reporting__table td:nth-child(3) {
+    width: 10rem;
+}
+.reporting__table th:nth-child(4),
+.reporting__table td:nth-child(4) {
+    width: 9rem;
+}
+.reporting__table th:nth-child(5),
+.reporting__table td:nth-child(5) {
+    width: 7rem;
+}
+.reporting__table th:nth-child(6),
+.reporting__table td:nth-child(6) {
+    width: 7.5rem;
+}
+.reporting__table th:nth-child(7),
+.reporting__table td:nth-child(7) {
+    width: 7.5rem;
+}
+.reporting__table th:nth-child(8),
+.reporting__table td:nth-child(8) {
+    width: 6.5rem;
+}
+.reporting__table th:nth-child(9),
+.reporting__table td:nth-child(9) {
+    width: 6.5rem;
+}
+.reporting__table th:nth-child(10),
+.reporting__table td:nth-child(10) {
+    width: 6.5rem;
+}
+.reporting__table th:nth-child(11),
+.reporting__table td:nth-child(11) {
+    width: 10.5rem;
+}
+.reporting__table th:nth-child(12),
+.reporting__table td:nth-child(12) {
+    width: 6.5rem;
+}
+.reporting__table th:nth-child(13),
+.reporting__table td:nth-child(13) {
+    width: 8rem;
+}
+.reporting__table th:nth-child(14),
+.reporting__table td:nth-child(14) {
+    width: 13.5rem;
+}
+.reporting__table th:nth-child(15),
+.reporting__table td:nth-child(15) {
+    width: 9rem;
+}
+
 .reporting__table td {
     text-align: left;
     padding: 0.85rem 1rem;
     border-bottom: 1px solid #eef1f6;
     color: #16325c;
-    white-space: nowrap;
 }
 
 .reporting__table tbody tr {

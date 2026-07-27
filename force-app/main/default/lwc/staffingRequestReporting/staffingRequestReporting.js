@@ -4,6 +4,7 @@ import { formatTime } from 'c/timeFormatUtils';
 import getMyRequests from '@salesforce/apex/StaffingRequestController.getMyRequests';
 
 const PRESETS = [
+    { key: 'all', label: 'All' },
     { key: 'last7', label: 'Last 7 Days' },
     { key: 'lastWeek', label: 'Last Week' },
     { key: 'lastMonth', label: 'Last Month' },
@@ -114,6 +115,9 @@ export default class StaffingRequestReporting extends LightningElement {
     // what was asked for.
     get effectiveRange() {
         const today = new Date();
+        if (this.activePreset === 'all') {
+            return { from: undefined, to: undefined };
+        }
         if (this.activePreset === 'last7') {
             return { from: toIso(addDays(today, -6)), to: toIso(today) };
         }
@@ -145,6 +149,9 @@ export default class StaffingRequestReporting extends LightningElement {
     }
 
     get filteredRequests() {
+        if (this.activePreset === 'all') {
+            return this.allRequests;
+        }
         if (!this.hasCompleteRange) {
             return [];
         }
@@ -169,6 +176,9 @@ export default class StaffingRequestReporting extends LightningElement {
     get emptyStateMessage() {
         if (this.isCustomActive && !this.hasCompleteRange) {
             return 'Select both a From and To date to see results.';
+        }
+        if (this.activePreset === 'all') {
+            return 'No staffing requests yet.';
         }
         return `No staffing requests between ${this.rangeLabel}.`;
     }
@@ -201,9 +211,12 @@ export default class StaffingRequestReporting extends LightningElement {
         // A data: URI avoids that extra moving part entirely - the whole
         // file is encoded directly into the href, no separate object-URL
         // lifecycle (and thus no possible early-revocation race) involved.
+        const rangeSuffix =
+            this.activePreset === 'all' ? 'all' : `${this.effectiveRange.from}-to-${this.effectiveRange.to}`;
+
         const link = document.createElement('a');
         link.href = `data:text/csv;charset=utf-8,${encodeURIComponent(csvContent)}`;
-        link.download = `staffing-requests-${this.effectiveRange.from}-to-${this.effectiveRange.to}.csv`;
+        link.download = `staffing-requests-${rangeSuffix}.csv`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

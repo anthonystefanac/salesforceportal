@@ -71,6 +71,31 @@ describe('c-staffing-request-reporting', () => {
         });
     });
 
+    it('shows every request regardless of date when All is selected', () => {
+        const element = createElement('c-staffing-request-reporting', { is: StaffingRequestReporting });
+        document.body.appendChild(element);
+
+        getMyRequests.emit(mockRequests);
+
+        return Promise.resolve().then(() => {
+            const allButton = Array.from(element.shadowRoot.querySelectorAll('.reporting__preset')).find(
+                (button) => button.textContent === 'All'
+            );
+            allButton.click();
+
+            return Promise.resolve().then(() => {
+                const rows = element.shadowRoot.querySelectorAll('tbody tr');
+                expect(rows).toHaveLength(mockRequests.length);
+
+                const downloadButton = element.shadowRoot.querySelector('lightning-button');
+                downloadButton.click();
+
+                expect(createdLinks).toHaveLength(1);
+                expect(createdLinks[0].download).toBe('staffing-requests-all.csv');
+            });
+        });
+    });
+
     it('shows the previous calendar week (Mon-Sun) when Last Week is selected', () => {
         const element = createElement('c-staffing-request-reporting', { is: StaffingRequestReporting });
         document.body.appendChild(element);

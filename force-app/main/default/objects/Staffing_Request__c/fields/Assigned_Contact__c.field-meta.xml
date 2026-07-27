@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Assigned_Contact__c</fullName>
+    <label>Assigned Contact</label>
+    <type>Text</type>
+    <length>120</length>
+    <required>false</required>
+    <description>Name of the individual assigned to complete this shift once filled. Set by internal staff today (or a future Bullhorn sync); external workers aren't Contact records in this org, so this is a plain text field rather than a lookup.</description>
+</CustomField>

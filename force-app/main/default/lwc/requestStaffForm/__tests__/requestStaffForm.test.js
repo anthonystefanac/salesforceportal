@@ -173,6 +173,42 @@ describe('c-request-staff-form', () => {
         expect(shiftDateInput.value).toBe('2026-09-03');
     });
 
+    it('sets the Shift Date picker\'s min attribute to today, so past dates aren\'t selectable', () => {
+        const element = createElement('c-request-staff-form', { is: RequestStaffForm });
+        document.body.appendChild(element);
+
+        const shiftDateInput = element.shadowRoot.querySelector('[data-field="shiftDate"]');
+        const today = new Date();
+        const expected = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(
+            today.getDate()
+        ).padStart(2, '0')}`;
+        expect(shiftDateInput.min).toBe(expected);
+    });
+
+    it('blocks submission with a past Shift Date', async () => {
+        const element = createElement('c-request-staff-form', { is: RequestStaffForm });
+        const toastHandler = jest.fn();
+        element.addEventListener('lightning__showtoast', toastHandler);
+        document.body.appendChild(element);
+
+        setInputValue(element, '[data-field="shiftDate"]', '2020-01-01');
+        await Promise.resolve();
+
+        const submitButton = element.shadowRoot.querySelector('lightning-button');
+        submitButton.click();
+
+        await Promise.resolve();
+        await Promise.resolve();
+
+        expect(toastHandler).toHaveBeenCalledTimes(1);
+        expect(toastHandler.mock.calls[0][0].detail.variant).toBe('error');
+        expect(toastHandler.mock.calls[0][0].detail.message).toBe('Shift date cannot be in the past.');
+        expect(createRequest).not.toHaveBeenCalled();
+
+        const banner = element.shadowRoot.querySelector('.request-staff-form__banner_error');
+        expect(banner.textContent).toBe('Shift date cannot be in the past.');
+    });
+
     it('blocks submission when Start Time is picked and End Time is left at its auto-filled value', async () => {
         const element = createElement('c-request-staff-form', { is: RequestStaffForm });
         const toastHandler = jest.fn();

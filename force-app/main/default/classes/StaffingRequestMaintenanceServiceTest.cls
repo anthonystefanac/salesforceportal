@@ -7,6 +7,13 @@ private class StaffingRequestMaintenanceServiceTest {
         Contact con = TestDataFactory.createContact(acct.Id, 'Portal', 'Tester');
         Facility__c facility = TestDataFactory.createFacility(acct.Id, 'Test Aged Care Facility');
 
+        // Moving Shift_Date__c into the past here is only a test-setup
+        // shortcut to simulate the calendar having advanced past it - real
+        // overdue requests get that way by time passing, never by someone
+        // editing the date backward, which is exactly what
+        // StaffingRequestValidationService.validateShiftDateNotInPast exists
+        // to block. Bypass it for these two setup writes only.
+        StaffingRequestValidationService.bypassForTests = true;
         Staffing_Request__c overdueSubmitted = TestDataFactory.createStaffingRequest(facility.Id, con.Id);
         overdueSubmitted.Shift_Date__c = Date.today().addDays(-2);
         overdueSubmitted.Status__c = 'Submitted';
@@ -16,6 +23,7 @@ private class StaffingRequestMaintenanceServiceTest {
         overdueFilled.Shift_Date__c = Date.today().addDays(-2);
         overdueFilled.Status__c = 'Filled';
         update overdueFilled;
+        StaffingRequestValidationService.bypassForTests = false;
 
         Staffing_Request__c futureSubmitted = TestDataFactory.createStaffingRequest(facility.Id, con.Id);
 

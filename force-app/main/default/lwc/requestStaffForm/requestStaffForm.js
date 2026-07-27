@@ -38,6 +38,14 @@ const QUANTITY_OPTIONS = Array.from({ length: MAX_QUANTITY }, (_, index) => {
     return { label: value, value };
 });
 
+function todayIso() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
 export default class RequestStaffForm extends LightningElement {
     roleOptions = ROLE_OPTIONS;
     priorityOptions = PRIORITY_OPTIONS;
@@ -115,6 +123,10 @@ export default class RequestStaffForm extends LightningElement {
         return !!this.bannerMessage;
     }
 
+    get minShiftDate() {
+        return todayIso();
+    }
+
     get bannerClass() {
         return this.bannerVariant === 'success'
             ? 'request-staff-form__banner request-staff-form__banner_success'
@@ -123,6 +135,18 @@ export default class RequestStaffForm extends LightningElement {
 
     async handleSubmit() {
         this.bannerMessage = undefined;
+
+        if (this.formData.shiftDate && this.formData.shiftDate < todayIso()) {
+            this.showBanner('error', 'Shift date cannot be in the past.');
+            this.dispatchEvent(
+                new ShowToastEvent({
+                    title: 'Unable to submit request',
+                    message: 'Shift date cannot be in the past.',
+                    variant: 'error'
+                })
+            );
+            return;
+        }
 
         if (this.formData.startTime && this.formData.startTime === this.formData.endTime) {
             this.showBanner('error', 'End time cannot be the same as start time.');

@@ -193,14 +193,19 @@ export default class StaffingRequestReporting extends LightningElement {
             .join('\n');
         const csvContent = `${header}\n${body}`;
 
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
+        // A Blob + URL.createObjectURL "blob:" link looked right but didn't
+        // actually download anything on this Experience Cloud LWR site - the
+        // anchor navigated to a blank page instead of triggering a save,
+        // most likely the site's CSP (or Lightning Web Security's DOM
+        // sandboxing) not treating blob: URLs the way a plain web app would.
+        // A data: URI avoids that extra moving part entirely - the whole
+        // file is encoded directly into the href, no separate object-URL
+        // lifecycle (and thus no possible early-revocation race) involved.
         const link = document.createElement('a');
-        link.href = url;
+        link.href = `data:text/csv;charset=utf-8,${encodeURIComponent(csvContent)}`;
         link.download = `staffing-requests-${this.effectiveRange.from}-to-${this.effectiveRange.to}.csv`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        URL.revokeObjectURL(url);
     }
 }

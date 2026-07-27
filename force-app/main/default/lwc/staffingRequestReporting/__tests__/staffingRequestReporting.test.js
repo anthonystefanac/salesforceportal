@@ -44,8 +44,6 @@ describe('c-staffing-request-reporting', () => {
             }
             return el;
         });
-        global.URL.createObjectURL = jest.fn(() => 'blob:mock-url');
-        global.URL.revokeObjectURL = jest.fn();
     });
 
     afterEach(() => {
@@ -190,6 +188,9 @@ describe('c-staffing-request-reporting', () => {
 
                     expect(createdLinks).toHaveLength(1);
                     expect(createdLinks[0].download).toBe('staffing-requests-2026-07-20-to-2026-07-26.csv');
+                    expect(createdLinks[0].href.startsWith('data:text/csv;charset=utf-8,')).toBe(true);
+                    expect(decodeURIComponent(createdLinks[0].href)).toContain('SR-0002');
+                    expect(decodeURIComponent(createdLinks[0].href)).toContain('SR-0003');
                     expect(createdLinks[0].click).toHaveBeenCalledTimes(1);
                 });
             });

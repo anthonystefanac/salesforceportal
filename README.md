@@ -167,7 +167,11 @@ action, not by anything a user picks on this form.
 
 `staffingRequestReporting` (nav label "Reporting") reuses the same
 `StaffingRequestController.getMyRequests()` data as My Requests — no new
-Apex — filtered client-side by `Shift_Date__c` against one of four ranges:
+Apex — filtered client-side by `Shift_Date__c` against one of five ranges:
+- **All** — no date filtering; every request the user can see. Added so
+  there's an explicit, unambiguous way to clear the date filter, rather
+  than making one of the other buttons deselectable (which would leave an
+  ambiguous "nothing selected" state).
 - **Last 7 Days** — a rolling window (today minus 6 days through today).
 - **Last Week** — the most recently *completed* calendar week (Monday
   through Sunday), not a rolling window. Deliberately different from Last 7
@@ -178,10 +182,20 @@ Apex — filtered client-side by `Shift_Date__c` against one of four ranges:
 
 A **Download CSV** button builds a CSV client-side (same columns as the
 table) from whatever's currently filtered and triggers a browser download —
-disabled when there's nothing to download. Defaults to Last 7 Days on load.
-This screen is read-only (no search/sort/pagination/actions) — it's meant
-for pulling a data extract for a date range, not day-to-day request
-management, which is what My Requests is for.
+disabled when there's nothing to download. The filename is
+`staffing-requests-all.csv` for the All range, or
+`staffing-requests-<from>-to-<to>.csv` otherwise. Defaults to Last 7 Days
+on load. This screen is read-only (no search/sort/pagination/actions) —
+it's meant for pulling a data extract for a date range, not day-to-day
+request management, which is what My Requests is for.
+
+**Column widths match My Requests.** Both tables now use
+`table-layout: fixed` with the same explicit per-column widths (set via
+`:nth-child` in each component's own CSS, since Shadow DOM means the two
+components can't share a CSS file) so the 15 columns the two screens have
+in common line up the same way on both pages, rather than each table
+auto-sizing its columns to its own content and column count (My Requests
+has a 16th Actions column Reporting doesn't).
 
 The download itself uses a `data:` URI (`<a download href="data:text/csv...">`),
 **not** the more common `Blob` + `URL.createObjectURL("blob:...")` pattern —
@@ -406,7 +420,7 @@ npm install
 npm run test:unit
 ```
 
-92 Jest tests across all 13 LWCs. This is the only thing in this project
+93 Jest tests across all 13 LWCs. This is the only thing in this project
 that's actually been run and confirmed passing in this environment.
 
 ### Requires a connected org (not verified here)

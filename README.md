@@ -163,6 +163,18 @@ picklist value `Cancellation Request` and the `Case.Related_Staffing_Request__c`
 field both still exist and are still used — just by that My Requests row
 action, not by anything a user picks on this form.
 
+**Subject is actually enforced as required now.** The `required` attribute
+on the Subject `lightning-input` only drives browser-native validation UI
+when something calls `reportValidity()` — nothing did, so it was purely
+decorative and the Case submitted fine with a blank Subject. `handleSubmit`
+now calls `reportValidity()` (for the native "Complete this field" styling)
+and, since Jest's `lightning-input` stub can't exercise real DOM validity,
+also gates on the trimmed `formData.subject` value itself and shows the
+guaranteed inline error banner ("Subject is required.") if it's blank or
+whitespace-only — the same pattern this form already uses for Apex errors,
+rather than relying solely on native validity UI that may not be reliable
+on this site type either.
+
 ### Reporting
 
 `staffingRequestReporting` (nav label "Reporting") reuses the same
@@ -420,7 +432,7 @@ npm install
 npm run test:unit
 ```
 
-93 Jest tests across all 13 LWCs. This is the only thing in this project
+95 Jest tests across all 13 LWCs. This is the only thing in this project
 that's actually been run and confirmed passing in this environment.
 
 ### Requires a connected org (not verified here)

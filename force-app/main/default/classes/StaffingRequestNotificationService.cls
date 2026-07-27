@@ -60,7 +60,7 @@ public without sharing class StaffingRequestNotificationService {
 
     private static List<Staffing_Request__c> queryDetails(Set<Id> ids) {
         return [
-            SELECT Name, Status__c, Role__c, Shift_Date__c, Start_Time__c, Quantity__c,
+            SELECT Name, Status__c, Role__c, Shift_Date__c, Start_Time__c, End_Time__c, Quantity__c,
                    Facility__r.Name, Ward__r.Name, Requested_By_Contact__c
             FROM Staffing_Request__c
             WHERE Id IN :ids
@@ -123,6 +123,7 @@ public without sharing class StaffingRequestNotificationService {
             + 'Role: ' + request.Role__c + '\n'
             + 'Shift Date: ' + (request.Shift_Date__c != null ? request.Shift_Date__c.format() : '') + '\n'
             + 'Start Time: ' + formatTime(request.Start_Time__c) + '\n'
+            + 'End Time: ' + formatTime(request.End_Time__c) + '\n'
             + 'Quantity: ' + request.Quantity__c + '\n'
             + 'Status: ' + request.Status__c + '\n';
     }

@@ -27,39 +27,6 @@
                 <div class="support-request-form__banner">{errorMessage}</div>
             </template>
             <div class="support-request-form__fields">
-                <lightning-combobox
-                    label="Related Request"
-                    placeholder="None"
-                    options={relatedRequestOptions}
-                    value={formData.relatedRequestId}
-                    onchange={handleRelatedRequestChange}
-                ></lightning-combobox>
-
-                <template if:true={hasSelectedRelatedRequest}>
-                    <div class="support-request-form__related-detail">
-                        <div>
-                            <span class="support-request-form__related-label">Date:</span>
-                            {selectedRelatedRequestShiftDate}
-                        </div>
-                        <div>
-                            <span class="support-request-form__related-label">Facility:</span>
-                            {selectedRelatedRequestFacility}
-                        </div>
-                        <div>
-                            <span class="support-request-form__related-label">Ward:</span>
-                            {selectedRelatedRequestWard}
-                        </div>
-                        <div>
-                            <span class="support-request-form__related-label">Role:</span>
-                            {selectedRelatedRequestRole}
-                        </div>
-                        <div>
-                            <span class="support-request-form__related-label">Start Time:</span>
-                            {selectedRelatedRequestStartTime}
-                        </div>
-                    </div>
-                </template>
-
                 <lightning-input
                     label="Subject"
                     data-field="subject"

@@ -1,18 +1,6 @@
 import { createElement } from 'lwc';
 import SupportRequestForm from 'c/supportRequestForm';
-import getMyRequests from '@salesforce/apex/StaffingRequestController.getMyRequests';
 import createCase from '@salesforce/apex/SupportRequestController.createCase';
-
-jest.mock(
-    '@salesforce/apex/StaffingRequestController.getMyRequests',
-    () => {
-        const { createApexTestWireAdapter } = require('@salesforce/sfdx-lwc-jest');
-        return {
-            default: createApexTestWireAdapter(jest.fn())
-        };
-    },
-    { virtual: true }
-);
 
 jest.mock(
     '@salesforce/apex/SupportRequestController.createCase',
@@ -35,19 +23,6 @@ jest.mock('lightning/navigation', () => {
     return { NavigationMixin };
 });
 
-const mockMyRequests = [
-    {
-        Id: 'a02000000000001AAA',
-        Name: 'SR-0001',
-        Facility__r: { Name: 'Test Hospital' },
-        Ward__r: { Name: 'Ward A' },
-        Role__c: 'Registered Nurse',
-        Shift_Date__c: '2026-08-01',
-        Start_Time__c: 25200000,
-        Status__c: 'Broadcasted'
-    }
-];
-
 function setInputValue(element, selector, value) {
     const input = element.shadowRoot.querySelector(selector);
     input.value = value;
@@ -63,47 +38,14 @@ describe('c-support-request-form', () => {
         jest.clearAllMocks();
     });
 
-    it('shows the related staffing request detail (date, facility, ward, role, start time) once selected', () => {
-        const element = createElement('c-support-request-form', { is: SupportRequestForm });
-        document.body.appendChild(element);
-
-        getMyRequests.emit(mockMyRequests);
-
-        return Promise.resolve().then(() => {
-            const relatedRequestField = element.shadowRoot.querySelector('lightning-combobox');
-            relatedRequestField.dispatchEvent(
-                new CustomEvent('change', { detail: { value: 'a02000000000001AAA' } })
-            );
-
-            return Promise.resolve().then(() => {
-                const detail = element.shadowRoot.querySelector('.support-request-form__related-detail');
-                expect(detail).not.toBeNull();
-                expect(detail.textContent).toContain('2026-08-01');
-                expect(detail.textContent).toContain('Test Hospital');
-                expect(detail.textContent).toContain('Ward A');
-                expect(detail.textContent).toContain('Registered Nurse');
-                expect(detail.textContent).toContain('07:00');
-            });
-        });
-    });
-
-    it('submits the Case as a General Query with the selected related request', async () => {
+    it('submits the Case as a General Query with the subject and description', async () => {
         createCase.mockResolvedValue('500000000000001AAA');
 
         const element = createElement('c-support-request-form', { is: SupportRequestForm });
         document.body.appendChild(element);
 
-        getMyRequests.emit(mockMyRequests);
-        await Promise.resolve();
-
-        const relatedRequestField = element.shadowRoot.querySelector('lightning-combobox');
-        relatedRequestField.dispatchEvent(
-            new CustomEvent('change', { detail: { value: 'a02000000000001AAA' } })
-        );
-        await Promise.resolve();
-
-        setInputValue(element, '[data-field="subject"]', 'Need to cancel a shift');
-        setInputValue(element, '[data-field="description"]', 'Overstaffed for this shift.');
+        setInputValue(element, '[data-field="subject"]', 'Question about a shift');
+        setInputValue(element, '[data-field="description"]', 'Just checking on something.');
 
         const submitButton = element.shadowRoot.querySelector('.support-request-form__submit');
         submitButton.click();
@@ -113,9 +55,10 @@ describe('c-support-request-form', () => {
 
         expect(createCase).toHaveBeenCalledTimes(1);
         const newCase = createCase.mock.calls[0][0].newCase;
-        expect(newCase.Related_Staffing_Request__c).toBe('a02000000000001AAA');
-        expect(newCase.Subject).toBe('Need to cancel a shift');
+        expect(newCase.Subject).toBe('Question about a shift');
+        expect(newCase.Description).toBe('Just checking on something.');
         expect(newCase.Portal_Request_Type__c).toBe('General Query');
+        expect(newCase.Related_Staffing_Request__c).toBeUndefined();
     });
 
     it('shows an inline confirmation and a success toast on successful submission', async () => {

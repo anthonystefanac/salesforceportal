@@ -103,19 +103,28 @@ whenever it's populated.
 Each row in `myStaffingRequests` also has a **Request Cancellation** action
 — this used to live on the Support/Query screen as a "Cancellation Request"
 type, but now lives directly on the row it applies to, since that's a more
-natural place to act on a specific request. Clicking it asks for
-confirmation (a native `window.confirm`, not a custom modal — kept simple
-rather than building a full dialog component), then reuses the exact same
-`SupportRequestController.createCase()` path Support already used: it
-creates a `Portal_Request_Type__c = 'Cancellation Request'` Case linked to
-that request (same confirmation email, same Case note) and refreshes the
-list. The button only shows for requests that aren't already
+natural place to act on a specific request. It's a compact
+`lightning-button-menu` (a small dropdown, icon-only trigger) with a single
+"Request Cancellation" menu item, rather than a full-width destructive
+button — the earlier button-per-row approach was visibly too wide and
+pushed the table past the screen edge on the live site. Selecting the menu
+item asks for confirmation (a native `window.confirm`, not a custom modal —
+kept simple rather than building a full dialog component), then reuses the
+exact same `SupportRequestController.createCase()` path Support already
+used: it creates a `Portal_Request_Type__c = 'Cancellation Request'` Case
+linked to that request (same confirmation email, same Case note) and
+refreshes the list. The action only shows for requests that aren't already
 Cancellation-Requested and aren't already in a terminal status (Filled /
 Unable to Fill / Cancelled). This also closed a real gap:
 `Cancellation_Requested__c` existed and was displayed as a column already,
 but nothing in the codebase ever actually set it — `SupportRequestService`
 now flags it on the related request whenever a Cancellation Request Case is
 created, regardless of which screen submitted it.
+
+The `myStaffingRequests` table container also has defensive
+`max-width: 100%`/`overflow-x: auto` CSS on its wrapper elements, so any
+wide row content scrolls within the table's own frame instead of stretching
+the surrounding page.
 
 **Error/success feedback doesn't rely solely on toasts.** Both forms
 originally surfaced validation and Apex errors only via
@@ -397,7 +406,7 @@ npm install
 npm run test:unit
 ```
 
-91 Jest tests across all 13 LWCs. This is the only thing in this project
+92 Jest tests across all 13 LWCs. This is the only thing in this project
 that's actually been run and confirmed passing in this environment.
 
 ### Requires a connected org (not verified here)

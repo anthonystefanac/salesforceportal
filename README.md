@@ -210,6 +210,19 @@ and rethrows it as an `AuraHandledException` with the same friendly message,
 so the LWC's `error.body.message` shows "End Time cannot be the same as
 Start Time." rather than Salesforce's raw, verbose DML exception text.
 
+`requestStaffForm` also blocks a Shift Date before today (the date picker's
+`min` is set to today, plus the same submit-time check as the End Time rule),
+and `StaffingRequestValidationService.validateShiftDateNotInPast` enforces it
+server-side the same way. This one needs its own "don't re-block existing
+data" logic, for a reason specific to this field: a request's Shift Date is
+*expected* to become "in the past" simply by the calendar advancing — that's
+exactly what `StaffingRequestMaintenanceService`'s daily overdue job acts on
+— so this rule only blocks a save that actively introduces or changes into a
+past date, never a record that's merely aged into being past-dated, or is
+being updated for an unrelated reason (like that same overdue job setting
+Status to Unable to Fill). Without that distinction, the daily overdue job
+would break the moment this validation deployed.
+
 ### Notifications
 
 `StaffingRequestTrigger` (after insert, after update on `Staffing_Request__c`)
@@ -312,7 +325,7 @@ npm install
 npm run test:unit
 ```
 
-78 Jest tests across all 12 LWCs. This is the only thing in this project
+80 Jest tests across all 12 LWCs. This is the only thing in this project
 that's actually been run and confirmed passing in this environment.
 
 ### Requires a connected org (not verified here)

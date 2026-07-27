@@ -1,0 +1,121 @@
+.reporting__title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #16325c;
+    margin: 0 0 1.25rem 0;
+    letter-spacing: -0.01em;
+}
+
+.reporting__panel {
+    background: #ffffff;
+    border: 1px solid #e4e8f0;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 2px rgba(22, 50, 92, 0.05), 0 6px 16px rgba(22, 50, 92, 0.06);
+    overflow: hidden;
+}
+
+.reporting__controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #e4e8f0;
+    background: #f7f9fc;
+}
+
+.reporting__presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.reporting__preset {
+    all: unset;
+    box-sizing: border-box;
+    cursor: pointer;
+    padding: 0.5rem 1rem;
+    border-radius: 999px;
+    border: 1px solid #d8dde6;
+    background: #ffffff;
+    color: #54698d;
+    font-size: 0.82rem;
+    font-weight: 600;
+    transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+}
+
+.reporting__preset:hover {
+    background: #eaf2fc;
+    color: #08417a;
+}
+
+.reporting__preset:focus-visible {
+    outline: 2px solid #0b5cab;
+    outline-offset: 2px;
+}
+
+.reporting__preset_active {
+    background: #0b5cab;
+    border-color: #0b5cab;
+    color: #ffffff;
+}
+
+.reporting__preset_active:hover {
+    background: #08417a;
+    color: #ffffff;
+}
+
+.reporting__custom-range {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.reporting__table-wrap {
+    overflow-x: auto;
+}
+
+.reporting__table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.reporting__table th {
+    text-align: left;
+    padding: 0.75rem 1rem;
+    background: #f7f9fc;
+    color: #6b7d99;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid #e4e8f0;
+    white-space: nowrap;
+}
+
+.reporting__table td {
+    text-align: left;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid #eef1f6;
+    color: #16325c;
+    white-space: nowrap;
+}
+
+.reporting__table tbody tr {
+    transition: background-color 150ms ease;
+}
+
+.reporting__table tbody tr:hover {
+    background-color: #f7f9fc;
+}
+
+.reporting__table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.reporting__empty {
+    color: #54698d;
+    padding: 1.5rem;
+    margin: 0;
+}

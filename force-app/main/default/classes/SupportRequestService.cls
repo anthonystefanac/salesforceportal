@@ -4,6 +4,12 @@
  * server-set requester, then send a confirmation email. Email failure never
  * blocks the Case itself from being submitted - it's a nice-to-have, not the
  * core function.
+ *
+ * Also the entry point for cancellation requests, whichever screen submits
+ * one (myStaffingRequests' per-row action today) - a Cancellation Request
+ * Case here also flags Staffing_Request__c.Cancellation_Requested__c on the
+ * related record, since that field is portal read-only (server-set only)
+ * and nothing else in the codebase ever sets it.
  */
 public with sharing class SupportRequestService {
 
@@ -17,6 +23,11 @@ public with sharing class SupportRequestService {
         sanitizedCase.ContactId = PortalUserContext.getCurrentContactId();
         insert sanitizedCase;
 
+        if (sanitizedCase.Portal_Request_Type__c == 'Cancellation Request'
+            && sanitizedCase.Related_Staffing_Request__c != null) {
+            flagCancellationRequested(sanitizedCase.Related_Staffing_Request__c);
+        }
+
         try {
             sendConfirmationEmail(sanitizedCase);
         } catch (Exception emailError) {
@@ -24,6 +35,10 @@ public with sharing class SupportRequestService {
         }
 
         return sanitizedCase.Id;
+    }
+
+    private static void flagCancellationRequested(Id staffingRequestId) {
+        update new Staffing_Request__c(Id = staffingRequestId, Cancellation_Requested__c = true);
     }
 
     private static void sendConfirmationEmail(Case submittedCase) {

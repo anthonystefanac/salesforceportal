@@ -32,6 +32,55 @@ private class SupportRequestServiceTest {
         System.assertEquals(con.Id, inserted.ContactId, 'Case must be linked to the running portal user\'s Contact');
         System.assertEquals('Need to cancel a shift', inserted.Subject);
         System.assertEquals(request.Id, inserted.Related_Staffing_Request__c);
+
+        Staffing_Request__c updatedRequest = [
+            SELECT Cancellation_Requested__c
+            FROM Staffing_Request__c
+            WHERE Id = :request.Id
+        ];
+        System.assertEquals(
+            true,
+            updatedRequest.Cancellation_Requested__c,
+            'A Cancellation Request Case must flag the related Staffing_Request__c'
+        );
+    }
+
+    @isTest
+    static void testGeneralQueryDoesNotFlagCancellationRequested() {
+        Account acct = TestDataFactory.createAccount('Test Aged Care Group');
+        Contact con = TestDataFactory.createContact(acct.Id, 'Portal', 'Tester');
+        Facility__c facility = TestDataFactory.createFacility(acct.Id, 'Test Facility');
+        Staffing_Request__c request = TestDataFactory.createStaffingRequest(facility.Id, con.Id);
+
+        Id portalProfileId = TestDataFactory.getPortalProfileIdOrNull();
+        if (portalProfileId == null) {
+            return;
+        }
+        User portalUser = TestDataFactory.createPortalUser(portalProfileId, con.Id, 'supportcasetest3');
+
+        Case newCase = new Case(
+            Subject = 'Question about a shift',
+            Description = 'Just checking something.',
+            Portal_Request_Type__c = 'General Query',
+            Related_Staffing_Request__c = request.Id
+        );
+
+        Test.startTest();
+        System.runAs(portalUser) {
+            SupportRequestService.submitNewCase(newCase);
+        }
+        Test.stopTest();
+
+        Staffing_Request__c unchangedRequest = [
+            SELECT Cancellation_Requested__c
+            FROM Staffing_Request__c
+            WHERE Id = :request.Id
+        ];
+        System.assertEquals(
+            false,
+            unchangedRequest.Cancellation_Requested__c,
+            'A General Query about a related request must not flag it as a cancellation'
+        );
     }
 
     @isTest

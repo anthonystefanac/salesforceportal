@@ -7,20 +7,17 @@ import createCase from '@salesforce/apex/SupportRequestController.createCase';
 
 const MY_REQUESTS_PAGE_NAME = 'My_Requests__c';
 
-const REQUEST_TYPE_OPTIONS = [
-    { label: 'General Query', value: 'General Query' },
-    { label: 'Cancellation Request', value: 'Cancellation Request' }
-];
+// Cancellation requests now come from a per-row action on My Requests
+// instead - this form only ever submits General Query cases.
+const REQUEST_TYPE = 'General Query';
 
 const DEFAULT_FORM = {
-    requestType: 'General Query',
     relatedRequestId: undefined,
     subject: undefined,
     description: undefined
 };
 
 export default class SupportRequestForm extends NavigationMixin(LightningElement) {
-    requestTypeOptions = REQUEST_TYPE_OPTIONS;
     myRequests = [];
     formData = { ...DEFAULT_FORM };
     isSubmitting = false;
@@ -86,12 +83,6 @@ export default class SupportRequestForm extends NavigationMixin(LightningElement
         return !!this.errorMessage;
     }
 
-    handleRequestTypeChange(event) {
-        // Changing Request Type resets any Related Request already picked,
-        // rather than carrying a possibly-stale selection across types.
-        this.formData = { ...this.formData, requestType: event.detail.value, relatedRequestId: undefined };
-    }
-
     handleRelatedRequestChange(event) {
         this.formData = { ...this.formData, relatedRequestId: event.detail.value };
     }
@@ -106,7 +97,7 @@ export default class SupportRequestForm extends NavigationMixin(LightningElement
         this.isSubmitting = true;
         try {
             const newCase = {
-                Portal_Request_Type__c: this.formData.requestType,
+                Portal_Request_Type__c: REQUEST_TYPE,
                 Related_Staffing_Request__c: this.formData.relatedRequestId,
                 Subject: this.formData.subject,
                 Description: this.formData.description

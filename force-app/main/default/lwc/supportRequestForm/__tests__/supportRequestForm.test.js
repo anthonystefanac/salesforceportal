@@ -70,7 +70,7 @@ describe('c-support-request-form', () => {
         getMyRequests.emit(mockMyRequests);
 
         return Promise.resolve().then(() => {
-            const relatedRequestField = element.shadowRoot.querySelectorAll('lightning-combobox')[1];
+            const relatedRequestField = element.shadowRoot.querySelector('lightning-combobox');
             relatedRequestField.dispatchEvent(
                 new CustomEvent('change', { detail: { value: 'a02000000000001AAA' } })
             );
@@ -87,31 +87,7 @@ describe('c-support-request-form', () => {
         });
     });
 
-    it('resets the Related Request when Request Type is changed', async () => {
-        const element = createElement('c-support-request-form', { is: SupportRequestForm });
-        document.body.appendChild(element);
-
-        getMyRequests.emit(mockMyRequests);
-        await Promise.resolve();
-
-        const [requestTypeField, relatedRequestField] = element.shadowRoot.querySelectorAll('lightning-combobox');
-        relatedRequestField.dispatchEvent(
-            new CustomEvent('change', { detail: { value: 'a02000000000001AAA' } })
-        );
-        await Promise.resolve();
-
-        expect(element.shadowRoot.querySelector('.support-request-form__related-detail')).not.toBeNull();
-
-        requestTypeField.dispatchEvent(new CustomEvent('change', { detail: { value: 'Cancellation Request' } }));
-        await Promise.resolve();
-        requestTypeField.dispatchEvent(new CustomEvent('change', { detail: { value: 'General Query' } }));
-        await Promise.resolve();
-
-        expect(element.shadowRoot.querySelector('.support-request-form__related-detail')).toBeNull();
-        expect(relatedRequestField.value).toBeUndefined();
-    });
-
-    it('submits the Case with the selected related request and request type', async () => {
+    it('submits the Case as a General Query with the selected related request', async () => {
         createCase.mockResolvedValue('500000000000001AAA');
 
         const element = createElement('c-support-request-form', { is: SupportRequestForm });
@@ -120,7 +96,7 @@ describe('c-support-request-form', () => {
         getMyRequests.emit(mockMyRequests);
         await Promise.resolve();
 
-        const relatedRequestField = element.shadowRoot.querySelectorAll('lightning-combobox')[1];
+        const relatedRequestField = element.shadowRoot.querySelector('lightning-combobox');
         relatedRequestField.dispatchEvent(
             new CustomEvent('change', { detail: { value: 'a02000000000001AAA' } })
         );

@@ -2,6 +2,7 @@ import { createElement } from 'lwc';
 import MyStaffingRequests from 'c/myStaffingRequests';
 import { CurrentPageReference } from 'lightning/navigation';
 import getMyRequests from '@salesforce/apex/StaffingRequestController.getMyRequests';
+import createCase from '@salesforce/apex/SupportRequestController.createCase';
 
 const mockRequests = require('./data/getMyRequests.json');
 
@@ -16,12 +17,21 @@ jest.mock(
     { virtual: true }
 );
 
+jest.mock(
+    '@salesforce/apex/SupportRequestController.createCase',
+    () => ({ default: jest.fn() }),
+    { virtual: true }
+);
+
 describe('c-my-staffing-requests', () => {
     afterEach(() => {
         while (document.body.firstChild) {
             document.body.removeChild(document.body.firstChild);
         }
         jest.clearAllMocks();
+        if (window.confirm && window.confirm.mockRestore) {
+            window.confirm.mockRestore();
+        }
     });
 
     it('renders a row per request with a status badge, unfiltered by default', () => {
@@ -65,8 +75,24 @@ describe('c-my-staffing-requests', () => {
             expect(cells[4].textContent).toBe('—');
             expect(cells[8].textContent).toBe('1');
             expect(cells[9].textContent).toBe('Medium');
-            // ..., Status, Broadcasted, Cancellation Requested, Last Update
-            expect(cells[12].textContent).toBe('No');
+            // ..., Assigned Contact, Status, Broadcasted, Cancellation Requested, Last Update
+            expect(cells[10].textContent).toBe('—');
+            expect(cells[13].textContent).toBe('No');
+        });
+    });
+
+    it('shows the Assigned Contact once a shift is filled', () => {
+        const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
+        document.body.appendChild(element);
+
+        getMyRequests.emit([
+            { ...mockRequests[0], Assigned_Contact__c: 'Jane Doe' }
+        ]);
+
+        return Promise.resolve().then(() => {
+            const firstRow = element.shadowRoot.querySelector('tbody tr');
+            const cells = firstRow.querySelectorAll('td');
+            expect(cells[10].textContent).toBe('Jane Doe');
         });
     });
 
@@ -312,6 +338,108 @@ describe('c-my-staffing-requests', () => {
                 });
             });
         });
+    });
+
+    it('only shows a Request Cancellation button for cancellable rows', () => {
+        const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
+        document.body.appendChild(element);
+
+        getMyRequests.emit(mockRequests);
+
+        return Promise.resolve().then(() => {
+            const rows = element.shadowRoot.querySelectorAll('tbody tr');
+            // SR-0001 is Broadcasted (cancellable); SR-0002 Filled, SR-0003
+            // Unable to Fill, SR-0004 Cancelled are all terminal statuses.
+            expect(rows[0].querySelector('lightning-button')).not.toBeNull();
+            expect(rows[1].querySelector('lightning-button')).toBeNull();
+            expect(rows[2].querySelector('lightning-button')).toBeNull();
+            expect(rows[3].querySelector('lightning-button')).toBeNull();
+        });
+    });
+
+    it('does not show the button for a request that already has a cancellation requested', () => {
+        const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
+        document.body.appendChild(element);
+
+        getMyRequests.emit([{ ...mockRequests[0], Cancellation_Requested__c: true }]);
+
+        return Promise.resolve().then(() => {
+            const row = element.shadowRoot.querySelector('tbody tr');
+            expect(row.querySelector('lightning-button')).toBeNull();
+        });
+    });
+
+    it('requests a cancellation after confirming, and refreshes the list', async () => {
+        createCase.mockResolvedValue('500000000000001AAA');
+        jest.spyOn(window, 'confirm').mockReturnValue(true);
+
+        const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
+        document.body.appendChild(element);
+
+        getMyRequests.emit(mockRequests);
+        await Promise.resolve();
+
+        const button = element.shadowRoot.querySelector('lightning-button');
+        button.click();
+        await Promise.resolve();
+        await Promise.resolve();
+
+        expect(window.confirm).toHaveBeenCalledTimes(1);
+        expect(createCase).toHaveBeenCalledTimes(1);
+        const newCase = createCase.mock.calls[0][0].newCase;
+        expect(newCase.Portal_Request_Type__c).toBe('Cancellation Request');
+        expect(newCase.Related_Staffing_Request__c).toBe(mockRequests[0].Id);
+        expect(newCase.Subject).toContain('SR-0001');
+
+        const banner = element.shadowRoot.querySelector('.my-requests__banner_success');
+        expect(banner.textContent).toContain('SR-0001');
+    });
+
+    it('does not submit a cancellation if the confirmation is declined', async () => {
+        jest.spyOn(window, 'confirm').mockReturnValue(false);
+
+        const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
+        document.body.appendChild(element);
+
+        getMyRequests.emit(mockRequests);
+        await Promise.resolve();
+
+        const button = element.shadowRoot.querySelector('lightning-button');
+        button.click();
+        await Promise.resolve();
+
+        expect(createCase).not.toHaveBeenCalled();
+    });
+
+    it('shows a saving state and an error banner if the cancellation request fails', async () => {
+        jest.spyOn(window, 'confirm').mockReturnValue(true);
+        let rejectCreate;
+        createCase.mockReturnValue(
+            new Promise((_resolve, reject) => {
+                rejectCreate = reject;
+            })
+        );
+
+        const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
+        document.body.appendChild(element);
+
+        getMyRequests.emit(mockRequests);
+        await Promise.resolve();
+
+        const button = element.shadowRoot.querySelector('lightning-button');
+        button.click();
+        await Promise.resolve();
+
+        expect(button.label).toBe('Cancelling…');
+        expect(button.disabled).toBe(true);
+
+        rejectCreate({ body: { message: 'Unable to create case' } });
+        await Promise.resolve();
+        await Promise.resolve();
+        await Promise.resolve();
+
+        const banner = element.shadowRoot.querySelector('.my-requests__banner_error');
+        expect(banner.textContent).toBe('Unable to create case');
     });
 
     it('shows an error message when the wire adapter errors', () => {

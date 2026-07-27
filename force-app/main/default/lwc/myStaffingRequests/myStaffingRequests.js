@@ -3,8 +3,10 @@ import { refreshApex } from '@salesforce/apex';
 import { CurrentPageReference } from 'lightning/navigation';
 import { formatTime } from 'c/timeFormatUtils';
 import getMyRequests from '@salesforce/apex/StaffingRequestController.getMyRequests';
+import createCase from '@salesforce/apex/SupportRequestController.createCase';
 
 const NOT_OPEN_STATUSES = ['Filled', 'Unable to Fill', 'Cancelled'];
+const CANCELLATION_BLOCKED_STATUSES = ['Filled', 'Unable to Fill', 'Cancelled'];
 
 const FILTER_LABELS = {
     open: 'Open Requests',
@@ -22,13 +24,14 @@ const COLUMNS = [
     { key: 'endTime', label: 'End Time' },
     { key: 'quantity', label: 'Quantity' },
     { key: 'priority', label: 'Priority' },
+    { key: 'assignedContact', label: 'Assigned Contact' },
     { key: 'status', label: 'Status' },
     { key: 'broadcasted', label: 'Broadcasted' },
     { key: 'cancellationRequested', label: 'Cancellation Requested' },
     { key: 'lastUpdate', label: 'Last Update' }
 ];
 
-const SEARCH_FIELDS = ['name', 'facilityName', 'wardName', 'role', 'specialty', 'status'];
+const SEARCH_FIELDS = ['name', 'facilityName', 'wardName', 'role', 'specialty', 'status', 'assignedContact'];
 const PAGE_SIZE = 10;
 
 export default class MyStaffingRequests extends LightningElement {
@@ -40,6 +43,9 @@ export default class MyStaffingRequests extends LightningElement {
     sortField;
     sortDirection = 'asc';
     currentPage = 1;
+    cancellingRequestId;
+    bannerMessage;
+    bannerVariant;
 
     @wire(CurrentPageReference)
     setCurrentPageReference(pageReference) {
@@ -57,23 +63,28 @@ export default class MyStaffingRequests extends LightningElement {
         this._wiredRequestsResult = result;
         const { data, error } = result;
         if (data) {
-            this.allRequests = data.map((request) => ({
-                id: request.Id,
-                name: request.Name,
-                facilityName: request.Facility__r ? request.Facility__r.Name : '',
-                wardName: request.Ward__r ? request.Ward__r.Name : '—',
-                role: request.Role__c,
-                specialty: request.Specialty__c || '—',
-                shiftDate: request.Shift_Date__c,
-                startTime: formatTime(request.Start_Time__c),
-                endTime: formatTime(request.End_Time__c),
-                quantity: request.Quantity__c,
-                priority: request.Priority__c,
-                status: request.Status__c,
-                broadcasted: request.Broadcasted_Date__c ? 'Yes' : 'No',
-                cancellationRequested: request.Cancellation_Requested__c ? 'Yes' : 'No',
-                lastUpdate: request.Last_Status_Update__c
-            }));
+            this.allRequests = data.map((request) => {
+                const cancellationRequested = !!request.Cancellation_Requested__c;
+                return {
+                    id: request.Id,
+                    name: request.Name,
+                    facilityName: request.Facility__r ? request.Facility__r.Name : '',
+                    wardName: request.Ward__r ? request.Ward__r.Name : '—',
+                    role: request.Role__c,
+                    specialty: request.Specialty__c || '—',
+                    shiftDate: request.Shift_Date__c,
+                    startTime: formatTime(request.Start_Time__c),
+                    endTime: formatTime(request.End_Time__c),
+                    quantity: request.Quantity__c,
+                    priority: request.Priority__c,
+                    assignedContact: request.Assigned_Contact__c || '—',
+                    status: request.Status__c,
+                    broadcasted: request.Broadcasted_Date__c ? 'Yes' : 'No',
+                    cancellationRequested: cancellationRequested ? 'Yes' : 'No',
+                    lastUpdate: request.Last_Status_Update__c,
+                    canCancel: !cancellationRequested && !CANCELLATION_BLOCKED_STATUSES.includes(request.Status__c)
+                };
+            });
             this.error = undefined;
         } else if (error) {
             this.error = error;
@@ -148,7 +159,11 @@ export default class MyStaffingRequests extends LightningElement {
 
     get requests() {
         const start = (this.safeCurrentPage - 1) * PAGE_SIZE;
-        return this.sortedRequests.slice(start, start + PAGE_SIZE);
+        return this.sortedRequests.slice(start, start + PAGE_SIZE).map((request) => ({
+            ...request,
+            isCancelling: this.cancellingRequestId === request.id,
+            cancelButtonLabel: this.cancellingRequestId === request.id ? 'Cancelling…' : 'Request Cancellation'
+        }));
     }
 
     get hasMultiplePages() {
@@ -214,6 +229,16 @@ export default class MyStaffingRequests extends LightningElement {
         return !!this.error;
     }
 
+    get hasBanner() {
+        return !!this.bannerMessage;
+    }
+
+    get bannerClass() {
+        return this.bannerVariant === 'success'
+            ? 'my-requests__banner my-requests__banner_success'
+            : 'my-requests__banner my-requests__banner_error';
+    }
+
     handleClearFilter() {
         this.activeFilter = undefined;
         this.dateFilter = undefined;
@@ -248,6 +273,47 @@ export default class MyStaffingRequests extends LightningElement {
     handleNextPage() {
         if (!this.isLastPage) {
             this.currentPage = this.safeCurrentPage + 1;
+        }
+    }
+
+    async handleRequestCancellation(event) {
+        const requestId = event.currentTarget.dataset.id;
+        const request = this.allRequests.find((candidate) => candidate.id === requestId);
+        if (!request) {
+            return;
+        }
+
+        // eslint-disable-next-line no-alert
+        const confirmed = window.confirm(
+            `Request cancellation for ${request.name} (${request.shiftDate})? ` +
+                `This will notify our team and email you a confirmation.`
+        );
+        if (!confirmed) {
+            return;
+        }
+
+        this.bannerMessage = undefined;
+        this.cancellingRequestId = requestId;
+        try {
+            const newCase = {
+                Portal_Request_Type__c: 'Cancellation Request',
+                Related_Staffing_Request__c: requestId,
+                Subject: `Cancellation Request - ${request.name}`,
+                Description:
+                    `Cancellation requested via My Requests for the ${request.role} shift ` +
+                    `at ${request.facilityName} on ${request.shiftDate}.`
+            };
+            await createCase({ newCase });
+            this.bannerVariant = 'success';
+            this.bannerMessage = `Cancellation requested for ${request.name}. Our team will follow up shortly.`;
+            if (this._wiredRequestsResult) {
+                await refreshApex(this._wiredRequestsResult);
+            }
+        } catch (error) {
+            this.bannerVariant = 'error';
+            this.bannerMessage = (error && error.body && error.body.message) || 'An unexpected error occurred.';
+        } finally {
+            this.cancellingRequestId = undefined;
         }
     }
 }

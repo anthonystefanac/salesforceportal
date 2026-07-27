@@ -13,6 +13,9 @@
             <p class="slds-text-color_error">Unable to load your requests right now.</p>
         </template>
         <template if:false={hasError}>
+            <template if:true={hasBanner}>
+                <div class={bannerClass}>{bannerMessage}</div>
+            </template>
             <div class="my-requests__search">
                 <lightning-input
                     type="search"
@@ -45,6 +48,7 @@
                                     {column.label}<span class="my-requests__sort-indicator">{column.indicator}</span>
                                 </th>
                             </template>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -60,6 +64,7 @@
                                 <td>{request.endTime}</td>
                                 <td>{request.quantity}</td>
                                 <td>{request.priority}</td>
+                                <td>{request.assignedContact}</td>
                                 <td>
                                     <c-request-status-badge status={request.status}></c-request-status-badge>
                                 </td>
@@ -67,6 +72,17 @@
                                 <td>{request.cancellationRequested}</td>
                                 <td>
                                     <lightning-formatted-date-time value={request.lastUpdate}></lightning-formatted-date-time>
+                                </td>
+                                <td>
+                                    <template if:true={request.canCancel}>
+                                        <lightning-button
+                                            label={request.cancelButtonLabel}
+                                            variant="destructive-text"
+                                            data-id={request.id}
+                                            disabled={request.isCancelling}
+                                            onclick={handleRequestCancellation}
+                                        ></lightning-button>
+                                    </template>
                                 </td>
                             </tr>
                         </template>

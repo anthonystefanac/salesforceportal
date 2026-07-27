@@ -162,7 +162,7 @@ export default class MyStaffingRequests extends LightningElement {
         return this.sortedRequests.slice(start, start + PAGE_SIZE).map((request) => ({
             ...request,
             isCancelling: this.cancellingRequestId === request.id,
-            cancelButtonLabel: this.cancellingRequestId === request.id ? 'Cancelling…' : 'Request Cancellation'
+            cancelMenuLabel: this.cancellingRequestId === request.id ? 'Cancelling…' : 'Request Cancellation'
         }));
     }
 
@@ -277,6 +277,9 @@ export default class MyStaffingRequests extends LightningElement {
     }
 
     async handleRequestCancellation(event) {
+        if (event.detail.value !== 'cancel') {
+            return;
+        }
         const requestId = event.currentTarget.dataset.id;
         const request = this.allRequests.find((candidate) => candidate.id === requestId);
         if (!request) {

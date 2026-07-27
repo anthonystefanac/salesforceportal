@@ -6,7 +6,12 @@
     letter-spacing: -0.01em;
 }
 
+.my-requests {
+    max-width: 100%;
+}
+
 .my-requests__panel {
+    max-width: 100%;
     background: #ffffff;
     border: 1px solid #e4e8f0;
     border-radius: 0.75rem;
@@ -15,6 +20,7 @@
 }
 
 .my-requests__table-wrap {
+    max-width: 100%;
     overflow-x: auto;
 }
 

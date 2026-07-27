@@ -75,13 +75,20 @@
                                 </td>
                                 <td>
                                     <template if:true={request.canCancel}>
-                                        <lightning-button
-                                            label={request.cancelButtonLabel}
-                                            variant="destructive-text"
+                                        <lightning-button-menu
+                                            alternative-text="Actions"
+                                            icon-name="utility:down"
+                                            icon-size="x-small"
+                                            menu-alignment="right"
                                             data-id={request.id}
                                             disabled={request.isCancelling}
-                                            onclick={handleRequestCancellation}
-                                        ></lightning-button>
+                                            onselect={handleRequestCancellation}
+                                        >
+                                            <lightning-menu-item
+                                                value="cancel"
+                                                label={request.cancelMenuLabel}
+                                            ></lightning-menu-item>
+                                        </lightning-button-menu>
                                     </template>
                                 </td>
                             </tr>

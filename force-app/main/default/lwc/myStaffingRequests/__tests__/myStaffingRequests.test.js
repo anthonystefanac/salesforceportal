@@ -340,7 +340,11 @@ describe('c-my-staffing-requests', () => {
         });
     });
 
-    it('only shows a Request Cancellation button for cancellable rows', () => {
+    function selectCancel(buttonMenu) {
+        buttonMenu.dispatchEvent(new CustomEvent('select', { detail: { value: 'cancel' } }));
+    }
+
+    it('only shows an actions dropdown for cancellable rows', () => {
         const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
         document.body.appendChild(element);
 
@@ -350,14 +354,14 @@ describe('c-my-staffing-requests', () => {
             const rows = element.shadowRoot.querySelectorAll('tbody tr');
             // SR-0001 is Broadcasted (cancellable); SR-0002 Filled, SR-0003
             // Unable to Fill, SR-0004 Cancelled are all terminal statuses.
-            expect(rows[0].querySelector('lightning-button')).not.toBeNull();
-            expect(rows[1].querySelector('lightning-button')).toBeNull();
-            expect(rows[2].querySelector('lightning-button')).toBeNull();
-            expect(rows[3].querySelector('lightning-button')).toBeNull();
+            expect(rows[0].querySelector('lightning-button-menu')).not.toBeNull();
+            expect(rows[1].querySelector('lightning-button-menu')).toBeNull();
+            expect(rows[2].querySelector('lightning-button-menu')).toBeNull();
+            expect(rows[3].querySelector('lightning-button-menu')).toBeNull();
         });
     });
 
-    it('does not show the button for a request that already has a cancellation requested', () => {
+    it('does not show the actions dropdown for a request that already has a cancellation requested', () => {
         const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
         document.body.appendChild(element);
 
@@ -365,7 +369,7 @@ describe('c-my-staffing-requests', () => {
 
         return Promise.resolve().then(() => {
             const row = element.shadowRoot.querySelector('tbody tr');
-            expect(row.querySelector('lightning-button')).toBeNull();
+            expect(row.querySelector('lightning-button-menu')).toBeNull();
         });
     });
 
@@ -379,8 +383,8 @@ describe('c-my-staffing-requests', () => {
         getMyRequests.emit(mockRequests);
         await Promise.resolve();
 
-        const button = element.shadowRoot.querySelector('lightning-button');
-        button.click();
+        const buttonMenu = element.shadowRoot.querySelector('lightning-button-menu');
+        selectCancel(buttonMenu);
         await Promise.resolve();
         await Promise.resolve();
 
@@ -404,8 +408,22 @@ describe('c-my-staffing-requests', () => {
         getMyRequests.emit(mockRequests);
         await Promise.resolve();
 
-        const button = element.shadowRoot.querySelector('lightning-button');
-        button.click();
+        const buttonMenu = element.shadowRoot.querySelector('lightning-button-menu');
+        selectCancel(buttonMenu);
+        await Promise.resolve();
+
+        expect(createCase).not.toHaveBeenCalled();
+    });
+
+    it('ignores a select event for anything other than the cancel menu item', async () => {
+        const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
+        document.body.appendChild(element);
+
+        getMyRequests.emit(mockRequests);
+        await Promise.resolve();
+
+        const buttonMenu = element.shadowRoot.querySelector('lightning-button-menu');
+        buttonMenu.dispatchEvent(new CustomEvent('select', { detail: { value: 'something-else' } }));
         await Promise.resolve();
 
         expect(createCase).not.toHaveBeenCalled();
@@ -426,12 +444,11 @@ describe('c-my-staffing-requests', () => {
         getMyRequests.emit(mockRequests);
         await Promise.resolve();
 
-        const button = element.shadowRoot.querySelector('lightning-button');
-        button.click();
+        const buttonMenu = element.shadowRoot.querySelector('lightning-button-menu');
+        selectCancel(buttonMenu);
         await Promise.resolve();
 
-        expect(button.label).toBe('Cancelling…');
-        expect(button.disabled).toBe(true);
+        expect(buttonMenu.disabled).toBe(true);
 
         rejectCreate({ body: { message: 'Unable to create case' } });
         await Promise.resolve();

@@ -23,10 +23,11 @@ force-app/main/default/
   triggers/            StaffingRequestTrigger — fires the Start/End Time
                        validation and the submit/status-change notification
                        emails (see "Data validation" / "Notifications" below)
-  lwc/                 12 Lightning Web Components covering the current screens
+  lwc/                 13 Lightning Web Components covering the current screens
                        (plus timeFormatUtils, a shared non-visual helper module),
-                       including an added Calendar screen for reviewing bookings by day
-                       and a header user/account badge (portalUserBadge)
+                       including an added Calendar screen for reviewing bookings by day,
+                       a header user/account badge (portalUserBadge), and a Reporting
+                       screen (staffingRequestReporting)
   permissionsets/      Alliance_Client_Portal_User — assign to every portal Contact's User
   sharingSets/         Grants same-Account contacts shared read access
   tabs/                Custom object tabs
@@ -43,6 +44,7 @@ force-app/main/default/
 | Calendar | `requestStaffCalendar` (+ `requestStatusBadge`) |
 | Invoices | `invoiceList` |
 | Support / query | `supportRequestForm` |
+| Reporting | `staffingRequestReporting` (+ `requestStatusBadge`) |
 
 `requestStaffCalendar` (nav label "Calendar") is an added convenience
 screen, not part of the original 6-screen deck: a month grid showing a
@@ -90,6 +92,31 @@ Submit buttons now show a "Submitting…" label plus a small spinner while
 their Apex call is in flight, instead of only a (easy-to-miss) disabled
 state.
 
+`myStaffingRequests` also shows an **Assigned Contact** column —
+`Staffing_Request__c.Assigned_Contact__c`, a plain text field (not a Contact
+lookup, since the individual actually completing a shift is a Bullhorn
+candidate, not a Contact record in this org) that internal staff fill in
+once a shift is filled. It's read-only to the portal, same as Status. It's
+also included in the Filled/Unable to Fill/Cancelled notification emails
+whenever it's populated.
+
+Each row in `myStaffingRequests` also has a **Request Cancellation** action
+— this used to live on the Support/Query screen as a "Cancellation Request"
+type, but now lives directly on the row it applies to, since that's a more
+natural place to act on a specific request. Clicking it asks for
+confirmation (a native `window.confirm`, not a custom modal — kept simple
+rather than building a full dialog component), then reuses the exact same
+`SupportRequestController.createCase()` path Support already used: it
+creates a `Portal_Request_Type__c = 'Cancellation Request'` Case linked to
+that request (same confirmation email, same Case note) and refreshes the
+list. The button only shows for requests that aren't already
+Cancellation-Requested and aren't already in a terminal status (Filled /
+Unable to Fill / Cancelled). This also closed a real gap:
+`Cancellation_Requested__c` existed and was displayed as a column already,
+but nothing in the codebase ever actually set it — `SupportRequestService`
+now flags it on the related request whenever a Cancellation Request Case is
+created, regardless of which screen submitted it.
+
 **Error/success feedback doesn't rely solely on toasts.** Both forms
 originally surfaced validation and Apex errors only via
 `lightning/platformShowToastEvent`. That's a problem here specifically
@@ -121,6 +148,40 @@ record-edit-form couldn't:
   request's Date/Facility/Ward/Role/Start Time. Email failures are caught
   and logged rather than blocking the Case from being created — confirmation
   email is a nice-to-have, not the core function.
+
+`supportRequestForm` no longer offers a Request Type picker — it only ever
+submits `Portal_Request_Type__c = 'General Query'` now. Cancellation
+requests moved to a per-row action on My Requests (above); the
+`Portal_Request_Type__c` picklist value `Cancellation Request` still exists
+(that row action still creates Cases with it), it's just no longer a choice
+a user picks from this form.
+
+### Reporting
+
+`staffingRequestReporting` (nav label "Reporting") reuses the same
+`StaffingRequestController.getMyRequests()` data as My Requests — no new
+Apex — filtered client-side by `Shift_Date__c` against one of four ranges:
+- **Last 7 Days** — a rolling window (today minus 6 days through today).
+- **Last Week** — the most recently *completed* calendar week (Monday
+  through Sunday), not a rolling window. Deliberately different from Last 7
+  Days rather than a duplicate of it.
+- **Last Month** — the most recently completed calendar month.
+- **Custom Range** — manual From/To date pickers; shows a prompt rather
+  than silently showing everything until both dates are set.
+
+A **Download CSV** button builds a CSV client-side (same columns as the
+table) from whatever's currently filtered and triggers a browser download —
+disabled when there's nothing to download. Defaults to Last 7 Days on load.
+This screen is read-only (no search/sort/pagination/actions) — it's meant
+for pulling a data extract for a date range, not day-to-day request
+management, which is what My Requests is for.
+
+**This is a brand new page, so it needs a manual Experience Builder step**
+the same way Calendar did when it was added: create a new page in
+Experience Builder, drag `staffingRequestReporting` onto it, and add a
+"Reporting" entry to the site's navigation menu. None of that is something
+that can be captured as deployable metadata up front — see "Experience
+Cloud site setup" below for the same caveat about hand-composed pages.
 
 ## No Salesforce org is connected here
 
@@ -325,7 +386,7 @@ npm install
 npm run test:unit
 ```
 
-80 Jest tests across all 12 LWCs. This is the only thing in this project
+92 Jest tests across all 13 LWCs. This is the only thing in this project
 that's actually been run and confirmed passing in this environment.
 
 ### Requires a connected org (not verified here)
@@ -354,7 +415,10 @@ All child objects are Master-Detail to their parent, so read sharing is
   the shift/staff demand request. `Status__c` is the client-safe lifecycle:
   Submitted, Being Worked, Broadcasted, Filled, Unable to Fill, Cancelled.
   `Requested_By_Contact__c` and `External_Demand_Id__c` are intentionally
-  not portal-readable — server-set only.
+  not portal-readable — server-set only. `Assigned_Contact__c` (plain text,
+  not a lookup — see "Screens → components" above) and
+  `Cancellation_Requested__c` are portal-readable but not portal-editable —
+  both are set only by trusted server-side Apex.
 - **Invoice__c** (MD → Account) — read-only in Phase 1.
   `External_Invoice_Id__c` is not portal-readable. The PDF itself is a
   standard `ContentVersion`/`ContentDocumentLink`, not a custom field.

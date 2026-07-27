@@ -39,6 +39,24 @@ export default class SupportRequestForm extends NavigationMixin(LightningElement
 
     async handleSubmit() {
         this.errorMessage = undefined;
+
+        // `required` on lightning-input only shows browser-native validation
+        // UI when something calls reportValidity() - nothing here does, so
+        // it was purely decorative and the form submitted fine with a blank
+        // Subject. Report it for the native "Complete this field" styling,
+        // but gate on the actual value too, matching this codebase's
+        // guaranteed-inline-banner pattern (native validity UI alone isn't
+        // trusted here, the same reasoning as the ShowToastEvent fallback
+        // below).
+        const subjectInput = this.template.querySelector('[data-field="subject"]');
+        if (subjectInput) {
+            subjectInput.reportValidity();
+        }
+        if (!this.formData.subject || !this.formData.subject.trim()) {
+            this.errorMessage = 'Subject is required.';
+            return;
+        }
+
         this.isSubmitting = true;
         try {
             const newCase = {

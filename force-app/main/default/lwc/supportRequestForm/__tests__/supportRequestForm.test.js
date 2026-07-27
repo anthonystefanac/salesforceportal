@@ -61,6 +61,38 @@ describe('c-support-request-form', () => {
         expect(newCase.Related_Staffing_Request__c).toBeUndefined();
     });
 
+    it('does not submit and shows an inline error when Subject is left blank', async () => {
+        const element = createElement('c-support-request-form', { is: SupportRequestForm });
+        document.body.appendChild(element);
+
+        setInputValue(element, '[data-field="description"]', 'Just checking on something.');
+
+        const submitButton = element.shadowRoot.querySelector('.support-request-form__submit');
+        submitButton.click();
+
+        await Promise.resolve();
+
+        expect(createCase).not.toHaveBeenCalled();
+        const banner = element.shadowRoot.querySelector('.support-request-form__banner');
+        expect(banner.textContent).toBe('Subject is required.');
+    });
+
+    it('does not submit when Subject is only whitespace', async () => {
+        const element = createElement('c-support-request-form', { is: SupportRequestForm });
+        document.body.appendChild(element);
+
+        setInputValue(element, '[data-field="subject"]', '   ');
+
+        const submitButton = element.shadowRoot.querySelector('.support-request-form__submit');
+        submitButton.click();
+
+        await Promise.resolve();
+
+        expect(createCase).not.toHaveBeenCalled();
+        const banner = element.shadowRoot.querySelector('.support-request-form__banner');
+        expect(banner.textContent).toBe('Subject is required.');
+    });
+
     it('shows an inline confirmation and a success toast on successful submission', async () => {
         createCase.mockResolvedValue('500000000000001AAA');
 
@@ -68,6 +100,8 @@ describe('c-support-request-form', () => {
         const toastHandler = jest.fn();
         element.addEventListener('lightning__showtoast', toastHandler);
         document.body.appendChild(element);
+
+        setInputValue(element, '[data-field="subject"]', 'Question about a shift');
 
         const submitButton = element.shadowRoot.querySelector('.support-request-form__submit');
         submitButton.click();
@@ -94,6 +128,8 @@ describe('c-support-request-form', () => {
         const element = createElement('c-support-request-form', { is: SupportRequestForm });
         document.body.appendChild(element);
 
+        setInputValue(element, '[data-field="subject"]', 'Question about a shift');
+
         const submitButton = element.shadowRoot.querySelector('.support-request-form__submit');
         submitButton.click();
         await Promise.resolve();
@@ -114,6 +150,8 @@ describe('c-support-request-form', () => {
 
         const element = createElement('c-support-request-form', { is: SupportRequestForm });
         document.body.appendChild(element);
+
+        setInputValue(element, '[data-field="subject"]', 'Question about a shift');
 
         const submitButton = element.shadowRoot.querySelector('.support-request-form__submit');
         submitButton.click();
@@ -137,6 +175,8 @@ describe('c-support-request-form', () => {
 
         const element = createElement('c-support-request-form', { is: SupportRequestForm });
         document.body.appendChild(element);
+
+        setInputValue(element, '[data-field="subject"]', 'Question about a shift');
 
         const submitButton = element.shadowRoot.querySelector('.support-request-form__submit');
         submitButton.click();
@@ -163,6 +203,8 @@ describe('c-support-request-form', () => {
         element.addEventListener('lightning__showtoast', toastHandler);
         document.body.appendChild(element);
 
+        setInputValue(element, '[data-field="subject"]', 'Question about a shift');
+
         const submitButton = element.shadowRoot.querySelector('.support-request-form__submit');
         submitButton.click();
 
@@ -188,6 +230,8 @@ describe('c-support-request-form', () => {
 
         const element = createElement('c-support-request-form', { is: SupportRequestForm });
         document.body.appendChild(element);
+
+        setInputValue(element, '[data-field="subject"]', 'Question about a shift');
 
         const submitButton = element.shadowRoot.querySelector('.support-request-form__submit');
         submitButton.click();

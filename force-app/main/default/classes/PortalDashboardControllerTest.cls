@@ -9,6 +9,8 @@ private class PortalDashboardControllerTest {
 
         System.assertEquals(0, summary.openRequestCount);
         System.assertEquals(0, summary.unfilledShiftCount);
+        System.assertEquals(0, summary.filledShiftCount);
+        System.assertEquals(0, summary.cancelledShiftCount);
         System.assertEquals(0, summary.overdueInvoiceCount);
     }
 
@@ -27,6 +29,10 @@ private class PortalDashboardControllerTest {
         Staffing_Request__c filledRequest = TestDataFactory.createStaffingRequest(facility.Id, con.Id);
         filledRequest.Status__c = 'Filled';
         update filledRequest;
+
+        Staffing_Request__c cancelledRequest = TestDataFactory.createStaffingRequest(facility.Id, con.Id);
+        cancelledRequest.Status__c = 'Cancelled';
+        update cancelledRequest;
 
         TestDataFactory.createInvoice(acct.Id, 'INV-1001');
         Invoice__c overdueInvoice = TestDataFactory.createInvoice(acct.Id, 'INV-1002');
@@ -49,6 +55,8 @@ private class PortalDashboardControllerTest {
         // Unable to Fill is explicitly excluded from "open", so only the Submitted one counts.
         System.assertEquals(1, summary.openRequestCount, 'Only the Submitted request counts as open');
         System.assertEquals(1, summary.unfilledShiftCount, 'The Unable to Fill request is the unfilled shift');
+        System.assertEquals(1, summary.filledShiftCount, 'The Filled request is the filled shift');
+        System.assertEquals(1, summary.cancelledShiftCount, 'The Cancelled request is the cancelled shift');
         System.assertEquals(1, summary.overdueInvoiceCount, 'Only the Overdue invoice counts');
     }
 }

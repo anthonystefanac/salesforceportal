@@ -37,20 +37,19 @@ public with sharing class SupportRequestService {
         return sanitizedCase.Id;
     }
 
-    // Mirrors StaffingRequestService.validateFacilityAndWardAccess +
-    // DmlHelper: Staffing_Request__c is two Master-Detail hops from Account
-    // (via Facility__c), and the Sharing Set's cascade doesn't extend far
-    // enough for a "with sharing" DML statement to succeed against it -
-    // whether that's an insert setting a new cross-reference (fixed
-    // earlier) or, as here, an update to a field on an *existing* record
-    // the user already has read access to. The ownership check below is
-    // the real access control (it independently confirms this Staffing_Request__c
-    // belongs to the requesting user's own Account), which is what makes it
-    // safe to then do the update without sharing rather than depend on a
-    // mechanism proven not to cover this case. If the request doesn't
-    // belong to the user's Account - not reachable through normal use, since
-    // the id always comes from the user's own My Requests list - this skips
-    // the flag rather than failing the whole Case submission over it.
+    // Mirrors StaffingRequestService.validateFacilityAndWardAccess: the same
+    // Sharing Set cascade gap (Staffing_Request__c is two Master-Detail hops
+    // from Account, via Facility__c) that blocks a "with sharing" insert
+    // also blocks a "with sharing" update to a field on an *existing*
+    // record. The ownership check below is the real access control (it
+    // independently confirms this Staffing_Request__c belongs to the
+    // requesting user's own Account), which is what makes it safe to then
+    // do the update without sharing (see WithoutSharingDml) rather than
+    // depend on a mechanism proven not to cover this case. If the request
+    // doesn't belong to the user's Account - not reachable through normal
+    // use, since the id always comes from the user's own My Requests list -
+    // this skips the flag rather than failing the whole Case submission
+    // over it.
     private static void flagCancellationRequested(Id staffingRequestId) {
         Id currentAccountId = PortalUserContext.getCurrentAccountId();
         List<Staffing_Request__c> ownRequests = [
@@ -64,13 +63,7 @@ public with sharing class SupportRequestService {
             return;
         }
 
-        new DmlHelper().flagCancellationRequestedWithoutSharing(staffingRequestId);
-    }
-
-    private without sharing class DmlHelper {
-        void flagCancellationRequestedWithoutSharing(Id staffingRequestId) {
-            update new Staffing_Request__c(Id = staffingRequestId, Cancellation_Requested__c = true);
-        }
+        WithoutSharingDml.updateRecord(new Staffing_Request__c(Id = staffingRequestId, Cancellation_Requested__c = true));
     }
 
     private static void sendConfirmationEmail(Case submittedCase) {
@@ -114,15 +107,6 @@ public with sharing class SupportRequestService {
             + 'Facility: ' + (relatedRequest.Facility__r != null ? relatedRequest.Facility__r.Name : '') + '\n'
             + 'Ward: ' + (relatedRequest.Ward__r != null ? relatedRequest.Ward__r.Name : 'N/A') + '\n'
             + 'Role: ' + relatedRequest.Role__c + '\n'
-            + 'Start Time: ' + formatTime(relatedRequest.Start_Time__c) + '\n';
-    }
-
-    // Apex's Time class has no .format() method (unlike Date/Datetime), so
-    // build a simple HH:MM string from its hour()/minute() accessors.
-    private static String formatTime(Time value) {
-        if (value == null) {
-            return '';
-        }
-        return String.valueOf(value.hour()).leftPad(2, '0') + ':' + String.valueOf(value.minute()).leftPad(2, '0');
+            + 'Start Time: ' + TimeFormatUtil.format(relatedRequest.Start_Time__c) + '\n';
     }
 }

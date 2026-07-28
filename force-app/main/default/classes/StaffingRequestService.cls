@@ -25,14 +25,12 @@ public with sharing class StaffingRequestService {
         // which is technically correct but not an actionable message for a
         // portal user. Checking it here turns that into a clear message
         // pointing at what to do (refresh and re-select). This check is
-        // also *why* the DML below is safe to run without sharing (see the
-        // comment on DmlHelper).
+        // also *why* the DML below is safe to run without sharing (see
+        // WithoutSharingDml).
         validateFacilityAndWardAccess(sanitizedRequest);
 
-        DmlHelper dmlHelper = new DmlHelper();
-
         try {
-            dmlHelper.insertWithoutSharing(sanitizedRequest);
+            WithoutSharingDml.insertRecord(sanitizedRequest);
         } catch (DmlException dmlError) {
             // Surfaces StaffingRequestValidationService's addError() message
             // to the LWC cleanly - an uncaught DmlException instead reaches
@@ -43,7 +41,7 @@ public with sharing class StaffingRequestService {
         IWorkforceManagementService wfmService = WorkforceManagementServiceFactory.getService();
         sanitizedRequest.External_Demand_Id__c = wfmService.submitDemandRequest(sanitizedRequest);
         sanitizedRequest.Last_Status_Update__c = Datetime.now();
-        dmlHelper.updateWithoutSharing(sanitizedRequest);
+        WithoutSharingDml.updateRecord(sanitizedRequest);
 
         return sanitizedRequest.Id;
     }
@@ -85,32 +83,5 @@ public with sharing class StaffingRequestService {
         AuraHandledException error = new AuraHandledException(message);
         error.setMessage(message);
         return error;
-    }
-
-    /**
-     * validateFacilityAndWardAccess above is the real access control for
-     * this operation: it independently confirms, via its own query, that
-     * the submitted Facility (and Ward, if set) genuinely belong to the
-     * requesting user's own Account before either method below ever runs.
-     * The DML itself is done without sharing because, on a real connected
-     * org, the Sharing Set's cascade wasn't extending far enough for
-     * Salesforce's own cross-reference check at DML time -
-     * Staffing_Request__c is two Master-Detail hops from Account (via
-     * Facility__c), and inserting/updating it failed with
-     * INSUFFICIENT_ACCESS_ON_CROSS_REFERENCE_ENTITY against a Facility that
-     * was readable moments earlier through a "with sharing" SELECT (the
-     * same query validateFacilityAndWardAccess runs). Rather than depend on
-     * a sharing mechanism that's demonstrably not covering this case,
-     * this narrowly bypasses it for the two DML statements our own check
-     * has already made safe.
-     */
-    private without sharing class DmlHelper {
-        void insertWithoutSharing(Staffing_Request__c request) {
-            insert request;
-        }
-
-        void updateWithoutSharing(Staffing_Request__c request) {
-            update request;
-        }
     }
 }

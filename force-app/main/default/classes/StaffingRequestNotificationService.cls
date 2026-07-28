@@ -122,8 +122,8 @@ public without sharing class StaffingRequestNotificationService {
             + 'Ward: ' + (request.Ward__r != null ? request.Ward__r.Name : 'N/A') + '\n'
             + 'Role: ' + request.Role__c + '\n'
             + 'Shift Date: ' + (request.Shift_Date__c != null ? request.Shift_Date__c.format() : '') + '\n'
-            + 'Start Time: ' + formatTime(request.Start_Time__c) + '\n'
-            + 'End Time: ' + formatTime(request.End_Time__c) + '\n'
+            + 'Start Time: ' + TimeFormatUtil.format(request.Start_Time__c) + '\n'
+            + 'End Time: ' + TimeFormatUtil.format(request.End_Time__c) + '\n'
             + 'Quantity: ' + request.Quantity__c + '\n'
             + 'Status: ' + request.Status__c + '\n';
         // Only meaningful once a shift is actually filled, so this line is
@@ -132,14 +132,5 @@ public without sharing class StaffingRequestNotificationService {
             lines += 'Assigned Contact: ' + request.Assigned_Contact__c + '\n';
         }
         return lines;
-    }
-
-    // Apex's Time class has no .format() method (unlike Date/Datetime), so
-    // build a simple HH:MM string from its hour()/minute() accessors.
-    private static String formatTime(Time value) {
-        if (value == null) {
-            return '';
-        }
-        return String.valueOf(value.hour()).leftPad(2, '0') + ':' + String.valueOf(value.minute()).leftPad(2, '0');
     }
 }

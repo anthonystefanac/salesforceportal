@@ -98,26 +98,34 @@ public class TestDataFactory {
             LanguageLocaleKey = 'en_US',
             LastName = 'Portal Test User'
         );
-        insert portalUser;
+        // User and PermissionSetAssignment are both "setup objects" - inserting
+        // them in the same transaction as the Account/Contact/Facility a test
+        // already created (non-setup objects) throws MIXED_DML_OPERATION.
+        // System.runAs opens a transaction scope that's exempt from that
+        // restriction - the standard workaround for exactly this "insert a
+        // test user, then assign it a permission set" pattern.
+        System.runAs(new User(Id = UserInfo.getUserId())) {
+            insert portalUser;
 
-        // Every real portal user needs Alliance_Client_Portal_User assigned
-        // in Setup for FLS/CRUD to work at all - without it here too, every
-        // WITH SECURITY_ENFORCED query and Security.stripInaccessible call
-        // in the classes under test sees this fixture as if it had none of
-        // the permission set's grants, which fails in three different ways
-        // depending on the call: a hard QueryException (secure query hit an
-        // inaccessible field), a NoAccessException (stripInaccessible found
-        // zero object-level access at all), or a silent, unannounced field
-        // strip (an object that still has *some* baseline access, just not
-        // that specific field - e.g. Case.Related_Staffing_Request__c).
-        List<PermissionSet> portalPermissionSets = [
-            SELECT Id FROM PermissionSet WHERE Name = 'Alliance_Client_Portal_User' LIMIT 1
-        ];
-        if (!portalPermissionSets.isEmpty()) {
-            insert new PermissionSetAssignment(
-                AssigneeId = portalUser.Id,
-                PermissionSetId = portalPermissionSets[0].Id
-            );
+            // Every real portal user needs Alliance_Client_Portal_User assigned
+            // in Setup for FLS/CRUD to work at all - without it here too, every
+            // WITH SECURITY_ENFORCED query and Security.stripInaccessible call
+            // in the classes under test sees this fixture as if it had none of
+            // the permission set's grants, which fails in three different ways
+            // depending on the call: a hard QueryException (secure query hit an
+            // inaccessible field), a NoAccessException (stripInaccessible found
+            // zero object-level access at all), or a silent, unannounced field
+            // strip (an object that still has *some* baseline access, just not
+            // that specific field - e.g. Case.Related_Staffing_Request__c).
+            List<PermissionSet> portalPermissionSets = [
+                SELECT Id FROM PermissionSet WHERE Name = 'Alliance_Client_Portal_User' LIMIT 1
+            ];
+            if (!portalPermissionSets.isEmpty()) {
+                insert new PermissionSetAssignment(
+                    AssigneeId = portalUser.Id,
+                    PermissionSetId = portalPermissionSets[0].Id
+                );
+            }
         }
 
         return portalUser;

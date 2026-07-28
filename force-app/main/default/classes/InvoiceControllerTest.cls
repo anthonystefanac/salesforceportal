@@ -165,6 +165,6 @@ private class InvoiceControllerTest {
         }
         Test.stopTest();
 
-        System.assert(threw, "Expected an AuraHandledException for another Account's invoice");
+        System.assert(threw, 'Expected an AuraHandledException for another Account\'s invoice');
     }
 }

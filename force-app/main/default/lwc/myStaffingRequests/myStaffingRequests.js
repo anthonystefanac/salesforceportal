@@ -11,7 +11,9 @@ const CANCELLATION_BLOCKED_STATUSES = ['Filled', 'Unable to Fill', 'Cancelled'];
 
 const FILTER_LABELS = {
     open: 'Open Requests',
-    unfilled: 'Unfilled Shifts'
+    unfilled: 'Unfilled Shifts',
+    filled: 'Filled Shifts',
+    cancelled: 'Cancelled Shifts'
 };
 
 const COLUMNS = [
@@ -111,6 +113,12 @@ export default class MyStaffingRequests extends LightningElement {
         }
         if (this.activeFilter === 'unfilled') {
             return this.allRequests.filter((request) => request.status === 'Unable to Fill');
+        }
+        if (this.activeFilter === 'filled') {
+            return this.allRequests.filter((request) => request.status === 'Filled');
+        }
+        if (this.activeFilter === 'cancelled') {
+            return this.allRequests.filter((request) => request.status === 'Cancelled');
         }
         return this.allRequests;
     }

@@ -1,5 +1,7 @@
 {
     "openRequestCount": 4,
     "unfilledShiftCount": 1,
+    "filledShiftCount": 3,
+    "cancelledShiftCount": 2,
     "overdueInvoiceCount": 2
 }

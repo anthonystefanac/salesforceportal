@@ -48,12 +48,14 @@ describe('c-portal-home-dashboard', () => {
 
         return Promise.resolve().then(() => {
             const tiles = element.shadowRoot.querySelectorAll('c-portal-dashboard-tile');
-            expect(tiles).toHaveLength(3);
+            expect(tiles).toHaveLength(5);
             expect(tiles[0].value).toBe(mockSummary.openRequestCount);
             expect(tiles[1].value).toBe(mockSummary.unfilledShiftCount);
             expect(tiles[1].variant).toBe('warning');
-            expect(tiles[2].value).toBe(mockSummary.overdueInvoiceCount);
-            expect(tiles[2].variant).toBe('warning');
+            expect(tiles[2].value).toBe(mockSummary.filledShiftCount);
+            expect(tiles[3].value).toBe(mockSummary.cancelledShiftCount);
+            expect(tiles[4].value).toBe(mockSummary.overdueInvoiceCount);
+            expect(tiles[4].variant).toBe('warning');
         });
     });
 
@@ -77,6 +79,46 @@ describe('c-portal-home-dashboard', () => {
         });
     });
 
+    it('navigates to My Requests with the filled filter when the filled tile is clicked', () => {
+        const element = createElement('c-portal-home-dashboard', {
+            is: PortalHomeDashboard
+        });
+        document.body.appendChild(element);
+
+        getDashboardSummary.emit(mockSummary);
+
+        return Promise.resolve().then(() => {
+            const tiles = element.shadowRoot.querySelectorAll('c-portal-dashboard-tile');
+            tiles[2].dispatchEvent(new CustomEvent('tileclick', { detail: { filterKey: 'filled' } }));
+
+            expect(mockNavigate).toHaveBeenCalledTimes(1);
+            const pageReference = mockNavigate.mock.calls[0][0];
+            expect(pageReference.type).toBe('comm__namedPage');
+            expect(pageReference.attributes.name).toBe('My_Requests__c');
+            expect(pageReference.state.filter).toBe('filled');
+        });
+    });
+
+    it('navigates to My Requests with the cancelled filter when the cancelled tile is clicked', () => {
+        const element = createElement('c-portal-home-dashboard', {
+            is: PortalHomeDashboard
+        });
+        document.body.appendChild(element);
+
+        getDashboardSummary.emit(mockSummary);
+
+        return Promise.resolve().then(() => {
+            const tiles = element.shadowRoot.querySelectorAll('c-portal-dashboard-tile');
+            tiles[3].dispatchEvent(new CustomEvent('tileclick', { detail: { filterKey: 'cancelled' } }));
+
+            expect(mockNavigate).toHaveBeenCalledTimes(1);
+            const pageReference = mockNavigate.mock.calls[0][0];
+            expect(pageReference.type).toBe('comm__namedPage');
+            expect(pageReference.attributes.name).toBe('My_Requests__c');
+            expect(pageReference.state.filter).toBe('cancelled');
+        });
+    });
+
     it('navigates to Invoices with the overdue filter when the overdue tile is clicked', () => {
         const element = createElement('c-portal-home-dashboard', {
             is: PortalHomeDashboard
@@ -87,7 +129,7 @@ describe('c-portal-home-dashboard', () => {
 
         return Promise.resolve().then(() => {
             const tiles = element.shadowRoot.querySelectorAll('c-portal-dashboard-tile');
-            tiles[2].dispatchEvent(new CustomEvent('tileclick', { detail: { filterKey: 'overdue' } }));
+            tiles[4].dispatchEvent(new CustomEvent('tileclick', { detail: { filterKey: 'overdue' } }));
 
             expect(mockNavigate).toHaveBeenCalledTimes(1);
             const pageReference = mockNavigate.mock.calls[0][0];

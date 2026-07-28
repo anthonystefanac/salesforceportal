@@ -17,6 +17,18 @@
                     ontileclick={handleTileClick}
                 ></c-portal-dashboard-tile>
                 <c-portal-dashboard-tile
+                    label="Filled Shifts"
+                    value={filledShiftCount}
+                    filter-key="filled"
+                    ontileclick={handleTileClick}
+                ></c-portal-dashboard-tile>
+                <c-portal-dashboard-tile
+                    label="Cancelled Shifts"
+                    value={cancelledShiftCount}
+                    filter-key="cancelled"
+                    ontileclick={handleTileClick}
+                ></c-portal-dashboard-tile>
+                <c-portal-dashboard-tile
                     label="Overdue Invoices"
                     value={overdueInvoiceCount}
                     variant="warning"

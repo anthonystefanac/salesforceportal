@@ -130,6 +130,36 @@ describe('c-my-staffing-requests', () => {
         });
     });
 
+    it('shows only filled shifts when the page reference filter is "filled"', () => {
+        const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
+        document.body.appendChild(element);
+
+        CurrentPageReference.emit({ state: { filter: 'filled' } });
+        getMyRequests.emit(mockRequests);
+
+        return Promise.resolve().then(() => {
+            const rows = element.shadowRoot.querySelectorAll('tbody tr');
+            expect(rows).toHaveLength(1);
+            const badge = element.shadowRoot.querySelector('c-request-status-badge');
+            expect(badge.status).toBe('Filled');
+        });
+    });
+
+    it('shows only cancelled shifts when the page reference filter is "cancelled"', () => {
+        const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
+        document.body.appendChild(element);
+
+        CurrentPageReference.emit({ state: { filter: 'cancelled' } });
+        getMyRequests.emit(mockRequests);
+
+        return Promise.resolve().then(() => {
+            const rows = element.shadowRoot.querySelectorAll('tbody tr');
+            expect(rows).toHaveLength(1);
+            const badge = element.shadowRoot.querySelector('c-request-status-badge');
+            expect(badge.status).toBe('Cancelled');
+        });
+    });
+
     it('shows only requests matching the shiftDate carried in page state', () => {
         const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
         document.body.appendChild(element);

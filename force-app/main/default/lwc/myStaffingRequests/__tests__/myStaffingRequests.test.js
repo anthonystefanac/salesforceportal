@@ -56,9 +56,9 @@ describe('c-my-staffing-requests', () => {
         return Promise.resolve().then(() => {
             const firstRow = element.shadowRoot.querySelector('tbody tr');
             const cells = firstRow.querySelectorAll('td');
-            // Request, Facility, Ward, Role, Specialty, Shift Date, Start Time, End Time, ...
-            expect(cells[6].textContent).toBe('07:00');
-            expect(cells[7].textContent).toBe('15:00');
+            // Action, Request, Facility, Ward, Role, Specialty, Shift Date, Start Time, End Time, ...
+            expect(cells[7].textContent).toBe('07:00');
+            expect(cells[8].textContent).toBe('15:00');
         });
     });
 
@@ -71,13 +71,13 @@ describe('c-my-staffing-requests', () => {
         return Promise.resolve().then(() => {
             const firstRow = element.shadowRoot.querySelector('tbody tr');
             const cells = firstRow.querySelectorAll('td');
-            // Request, Facility, Ward, Role, Specialty, Shift Date, Start Time, End Time, Quantity, Priority, ...
-            expect(cells[4].textContent).toBe('—');
-            expect(cells[8].textContent).toBe('1');
-            expect(cells[9].textContent).toBe('Medium');
+            // Action, Request, Facility, Ward, Role, Specialty, Shift Date, Start Time, End Time, Quantity, Priority, ...
+            expect(cells[5].textContent).toBe('—');
+            expect(cells[9].textContent).toBe('1');
+            expect(cells[10].textContent).toBe('Medium');
             // ..., Assigned Contact, Status, Broadcasted, Cancellation Requested, Last Update
-            expect(cells[10].textContent).toBe('—');
-            expect(cells[13].textContent).toBe('No');
+            expect(cells[11].textContent).toBe('—');
+            expect(cells[14].textContent).toBe('No');
         });
     });
 
@@ -92,7 +92,7 @@ describe('c-my-staffing-requests', () => {
         return Promise.resolve().then(() => {
             const firstRow = element.shadowRoot.querySelector('tbody tr');
             const cells = firstRow.querySelectorAll('td');
-            expect(cells[10].textContent).toBe('Jane Doe');
+            expect(cells[11].textContent).toBe('Jane Doe');
         });
     });
 

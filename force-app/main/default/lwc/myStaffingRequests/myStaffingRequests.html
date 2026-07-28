@@ -37,6 +37,7 @@
                 <table class="my-requests__table">
                     <thead>
                         <tr>
+                            <th class="my-requests__th">Action</th>
                             <template for:each={columns} for:item="column">
                                 <th
                                     key={column.key}
@@ -48,12 +49,29 @@
                                     {column.label}<span class="my-requests__sort-indicator">{column.indicator}</span>
                                 </th>
                             </template>
-                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
                         <template for:each={requests} for:item="request">
                             <tr key={request.id}>
+                                <td>
+                                    <template if:true={request.canCancel}>
+                                        <lightning-button-menu
+                                            alternative-text="Actions"
+                                            icon-name="utility:down"
+                                            icon-size="x-small"
+                                            menu-alignment="right"
+                                            data-id={request.id}
+                                            disabled={request.isCancelling}
+                                            onselect={handleRequestCancellation}
+                                        >
+                                            <lightning-menu-item
+                                                value="cancel"
+                                                label={request.cancelMenuLabel}
+                                            ></lightning-menu-item>
+                                        </lightning-button-menu>
+                                    </template>
+                                </td>
                                 <td>{request.name}</td>
                                 <td>{request.facilityName}</td>
                                 <td>{request.wardName}</td>
@@ -72,24 +90,6 @@
                                 <td>{request.cancellationRequested}</td>
                                 <td>
                                     <lightning-formatted-date-time value={request.lastUpdate}></lightning-formatted-date-time>
-                                </td>
-                                <td>
-                                    <template if:true={request.canCancel}>
-                                        <lightning-button-menu
-                                            alternative-text="Actions"
-                                            icon-name="utility:down"
-                                            icon-size="x-small"
-                                            menu-alignment="right"
-                                            data-id={request.id}
-                                            disabled={request.isCancelling}
-                                            onselect={handleRequestCancellation}
-                                        >
-                                            <lightning-menu-item
-                                                value="cancel"
-                                                label={request.cancelMenuLabel}
-                                            ></lightning-menu-item>
-                                        </lightning-button-menu>
-                                    </template>
                                 </td>
                             </tr>
                         </template>

@@ -1,6 +1,7 @@
 import { createElement } from 'lwc';
 import MyStaffingRequests from 'c/myStaffingRequests';
 import { CurrentPageReference } from 'lightning/navigation';
+import { formatDate, formatDateTime } from 'c/dateFormatUtils';
 import getMyRequests from '@salesforce/apex/StaffingRequestController.getMyRequests';
 import createCase from '@salesforce/apex/SupportRequestController.createCase';
 
@@ -44,6 +45,45 @@ describe('c-my-staffing-requests', () => {
             const rows = element.shadowRoot.querySelectorAll('tbody tr');
             expect(rows).toHaveLength(4);
             expect(element.shadowRoot.querySelector('.my-requests__filter-banner')).toBeNull();
+        });
+    });
+
+    it('defaults to sorting by request number descending', () => {
+        const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
+        document.body.appendChild(element);
+
+        getMyRequests.emit(mockRequests);
+
+        return Promise.resolve().then(() => {
+            const rows = element.shadowRoot.querySelectorAll('tbody tr');
+            expect(rows[0].textContent).toContain('SR-0004');
+            expect(rows[1].textContent).toContain('SR-0003');
+            expect(rows[2].textContent).toContain('SR-0002');
+            expect(rows[3].textContent).toContain('SR-0001');
+
+            const requestHeader = Array.from(element.shadowRoot.querySelectorAll('th')).find((th) =>
+                th.textContent.includes('Request')
+            );
+            expect(requestHeader.getAttribute('aria-sort')).toBe('descending');
+        });
+    });
+
+    it('formats Shift Date and Last Update as DD/MM/YYYY for display, regardless of Locale', () => {
+        const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
+        document.body.appendChild(element);
+
+        getMyRequests.emit(mockRequests);
+
+        return Promise.resolve().then(() => {
+            // Default sort is descending by request number, so the first row is SR-0004.
+            const firstRow = element.shadowRoot.querySelector('tbody tr');
+            const cells = firstRow.querySelectorAll('td');
+            // Action, Request, Facility, Ward, Role, Specialty, Shift Date, Start Time, ...
+            expect(cells[6].textContent).toBe(formatDate(mockRequests[3].Shift_Date__c));
+            expect(cells[6].textContent).toMatch(/^\d{2}\/\d{2}\/\d{4}$/);
+            // ..., Last Update is the final column.
+            const lastCell = cells[cells.length - 1];
+            expect(lastCell.textContent).toBe(formatDateTime(mockRequests[3].Last_Status_Update__c));
         });
     });
 
@@ -173,7 +213,7 @@ describe('c-my-staffing-requests', () => {
             expect(rows[0].textContent).toContain('SR-0002');
 
             const banner = element.shadowRoot.querySelector('.my-requests__filter-banner');
-            expect(banner.textContent).toContain('Shift Date: 2026-07-29');
+            expect(banner.textContent).toContain('Shift Date: 29/07/2026');
         });
     });
 
@@ -205,7 +245,7 @@ describe('c-my-staffing-requests', () => {
 
         return Promise.resolve().then(() => {
             const empty = element.shadowRoot.querySelector('.my-requests__empty');
-            expect(empty.textContent).toContain('Unfilled Shifts');
+            expect(empty.textContent).toContain('Unable to Fill Shifts');
         });
     });
 
@@ -382,12 +422,14 @@ describe('c-my-staffing-requests', () => {
 
         return Promise.resolve().then(() => {
             const rows = element.shadowRoot.querySelectorAll('tbody tr');
-            // SR-0001 is Broadcasted (cancellable); SR-0002 Filled, SR-0003
-            // Unable to Fill, SR-0004 Cancelled are all terminal statuses.
-            expect(rows[0].querySelector('lightning-button-menu')).not.toBeNull();
+            // Default sort is by request number descending, so rows render
+            // SR-0004, SR-0003, SR-0002, SR-0001. SR-0001 is Broadcasted
+            // (cancellable); SR-0002 Filled, SR-0003 Unable to Fill, SR-0004
+            // Cancelled are all terminal statuses.
+            expect(rows[0].querySelector('lightning-button-menu')).toBeNull();
             expect(rows[1].querySelector('lightning-button-menu')).toBeNull();
             expect(rows[2].querySelector('lightning-button-menu')).toBeNull();
-            expect(rows[3].querySelector('lightning-button-menu')).toBeNull();
+            expect(rows[3].querySelector('lightning-button-menu')).not.toBeNull();
         });
     });
 

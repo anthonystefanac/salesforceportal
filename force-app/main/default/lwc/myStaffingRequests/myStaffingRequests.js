@@ -2,6 +2,7 @@ import { LightningElement, wire } from 'lwc';
 import { refreshApex } from '@salesforce/apex';
 import { CurrentPageReference } from 'lightning/navigation';
 import { formatTime } from 'c/timeFormatUtils';
+import { formatDate, formatDateTime } from 'c/dateFormatUtils';
 import { sortRecords, toggleSort, buildSortableColumns } from 'c/sortTableUtils';
 import getMyRequests from '@salesforce/apex/StaffingRequestController.getMyRequests';
 import createCase from '@salesforce/apex/SupportRequestController.createCase';
@@ -11,7 +12,7 @@ const CANCELLATION_BLOCKED_STATUSES = ['Filled', 'Unable to Fill', 'Cancelled'];
 
 const FILTER_LABELS = {
     open: 'Open Requests',
-    unfilled: 'Unfilled Shifts',
+    unfilled: 'Unable to Fill Shifts',
     filled: 'Filled Shifts',
     cancelled: 'Cancelled Shifts'
 };
@@ -43,8 +44,12 @@ export default class MyStaffingRequests extends LightningElement {
     activeFilter;
     dateFilter;
     searchTerm = '';
-    sortField;
-    sortDirection = 'asc';
+    // Default sort: newest request number first (SR-0004 needs the account's
+    // Name auto-number to actually be zero-padded so descending string
+    // comparison lines up with numeric order - Staffing_Request__c's is
+    // "SR-{0000}", so this holds up to 9999 requests).
+    sortField = 'name';
+    sortDirection = 'desc';
     currentPage = 1;
     cancellingRequestId;
     bannerMessage;
@@ -75,7 +80,12 @@ export default class MyStaffingRequests extends LightningElement {
                     wardName: request.Ward__r ? request.Ward__r.Name : '—',
                     role: request.Role__c,
                     specialty: request.Specialty__c || '—',
+                    // shiftDate/lastUpdate stay in their raw, lexicographically
+                    // sortable/comparable form (ISO) - the *Display variants
+                    // below are DD/MM/YYYY purely for what's shown in the
+                    // table, computed once here rather than at render time.
                     shiftDate: request.Shift_Date__c,
+                    shiftDateDisplay: formatDate(request.Shift_Date__c),
                     startTime: formatTime(request.Start_Time__c),
                     endTime: formatTime(request.End_Time__c),
                     quantity: request.Quantity__c,
@@ -85,6 +95,7 @@ export default class MyStaffingRequests extends LightningElement {
                     broadcasted: request.Broadcasted_Date__c ? 'Yes' : 'No',
                     cancellationRequested: cancellationRequested ? 'Yes' : 'No',
                     lastUpdate: request.Last_Status_Update__c,
+                    lastUpdateDisplay: formatDateTime(request.Last_Status_Update__c),
                     canCancel: !cancellationRequested && !CANCELLATION_BLOCKED_STATUSES.includes(request.Status__c)
                 };
             });
@@ -186,7 +197,7 @@ export default class MyStaffingRequests extends LightningElement {
 
     get activeFilterLabel() {
         if (this.dateFilter) {
-            return `Shift Date: ${this.dateFilter}`;
+            return `Shift Date: ${formatDate(this.dateFilter)}`;
         }
         return this.activeFilter ? FILTER_LABELS[this.activeFilter] : '';
     }
@@ -264,7 +275,7 @@ export default class MyStaffingRequests extends LightningElement {
 
         // eslint-disable-next-line no-alert
         const confirmed = window.confirm(
-            `Request cancellation for ${request.name} (${request.shiftDate})? ` +
+            `Request cancellation for ${request.name} (${request.shiftDateDisplay})? ` +
                 `This will notify our team and email you a confirmation.`
         );
         if (!confirmed) {
@@ -280,7 +291,7 @@ export default class MyStaffingRequests extends LightningElement {
                 Subject: `Cancellation Request - ${request.name}`,
                 Description:
                     `Cancellation requested via My Requests for the ${request.role} shift ` +
-                    `at ${request.facilityName} on ${request.shiftDate}.`
+                    `at ${request.facilityName} on ${request.shiftDateDisplay}.`
             };
             await createCase({ newCase });
             this.bannerVariant = 'success';

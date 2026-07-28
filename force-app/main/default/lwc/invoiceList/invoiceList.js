@@ -4,6 +4,7 @@ import { NavigationMixin, CurrentPageReference } from 'lightning/navigation';
 import { formatDate } from 'c/dateFormatUtils';
 import { sortRecords, toggleSort, buildSortableColumns } from 'c/sortTableUtils';
 import getInvoices from '@salesforce/apex/InvoiceController.getInvoices';
+import getInvoiceFileIds from '@salesforce/apex/InvoiceController.getInvoiceFileIds';
 
 const FILTER_LABELS = {
     overdue: 'Overdue Invoices'
@@ -21,6 +22,7 @@ const SEARCH_FIELDS = ['Invoice_Number__c', 'Status__c'];
 
 export default class InvoiceList extends NavigationMixin(LightningElement) {
     allInvoices = [];
+    fileIdsByInvoiceId = {};
     error;
     activeFilter;
     searchTerm = '';
@@ -55,12 +57,31 @@ export default class InvoiceList extends NavigationMixin(LightningElement) {
         }
     }
 
+    _wiredFileIdsResult;
+
+    // A separate wire (rather than folding into getInvoices' own query)
+    // since the file itself is a standard ContentVersion/ContentDocumentLink,
+    // not a field on Invoice__c - keyed by invoice Id, merged onto each row
+    // in the invoices getter below so it stays correct regardless of which
+    // of the two wires resolves first.
+    @wire(getInvoiceFileIds)
+    wiredFileIds(result) {
+        this._wiredFileIdsResult = result;
+        const { data } = result;
+        if (data) {
+            this.fileIdsByInvoiceId = data;
+        }
+    }
+
     // A cacheable wire can otherwise serve a stale result on a fresh page
     // navigation - force a real server round-trip every time this component
     // (re)mounts.
     connectedCallback() {
         if (this._wiredInvoicesResult) {
             refreshApex(this._wiredInvoicesResult);
+        }
+        if (this._wiredFileIdsResult) {
+            refreshApex(this._wiredFileIdsResult);
         }
     }
 
@@ -82,7 +103,14 @@ export default class InvoiceList extends NavigationMixin(LightningElement) {
               )
             : this.filteredInvoices;
 
-        return sortRecords(searched, this.sortField, this.sortDirection);
+        return sortRecords(searched, this.sortField, this.sortDirection).map((invoice) => {
+            const fileId = this.fileIdsByInvoiceId[invoice.Id];
+            return {
+                ...invoice,
+                fileId,
+                viewLabel: fileId ? 'Download PDF' : 'View'
+            };
+        });
     }
 
     get columns() {
@@ -132,6 +160,25 @@ export default class InvoiceList extends NavigationMixin(LightningElement) {
 
     handleView(event) {
         const invoiceId = event.currentTarget.dataset.id;
+        const fileId = event.currentTarget.dataset.fileId;
+
+        if (fileId) {
+            // Salesforce's own file-download servlet path - a first-party,
+            // same-origin URL, so a plain anchor click triggers a real
+            // browser download here the same reliable way Reporting's CSV
+            // download does. This is not the blob: URL approach that failed
+            // on this site type (see Reporting's CSV download note) - it's
+            // a normal navigation to a same-origin path, which behaves
+            // exactly as it would in any web app.
+            const link = document.createElement('a');
+            link.href = `/sfc/servlet.shepherd/document/download/${fileId}`;
+            link.target = '_blank';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            return;
+        }
+
         this[NavigationMixin.Navigate]({
             type: 'standard__recordPage',
             attributes: {

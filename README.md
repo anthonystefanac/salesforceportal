@@ -130,6 +130,29 @@ Submit buttons now show a "Submitting…" label plus a small spinner while
 their Apex call is in flight, instead of only a (easy-to-miss) disabled
 state.
 
+`invoiceList`'s **View / Download** button is now wired to the actual
+attached file, not just the record page. `InvoiceController.getInvoiceFileIds()`
+returns a `Map<Id, Id>` of invoice Id → the most recently modified
+`ContentDocumentId` linked to it (a second, separate `@wire`, since the file
+itself is a standard `ContentVersion`/`ContentDocumentLink`, not a field on
+`Invoice__c` — merged onto each row client-side in the `invoices` getter, so
+it stays correct regardless of which of the two wires resolves first). The
+button label switches per row: **"Download PDF"** when a file exists, or
+**"View"** (the old record-page navigation, unchanged) when it doesn't — a
+row can't have a broken "Download" button that just lands on the record
+page instead. The download itself uses Salesforce's own file-download
+servlet path (`/sfc/servlet.shepherd/document/download/{contentDocumentId}`)
+via a plain in-page anchor click, the same reliable technique Reporting's
+CSV download already uses — this is a first-party, same-origin URL though,
+not a `blob:` one, so it's a more standard case than the CSV download's
+platform quirk. **Not yet verified against a real connected org**: whether
+a portal/Community user can query `ContentDocumentLink` directly (as
+`getInvoiceFileIds()` does) and whether the uploaded file's own sharing
+needs anything beyond the Invoice record's existing Sharing Set for an
+external user to actually see it — test this by uploading a file to one
+pilot Invoice record's Files related list, then downloading it while logged
+in as the portal user, not as an internal admin.
+
 `myStaffingRequests` also shows an **Assigned Contact** column —
 `Staffing_Request__c.Assigned_Contact__c`, a plain text field (not a Contact
 lookup, since the individual actually completing a shift is a Bullhorn
@@ -688,7 +711,7 @@ npm install
 npm run test:unit
 ```
 
-131 Jest tests across all 15 LWCs (including the `sortTableUtils` and
+132 Jest tests across all 15 LWCs (including the `sortTableUtils` and
 `dateFormatUtils` shared modules). This is the only thing in this project
 that's actually been run and confirmed passing in this environment.
 

@@ -64,8 +64,9 @@
                                 <td>{invoice.Status__c}</td>
                                 <td>
                                     <lightning-button
-                                        label="View / Download"
+                                        label={invoice.viewLabel}
                                         data-id={invoice.Id}
+                                        data-file-id={invoice.fileId}
                                         onclick={handleView}
                                     ></lightning-button>
                                 </td>

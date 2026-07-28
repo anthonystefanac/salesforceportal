@@ -2,11 +2,23 @@ import { createElement } from 'lwc';
 import InvoiceList from 'c/invoiceList';
 import { CurrentPageReference } from 'lightning/navigation';
 import getInvoices from '@salesforce/apex/InvoiceController.getInvoices';
+import getInvoiceFileIds from '@salesforce/apex/InvoiceController.getInvoiceFileIds';
 
 const mockInvoices = require('./data/getInvoices.json');
 
 jest.mock(
     '@salesforce/apex/InvoiceController.getInvoices',
+    () => {
+        const { createApexTestWireAdapter } = require('@salesforce/sfdx-lwc-jest');
+        return {
+            default: createApexTestWireAdapter(jest.fn())
+        };
+    },
+    { virtual: true }
+);
+
+jest.mock(
+    '@salesforce/apex/InvoiceController.getInvoiceFileIds',
     () => {
         const { createApexTestWireAdapter } = require('@salesforce/sfdx-lwc-jest');
         return {
@@ -38,11 +50,29 @@ jest.mock('lightning/navigation', () => {
 });
 
 describe('c-invoice-list', () => {
+    let createdLinks;
+
+    beforeEach(() => {
+        createdLinks = [];
+        const originalCreateElement = document.createElement.bind(document);
+        jest.spyOn(document, 'createElement').mockImplementation((tag) => {
+            const el = originalCreateElement(tag);
+            if (tag === 'a') {
+                jest.spyOn(el, 'click').mockImplementation(() => {});
+                createdLinks.push(el);
+            }
+            return el;
+        });
+    });
+
     afterEach(() => {
         while (document.body.firstChild) {
             document.body.removeChild(document.body.firstChild);
         }
         jest.clearAllMocks();
+        if (document.createElement.mockRestore) {
+            document.createElement.mockRestore();
+        }
     });
 
     it('renders one row per invoice, unfiltered by default', () => {
@@ -109,14 +139,16 @@ describe('c-invoice-list', () => {
         });
     });
 
-    it('navigates to the invoice record when View / Download is clicked', () => {
+    it('shows "View" and navigates to the invoice record when there is no attached file', () => {
         const element = createElement('c-invoice-list', { is: InvoiceList });
         document.body.appendChild(element);
 
         getInvoices.emit(mockInvoices);
+        getInvoiceFileIds.emit({});
 
         return Promise.resolve().then(() => {
             const button = element.shadowRoot.querySelector('lightning-button');
+            expect(button.label).toBe('View');
             button.click();
 
             expect(mockNavigate).toHaveBeenCalledTimes(1);
@@ -128,6 +160,26 @@ describe('c-invoice-list', () => {
                     actionName: 'view'
                 }
             });
+            expect(createdLinks).toHaveLength(0);
+        });
+    });
+
+    it('shows "Download PDF" and downloads the file directly when an invoice has an attached file', () => {
+        const element = createElement('c-invoice-list', { is: InvoiceList });
+        document.body.appendChild(element);
+
+        getInvoices.emit(mockInvoices);
+        getInvoiceFileIds.emit({ [mockInvoices[0].Id]: '069000000000001AAA' });
+
+        return Promise.resolve().then(() => {
+            const button = element.shadowRoot.querySelector('lightning-button');
+            expect(button.label).toBe('Download PDF');
+            button.click();
+
+            expect(mockNavigate).not.toHaveBeenCalled();
+            expect(createdLinks).toHaveLength(1);
+            expect(createdLinks[0].href).toContain('/sfc/servlet.shepherd/document/download/069000000000001AAA');
+            expect(createdLinks[0].target).toBe('_blank');
         });
     });
 

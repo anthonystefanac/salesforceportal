@@ -175,6 +175,24 @@ whitespace-only — the same pattern this form already uses for Apex errors,
 rather than relying solely on native validity UI that may not be reliable
 on this site type either.
 
+**`requestStaffForm` had the same gap, across more fields.** Role, Shift
+Date, Start Time, End Time, Quantity, and Priority were all marked
+`required` (Facility is required too, as a required Master-Detail
+relationship, though the `facilityPicker` child component that owns it
+didn't mark it `required` itself), but nothing called `reportValidity()`
+there either — a blank submission still went all the way to Apex, where
+the object's own `required=true` fields would reject it with a raw DML
+error message (e.g. "Required fields are missing: [Role__c]") instead of a
+clean, instant, client-side message. `handleSubmit` now checks
+Facility/Role/Shift Date/Start Time/End Time/Quantity/Priority up front
+and shows a single banner listing only whichever of those are still
+missing (e.g. "Please fill in: Facility, Role, Shift Date.") before ever
+calling Apex. Quantity and Priority always carry a default value in this
+form, so in practice they can't go blank through normal use, but they're
+included in the check anyway in case those defaults ever change. Ward,
+Specialty, and Notes are genuinely optional on the object and stay that
+way here.
+
 ### Reporting
 
 `staffingRequestReporting` (nav label "Reporting") reuses the same
@@ -193,13 +211,18 @@ Apex — filtered client-side by `Shift_Date__c` against one of five ranges:
   than silently showing everything until both dates are set.
 
 A **Download CSV** button builds a CSV client-side (same columns as the
-table) from whatever's currently filtered and triggers a browser download —
-disabled when there's nothing to download. The filename is
-`staffing-requests-all.csv` for the All range, or
+table) from whatever's currently filtered *and sorted* and triggers a
+browser download — disabled when there's nothing to download. The filename
+is `staffing-requests-all.csv` for the All range, or
 `staffing-requests-<from>-to-<to>.csv` otherwise. Defaults to Last 7 Days
-on load. This screen is read-only (no search/sort/pagination/actions) —
-it's meant for pulling a data extract for a date range, not day-to-day
-request management, which is what My Requests is for.
+on load. This screen is read-only (no search/pagination/row actions) — it's
+meant for pulling a data extract for a date range, not day-to-day request
+management, which is what My Requests is for.
+
+**Sortable column headers**, the same client-side implementation as
+`myStaffingRequests` (click to sort ascending, click again to toggle
+descending) — sorting is layered on top of whichever date-range preset is
+active, and the CSV download reflects the current sort order too.
 
 **Column widths match My Requests.** Both tables now use
 `table-layout: fixed` with the same explicit per-column widths (set via
@@ -432,7 +455,7 @@ npm install
 npm run test:unit
 ```
 
-95 Jest tests across all 13 LWCs. This is the only thing in this project
+99 Jest tests across all 13 LWCs. This is the only thing in this project
 that's actually been run and confirmed passing in this environment.
 
 ### Requires a connected org (not verified here)

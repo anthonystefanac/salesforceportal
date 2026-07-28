@@ -159,10 +159,10 @@ CSV text. A failed fetch (no file, wrong Account, etc.) shows a guaranteed
 inline error banner rather than a toast, consistent with the rest of the
 app.
 
-**Two access gaps were found and fixed testing this against a real
-connected org**, both silent - the query succeeds and just returns
-nothing, no exception, no console error - which made this genuinely hard
-to diagnose:
+**Three access gaps were found testing this against a real connected
+org**, all silent - the query succeeds and just returns nothing, no
+exception, no console error - which made this genuinely hard to diagnose.
+Each was found and fixed one at a time as testing revealed the next layer:
 
 1. **Row-level sharing.** `ContentDocumentLink`'s own visibility for a
    portal/Community user doesn't reliably follow the linked record's
@@ -180,10 +180,17 @@ to diagnose:
    exact same query found the file instantly as an admin, but the portal
    user got nothing even through `WithoutSharingFileAccess` until
    `ContentVersion` was granted **Read** in `Alliance_Client_Portal_User`
-   (`objectPermissions` - see that permission set). `ContentDocumentLink`
-   itself isn't a grantable object in Permission Set Object Settings at
-   all (its access is derived, not a direct CRUD grant), so there's no
-   separate entry needed for it.
+   (`objectPermissions` - see that permission set).
+3. **A second object, reached via relationship.** Even with `ContentVersion`
+   granted, `getLatestContentDocumentIdsByLinkedEntity`'s own query still
+   touched a *different* object the permission set said nothing about:
+   `ORDER BY ContentDocument.ContentModifiedDate DESC` traverses into
+   `ContentDocument`, not just `ContentDocumentLink`/`ContentVersion`.
+   Rather than add yet another object permission grant (and `ContentDocument`
+   isn't reliably grantable in Permission Set Object Settings either),
+   the query now orders by `ContentDocumentLink.CreatedDate` instead -
+   a field on the object already being queried, so no relationship
+   traversal and no extra permission needed at all.
 
 If `getInvoiceFileIds()` still fails for some other reason (an actual
 exception, not just an empty result), every row falls back to showing

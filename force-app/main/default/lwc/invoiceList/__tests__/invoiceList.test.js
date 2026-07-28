@@ -3,6 +3,7 @@ import InvoiceList from 'c/invoiceList';
 import { CurrentPageReference } from 'lightning/navigation';
 import getInvoices from '@salesforce/apex/InvoiceController.getInvoices';
 import getInvoiceFileIds from '@salesforce/apex/InvoiceController.getInvoiceFileIds';
+import getInvoiceFileData from '@salesforce/apex/InvoiceController.getInvoiceFileData';
 
 const mockInvoices = require('./data/getInvoices.json');
 
@@ -25,6 +26,12 @@ jest.mock(
             default: createApexTestWireAdapter(jest.fn())
         };
     },
+    { virtual: true }
+);
+
+jest.mock(
+    '@salesforce/apex/InvoiceController.getInvoiceFileData',
+    () => ({ default: jest.fn() }),
     { virtual: true }
 );
 
@@ -164,23 +171,47 @@ describe('c-invoice-list', () => {
         });
     });
 
-    it('shows "Download PDF" and downloads the file directly when an invoice has an attached file', () => {
+    it('shows "Download PDF" and downloads the file directly when an invoice has an attached file', async () => {
+        getInvoiceFileData.mockResolvedValue({ fileName: 'INV-0001.pdf', base64Data: 'ZmFrZS1wZGYtYnl0ZXM=' });
+
         const element = createElement('c-invoice-list', { is: InvoiceList });
         document.body.appendChild(element);
 
         getInvoices.emit(mockInvoices);
         getInvoiceFileIds.emit({ [mockInvoices[0].Id]: '069000000000001AAA' });
+        await Promise.resolve();
 
-        return Promise.resolve().then(() => {
-            const button = element.shadowRoot.querySelector('lightning-button');
-            expect(button.label).toBe('Download PDF');
-            button.click();
+        const button = element.shadowRoot.querySelector('lightning-button');
+        expect(button.label).toBe('Download PDF');
+        button.click();
+        await Promise.resolve();
+        await Promise.resolve();
 
-            expect(mockNavigate).not.toHaveBeenCalled();
-            expect(createdLinks).toHaveLength(1);
-            expect(createdLinks[0].href).toContain('/sfc/servlet.shepherd/document/download/069000000000001AAA');
-            expect(createdLinks[0].target).toBe('_blank');
-        });
+        expect(getInvoiceFileData).toHaveBeenCalledWith({ invoiceId: mockInvoices[0].Id });
+        expect(mockNavigate).not.toHaveBeenCalled();
+        expect(createdLinks).toHaveLength(1);
+        expect(createdLinks[0].href).toBe('data:application/octet-stream;base64,ZmFrZS1wZGYtYnl0ZXM=');
+        expect(createdLinks[0].download).toBe('INV-0001.pdf');
+    });
+
+    it('shows an inline error banner if fetching the file fails', async () => {
+        getInvoiceFileData.mockRejectedValue({ body: { message: 'No file is attached to this invoice.' } });
+
+        const element = createElement('c-invoice-list', { is: InvoiceList });
+        document.body.appendChild(element);
+
+        getInvoices.emit(mockInvoices);
+        getInvoiceFileIds.emit({ [mockInvoices[0].Id]: '069000000000001AAA' });
+        await Promise.resolve();
+
+        const button = element.shadowRoot.querySelector('lightning-button');
+        button.click();
+        await Promise.resolve();
+        await Promise.resolve();
+
+        const banner = element.shadowRoot.querySelector('.invoice-list__banner_error');
+        expect(banner.textContent).toBe('No file is attached to this invoice.');
+        expect(createdLinks).toHaveLength(0);
     });
 
     it('filters rows by search term across invoice number and status', () => {

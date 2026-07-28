@@ -140,16 +140,28 @@ it stays correct regardless of which of the two wires resolves first). The
 button label switches per row: **"Download PDF"** when a file exists, or
 **"View"** (the old record-page navigation, unchanged) when it doesn't — a
 row can't have a broken "Download" button that just lands on the record
-page instead. The download itself uses Salesforce's own file-download
-servlet path (`/sfc/servlet.shepherd/document/download/{contentDocumentId}`)
-via a plain in-page anchor click, the same reliable technique Reporting's
-CSV download already uses — this is a first-party, same-origin URL though,
-not a `blob:` one, so it's a more standard case than the CSV download's
-platform quirk. **Not yet verified against a real connected org**: whether
-a portal/Community user can query `ContentDocumentLink` directly (as
-`getInvoiceFileIds()` does) and whether the uploaded file's own sharing
-needs anything beyond the Invoice record's existing Sharing Set for an
-external user to actually see it — test this by uploading a file to one
+page instead.
+
+**The download itself does *not* link to Salesforce's internal
+`/sfc/servlet.shepherd/document/download/{id}` file servlet path** — that
+was the first approach tried, and it 404s on this Experience Cloud site:
+that path lives on Salesforce's core domain, and the site's own routing
+(especially LWR "Build Your Own") doesn't proxy through to it, so clicking
+the link landed on the site's own "Invalid Page" instead of the file.
+Instead, `InvoiceController.getInvoiceFileData(invoiceId)` is called
+imperatively (not a wire — only fetched on click, not preloaded for every
+row) and returns the file's bytes base64-encoded (`EncodingUtil.base64Encode`
+on the `ContentVersion.VersionData` Blob) plus its filename; the LWC builds
+a `data:application/octet-stream;base64,...` URI and triggers the download
+via a plain in-page anchor click — the same technique Reporting's CSV
+export already uses reliably on this site, just with file bytes instead of
+CSV text. A failed fetch (no file, wrong Account, etc.) shows a guaranteed
+inline error banner rather than a toast, consistent with the rest of the
+app. **Not yet verified against a real connected org**: whether a
+portal/Community user can query `ContentDocumentLink`/`ContentVersion`
+directly the way both Apex methods do, and whether the uploaded file's own
+sharing needs anything beyond the Invoice record's existing Sharing Set for
+an external user to actually read it — test this by uploading a file to one
 pilot Invoice record's Files related list, then downloading it while logged
 in as the portal user, not as an internal admin.
 
@@ -711,7 +723,7 @@ npm install
 npm run test:unit
 ```
 
-132 Jest tests across all 15 LWCs (including the `sortTableUtils` and
+133 Jest tests across all 15 LWCs (including the `sortTableUtils` and
 `dateFormatUtils` shared modules). This is the only thing in this project
 that's actually been run and confirmed passing in this environment.
 

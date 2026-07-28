@@ -5,6 +5,7 @@ import { formatDate } from 'c/dateFormatUtils';
 import { sortRecords, toggleSort, buildSortableColumns } from 'c/sortTableUtils';
 import getInvoices from '@salesforce/apex/InvoiceController.getInvoices';
 import getInvoiceFileIds from '@salesforce/apex/InvoiceController.getInvoiceFileIds';
+import getInvoiceFileData from '@salesforce/apex/InvoiceController.getInvoiceFileData';
 
 const FILTER_LABELS = {
     overdue: 'Overdue Invoices'
@@ -28,6 +29,7 @@ export default class InvoiceList extends NavigationMixin(LightningElement) {
     searchTerm = '';
     sortField;
     sortDirection = 'asc';
+    downloadError;
 
     @wire(CurrentPageReference)
     setCurrentPageReference(pageReference) {
@@ -158,24 +160,36 @@ export default class InvoiceList extends NavigationMixin(LightningElement) {
         this.sortDirection = next.direction;
     }
 
-    handleView(event) {
+    get hasDownloadError() {
+        return !!this.downloadError;
+    }
+
+    async handleView(event) {
         const invoiceId = event.currentTarget.dataset.id;
         const fileId = event.currentTarget.dataset.fileId;
 
         if (fileId) {
-            // Salesforce's own file-download servlet path - a first-party,
-            // same-origin URL, so a plain anchor click triggers a real
-            // browser download here the same reliable way Reporting's CSV
-            // download does. This is not the blob: URL approach that failed
-            // on this site type (see Reporting's CSV download note) - it's
-            // a normal navigation to a same-origin path, which behaves
-            // exactly as it would in any web app.
-            const link = document.createElement('a');
-            link.href = `/sfc/servlet.shepherd/document/download/${fileId}`;
-            link.target = '_blank';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            this.downloadError = undefined;
+            try {
+                const file = await getInvoiceFileData({ invoiceId });
+                // Salesforce's internal file-download servlet path
+                // (/sfc/servlet.shepherd/...) 404s on this Experience Cloud
+                // site - it's a core-domain path the site's own routing
+                // doesn't proxy through to, landing on the site's "Invalid
+                // Page" instead of the file. Fetching the bytes via Apex and
+                // building a data: URI here avoids that entirely - the same
+                // technique Reporting's CSV download already uses
+                // reliably on this site.
+                const link = document.createElement('a');
+                link.href = `data:application/octet-stream;base64,${file.base64Data}`;
+                link.download = file.fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } catch (error) {
+                this.downloadError =
+                    (error && error.body && error.body.message) || 'Unable to download this file right now.';
+            }
             return;
         }
 

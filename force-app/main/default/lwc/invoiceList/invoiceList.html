@@ -13,6 +13,9 @@
             <p class="slds-text-color_error">Unable to load invoices right now.</p>
         </template>
         <template if:false={hasError}>
+            <template if:true={hasDownloadError}>
+                <div class="invoice-list__banner invoice-list__banner_error">{downloadError}</div>
+            </template>
             <div class="invoice-list__search">
                 <lightning-input
                     type="search"

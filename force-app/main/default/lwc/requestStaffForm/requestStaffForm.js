@@ -16,13 +16,26 @@ const DEFAULT_FORM = {
     notes: undefined
 };
 
+// Must exactly match Staffing_Request__c.Role__c's restricted picklist
+// values - a mismatch here means the option would submit fine client-side
+// but fail server-side with a picklist validation error.
 const ROLE_OPTIONS = [
+    { label: 'Clinical Nurse', value: 'Clinical Nurse' },
     { label: 'Registered Nurse', value: 'Registered Nurse' },
+    { label: 'Registered Midwife', value: 'Registered Midwife' },
     { label: 'Enrolled Nurse', value: 'Enrolled Nurse' },
+    { label: 'Nursing Assistant (AIN)', value: 'Nursing Assistant (AIN)' },
     { label: 'Personal Care Assistant', value: 'Personal Care Assistant' },
-    { label: 'Allied Health', value: 'Allied Health' },
-    { label: 'Administration', value: 'Administration' },
-    { label: 'Other', value: 'Other' }
+    { label: 'Kitchen Hand', value: 'Kitchen Hand' },
+    { label: 'Pantry', value: 'Pantry' },
+    { label: 'Food Services Assistant', value: 'Food Services Assistant' },
+    { label: 'Cleaner', value: 'Cleaner' },
+    { label: 'Laundry', value: 'Laundry' },
+    { label: 'Assistant Cook', value: 'Assistant Cook' },
+    { label: 'Cook', value: 'Cook' },
+    { label: 'Chef', value: 'Chef' },
+    { label: 'Head Chef Supervisor', value: 'Head Chef Supervisor' },
+    { label: 'Allied Health', value: 'Allied Health' }
 ];
 
 const PRIORITY_OPTIONS = [

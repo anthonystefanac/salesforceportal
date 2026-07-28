@@ -9,9 +9,19 @@
         <valueSetDefinition>
             <sorted>false</sorted>
             <value>
+                <fullName>Clinical Nurse</fullName>
+                <default>false</default>
+                <label>Clinical Nurse</label>
+            </value>
+            <value>
                 <fullName>Registered Nurse</fullName>
                 <default>false</default>
                 <label>Registered Nurse</label>
+            </value>
+            <value>
+                <fullName>Registered Midwife</fullName>
+                <default>false</default>
+                <label>Registered Midwife</label>
             </value>
             <value>
                 <fullName>Enrolled Nurse</fullName>
@@ -19,24 +29,64 @@
                 <label>Enrolled Nurse</label>
             </value>
             <value>
+                <fullName>Nursing Assistant (AIN)</fullName>
+                <default>false</default>
+                <label>Nursing Assistant (AIN)</label>
+            </value>
+            <value>
                 <fullName>Personal Care Assistant</fullName>
                 <default>false</default>
                 <label>Personal Care Assistant</label>
             </value>
             <value>
+                <fullName>Kitchen Hand</fullName>
+                <default>false</default>
+                <label>Kitchen Hand</label>
+            </value>
+            <value>
+                <fullName>Pantry</fullName>
+                <default>false</default>
+                <label>Pantry</label>
+            </value>
+            <value>
+                <fullName>Food Services Assistant</fullName>
+                <default>false</default>
+                <label>Food Services Assistant</label>
+            </value>
+            <value>
+                <fullName>Cleaner</fullName>
+                <default>false</default>
+                <label>Cleaner</label>
+            </value>
+            <value>
+                <fullName>Laundry</fullName>
+                <default>false</default>
+                <label>Laundry</label>
+            </value>
+            <value>
+                <fullName>Assistant Cook</fullName>
+                <default>false</default>
+                <label>Assistant Cook</label>
+            </value>
+            <value>
+                <fullName>Cook</fullName>
+                <default>false</default>
+                <label>Cook</label>
+            </value>
+            <value>
+                <fullName>Chef</fullName>
+                <default>false</default>
+                <label>Chef</label>
+            </value>
+            <value>
+                <fullName>Head Chef Supervisor</fullName>
+                <default>false</default>
+                <label>Head Chef Supervisor</label>
+            </value>
+            <value>
                 <fullName>Allied Health</fullName>
                 <default>false</default>
                 <label>Allied Health</label>
-            </value>
-            <value>
-                <fullName>Administration</fullName>
-                <default>false</default>
-                <label>Administration</label>
-            </value>
-            <value>
-                <fullName>Other</fullName>
-                <default>false</default>
-                <label>Other</label>
             </value>
         </valueSetDefinition>
     </valueSet>

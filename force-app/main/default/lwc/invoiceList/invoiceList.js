@@ -69,9 +69,16 @@ export default class InvoiceList extends NavigationMixin(LightningElement) {
     @wire(getInvoiceFileIds)
     wiredFileIds(result) {
         this._wiredFileIdsResult = result;
-        const { data } = result;
+        const { data, error } = result;
         if (data) {
             this.fileIdsByInvoiceId = data;
+        } else if (error) {
+            // Non-fatal to the page - every row just falls back to "View"
+            // instead of "Download PDF" - but log it, since a permission or
+            // sharing gap blocking ContentDocumentLink access for this user
+            // would otherwise fail completely silently.
+            // eslint-disable-next-line no-console
+            console.error('getInvoiceFileIds failed', error);
         }
     }
 

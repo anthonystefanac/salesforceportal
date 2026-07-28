@@ -214,6 +214,23 @@ describe('c-invoice-list', () => {
         expect(createdLinks).toHaveLength(0);
     });
 
+    it('logs an error and leaves every row on "View" if getInvoiceFileIds itself errors', () => {
+        jest.spyOn(console, 'error').mockImplementation(() => {});
+
+        const element = createElement('c-invoice-list', { is: InvoiceList });
+        document.body.appendChild(element);
+
+        getInvoices.emit(mockInvoices);
+        getInvoiceFileIds.error(new Error('insufficient access'));
+
+        return Promise.resolve().then(() => {
+            const button = element.shadowRoot.querySelector('lightning-button');
+            expect(button.label).toBe('View');
+            expect(console.error).toHaveBeenCalled();
+            console.error.mockRestore();
+        });
+    });
+
     it('filters rows by search term across invoice number and status', () => {
         const element = createElement('c-invoice-list', { is: InvoiceList });
         document.body.appendChild(element);

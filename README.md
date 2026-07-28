@@ -163,7 +163,21 @@ directly the way both Apex methods do, and whether the uploaded file's own
 sharing needs anything beyond the Invoice record's existing Sharing Set for
 an external user to actually read it — test this by uploading a file to one
 pilot Invoice record's Files related list, then downloading it while logged
-in as the portal user, not as an internal admin.
+in as the portal user, not as an internal admin. If `getInvoiceFileIds()`
+does fail silently for this reason, every row falls back to showing "View"
+instead of "Download PDF" rather than breaking the page - `wiredFileIds()`
+logs that failure to the browser console (`console.error`) specifically so
+it's diagnosable rather than invisible.
+
+**A second, separate issue found in testing**: the "View" fallback itself
+(`standard__recordPage` navigation to the Invoice record) can also land on
+the site's own error page (`/portal/error` — "Invalid Page") if `Invoice__c`
+doesn't have an activated **Object Page** in this Experience Builder site.
+Unlike older Aura-based Community templates, LWR ("Build Your Own") sites
+need that page created explicitly: Setup → Digital Experiences → Builder →
+Pages → New Page → Object Page → select `Invoice__c` → Publish. This is
+unrelated to the file-download fix above; check it independently if the
+"View" button (not "Download PDF") is the one landing on Invalid Page.
 
 `myStaffingRequests` also shows an **Assigned Contact** column —
 `Staffing_Request__c.Assigned_Contact__c`, a plain text field (not a Contact
@@ -723,7 +737,7 @@ npm install
 npm run test:unit
 ```
 
-133 Jest tests across all 15 LWCs (including the `sortTableUtils` and
+134 Jest tests across all 15 LWCs (including the `sortTableUtils` and
 `dateFormatUtils` shared modules). This is the only thing in this project
 that's actually been run and confirmed passing in this environment.
 

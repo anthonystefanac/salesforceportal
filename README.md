@@ -405,6 +405,33 @@ made by the calling Apex, not trigger execution — so
 `StaffingRequestValidationService`'s Start/End Time and Shift Date rules
 are unaffected.
 
+**The same sharing gap also affected flagging `Cancellation_Requested__c`.**
+That field's whole purpose is to record that a portal user has asked for a
+shift to be cancelled — it's read-only to the portal (nothing else in the
+codebase ever sets it), driven entirely by
+`SupportRequestService.flagCancellationRequested`, called whenever a
+"Cancellation Request" Case is created with a `Related_Staffing_Request__c`
+(today, exclusively from the My Requests row action). It's what the
+"Cancellation Requested" column reflects and what makes `canCancel` on
+`myStaffingRequests` hide the action once cancellation's already been
+asked for. `flagCancellationRequested`'s `update` targets an *existing*
+`Staffing_Request__c` by Id in a `with sharing` class — the same two-hop
+Master-Detail-from-Account chain the Facility/Ward fix above addresses for
+inserts, so it hit the identical sharing gap for this update. Fixed the
+same way: an explicit check that the request's `Facility__r.Account__c`
+matches the requesting user's own Account (the real access control, not
+reachable through normal use with a mismatch since the id always comes from
+the user's own My Requests list) before doing the update through a nested
+`without sharing` class. A request that doesn't belong to the user's
+Account silently skips the flag rather than failing the whole Case
+submission over it — the Case is still the primary outcome; the flag is
+secondary, same as the confirmation email.
+
+(`DmlHelper` in both classes uses instance methods, not `static` ones —
+Apex doesn't allow `static` members on inner classes at all, "static can
+only be used on methods of a top level type", so each caller does
+`new DmlHelper().someMethod(...)` instead.)
+
 **`TestDataFactory.createPortalUser` now assigns the permission set — in a
 way that avoids `MIXED_DML_OPERATION`.** The first real `sf apex run test`
 run against a connected org surfaced the missing assignment: every

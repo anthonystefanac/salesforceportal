@@ -121,6 +121,11 @@ but nothing in the codebase ever actually set it — `SupportRequestService`
 now flags it on the related request whenever a Cancellation Request Case is
 created, regardless of which screen submitted it.
 
+**The Action column is the first column, titled "Action".** It started as
+a trailing, unlabeled column; it's now the leading column with a header, so
+it's the first thing a user sees for each row rather than something they
+have to scroll to find.
+
 The `myStaffingRequests` table container also has defensive
 `max-width: 100%`/`overflow-x: auto` CSS on its wrapper elements, so any
 wide row content scrolls within the table's own frame instead of stretching
@@ -229,8 +234,12 @@ active, and the CSV download reflects the current sort order too.
 `:nth-child` in each component's own CSS, since Shadow DOM means the two
 components can't share a CSS file) so the 15 columns the two screens have
 in common line up the same way on both pages, rather than each table
-auto-sizing its columns to its own content and column count (My Requests
-has a 16th Actions column Reporting doesn't).
+auto-sizing its columns to its own content and column count. My Requests
+has an Action column Reporting doesn't — it's the leading column there, so
+every other field's `:nth-child` index in `myStaffingRequests.css` is one
+higher than the matching field's index in `staffingRequestReporting.css`
+(e.g. Request is `nth-child(2)` on My Requests but `nth-child(1)` on
+Reporting), even though both give that field the same width.
 
 The download itself uses a `data:` URI (`<a download href="data:text/csv...">`),
 **not** the more common `Blob` + `URL.createObjectURL("blob:...")` pattern —

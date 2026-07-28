@@ -22,12 +22,17 @@ force-app/main/default/
                        boundaries, notification/validation services, and their test classes
   triggers/            StaffingRequestTrigger — fires the Start/End Time
                        validation and the submit/status-change notification
-                       emails (see "Data validation" / "Notifications" below)
-  lwc/                 13 Lightning Web Components covering the current screens
-                       (plus timeFormatUtils, a shared non-visual helper module),
-                       including an added Calendar screen for reviewing bookings by day,
-                       a header user/account badge (portalUserBadge), and a Reporting
-                       screen (staffingRequestReporting)
+                       emails (see "Data validation" / "Notifications" below).
+                       ContentDocumentLinkTrigger — corrects file-sharing
+                       visibility on invoice PDFs (see "Screens → components"
+                       below, under invoiceList's View / Download button)
+  lwc/                 15 Lightning Web Components total: 12 covering the
+                       current screens (including an added Calendar screen for
+                       reviewing bookings by day, a header user/account badge -
+                       portalUserBadge, and a Reporting screen -
+                       staffingRequestReporting) plus 3 shared, non-visual
+                       helper modules (dateFormatUtils, sortTableUtils,
+                       timeFormatUtils)
   permissionsets/      Alliance_Client_Portal_User — assign to every portal Contact's User
   sharingSets/         Grants same-Account contacts shared read access
   tabs/                Custom object tabs
@@ -159,10 +164,11 @@ CSV text. A failed fetch (no file, wrong Account, etc.) shows a guaranteed
 inline error banner rather than a toast, consistent with the rest of the
 app.
 
-**Three access gaps were found testing this against a real connected
-org**, all silent - the query succeeds and just returns nothing, no
-exception, no console error - which made this genuinely hard to diagnose.
-Each was found and fixed one at a time as testing revealed the next layer:
+**Getting this working against a real connected org took several rounds**,
+all silent failures - the query succeeds and just returns nothing, no
+exception, no console error - which made it genuinely hard to diagnose.
+Three things were tried and kept in place along the way, though none of
+them turned out to be the actual root cause:
 
 1. **Row-level sharing.** `ContentDocumentLink`'s own visibility for a
    portal/Community user doesn't reliably follow the linked record's
@@ -176,24 +182,37 @@ Each was found and fixed one at a time as testing revealed the next layer:
    cascade gap (see "Data validation" above, and `WithoutSharingDml`).
 2. **Object-level CRUD.** `without sharing` only bypasses sharing rules,
    not whether the running user's profile/permission set can read the
-   object at all. Confirmed via `System.debug` in Execute Anonymous: the
-   exact same query found the file instantly as an admin, but the portal
-   user got nothing even through `WithoutSharingFileAccess` until
-   `ContentVersion` was granted **Read** in `Alliance_Client_Portal_User`
-   (`objectPermissions` - see that permission set).
-3. **A second object, reached via relationship.** Even with `ContentVersion`
-   granted, `getLatestContentDocumentIdsByLinkedEntity`'s own query still
-   touched a *different* object the permission set said nothing about:
-   `ORDER BY ContentDocument.ContentModifiedDate DESC` traverses into
-   `ContentDocument`, not just `ContentDocumentLink`/`ContentVersion`.
-   Rather than add yet another object permission grant (and `ContentDocument`
-   isn't reliably grantable in Permission Set Object Settings either), the
-   query now orders by `ContentDocumentLink.SystemModstamp` instead - a
-   field on the object already being queried, so no relationship traversal
-   and no extra permission needed at all. (`CreatedDate` was tried first and
-   doesn't compile at all - `ContentDocumentLink` is a restricted junction
-   object with no `CreatedDate`/`LastModifiedDate` field, only
-   `SystemModstamp`.)
+   object at all, so `ContentVersion` was granted **Read** in
+   `Alliance_Client_Portal_User` (`objectPermissions`).
+3. **A second object, reached via relationship.** `getLatestContentDocumentIdsByLinkedEntity`'s
+   own query also touched a *different* object the permission set said
+   nothing about: `ORDER BY ContentDocument.ContentModifiedDate DESC`
+   traverses into `ContentDocument`, not just
+   `ContentDocumentLink`/`ContentVersion`. The query now orders by
+   `ContentDocumentLink.SystemModstamp` instead - a field on the object
+   already being queried, so no relationship traversal and no extra
+   permission needed at all.
+
+**The actual root cause was none of the above.** Confirmed via
+`System.debug` in Execute Anonymous, directly on the specific
+`ContentDocumentLink` row: `Visibility = 'InternalUsers'`. That single
+field, set when the file was uploaded through the standard "Add Files"
+button, hard-blocks any external/Community/portal user from ever seeing
+that file - completely independent of sharing rules, CRUD, or permission
+sets, which is exactly why none of the three fixes above ever moved the
+needle. The fix for the files already uploaded during this investigation
+was a one-off Apex data update setting `Visibility = 'AllUsers'`.
+
+**Going forward, this is handled automatically** so it doesn't become a
+recurring manual step for whoever uploads a new invoice's PDF:
+`ContentDocumentLinkTrigger` (`after insert` on `ContentDocumentLink`) calls
+`ContentDocumentLinkVisibilityService.ensureAllUsersVisibilityForInvoiceFiles()`,
+which corrects `Visibility` to `AllUsers` for any newly-linked file whose
+`LinkedEntityId` is an `Invoice__c` - scoped specifically to invoices, so a
+file attached to some unrelated record is left exactly as it was. This is
+`without sharing` for the same reason `WithoutSharingDml` is: the scope
+check (is this actually an Invoice__c) is the real access control, not
+whichever internal user happens to be uploading the file.
 
 If `getInvoiceFileIds()` still fails for some other reason (an actual
 exception, not just an empty result), every row falls back to showing

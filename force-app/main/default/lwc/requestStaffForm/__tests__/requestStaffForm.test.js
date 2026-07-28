@@ -16,6 +16,23 @@ function setInputValue(element, selector, value) {
     return input;
 }
 
+function selectFacility(element, facilityId) {
+    const facilityPicker = element.shadowRoot.querySelector('c-facility-picker');
+    facilityPicker.dispatchEvent(new CustomEvent('facilitychange', { detail: { facilityId } }));
+}
+
+// Fills every required field with a valid value (a far-future Shift Date so
+// it's never accidentally in the past relative to whenever the suite runs).
+// Quantity and Priority are left alone - they already default to '1' and
+// 'Medium'.
+function fillRequiredFields(element, overrides = {}) {
+    selectFacility(element, overrides.facilityId || 'a01000000000001AAA');
+    setInputValue(element, '[data-field="role"]', overrides.role || 'Registered Nurse');
+    setInputValue(element, '[data-field="shiftDate"]', overrides.shiftDate || '2030-01-01');
+    setInputValue(element, '[data-field="startTime"]', overrides.startTime || '07:00:00.000');
+    setInputValue(element, '[data-field="endTime"]', overrides.endTime || '15:00:00.000');
+}
+
 describe('c-request-staff-form', () => {
     afterEach(() => {
         while (document.body.firstChild) {
@@ -70,6 +87,8 @@ describe('c-request-staff-form', () => {
         const element = createElement('c-request-staff-form', { is: RequestStaffForm });
         document.body.appendChild(element);
 
+        fillRequiredFields(element);
+
         const submitButton = element.shadowRoot.querySelector('lightning-button');
         submitButton.click();
         await Promise.resolve();
@@ -99,6 +118,8 @@ describe('c-request-staff-form', () => {
         expect(quantityField.options[0]).toEqual({ label: '1', value: '1' });
         expect(quantityField.options[9]).toEqual({ label: '10', value: '10' });
 
+        fillRequiredFields(element);
+
         const submitButton = element.shadowRoot.querySelector('lightning-button');
         submitButton.click();
 
@@ -126,6 +147,11 @@ describe('c-request-staff-form', () => {
         facilityPicker.dispatchEvent(
             new CustomEvent('facilitychange', { detail: { facilityId: 'a01000000000002AAA' } })
         );
+
+        setInputValue(element, '[data-field="role"]', 'Registered Nurse');
+        setInputValue(element, '[data-field="shiftDate"]', '2030-01-01');
+        setInputValue(element, '[data-field="startTime"]', '07:00:00.000');
+        setInputValue(element, '[data-field="endTime"]', '15:00:00.000');
 
         const submitButton = element.shadowRoot.querySelector('lightning-button');
         submitButton.click();
@@ -191,7 +217,11 @@ describe('c-request-staff-form', () => {
         element.addEventListener('lightning__showtoast', toastHandler);
         document.body.appendChild(element);
 
+        selectFacility(element, 'a01000000000001AAA');
+        setInputValue(element, '[data-field="role"]', 'Registered Nurse');
         setInputValue(element, '[data-field="shiftDate"]', '2020-01-01');
+        setInputValue(element, '[data-field="startTime"]', '07:00:00.000');
+        setInputValue(element, '[data-field="endTime"]', '15:00:00.000');
         await Promise.resolve();
 
         const submitButton = element.shadowRoot.querySelector('lightning-button');
@@ -214,6 +244,10 @@ describe('c-request-staff-form', () => {
         const toastHandler = jest.fn();
         element.addEventListener('lightning__showtoast', toastHandler);
         document.body.appendChild(element);
+
+        selectFacility(element, 'a01000000000001AAA');
+        setInputValue(element, '[data-field="role"]', 'Registered Nurse');
+        setInputValue(element, '[data-field="shiftDate"]', '2030-01-01');
 
         // Only Start Time is touched - End Time is never explicitly set by
         // the user, it's left at whatever the auto-fill applied.
@@ -238,6 +272,9 @@ describe('c-request-staff-form', () => {
         element.addEventListener('lightning__showtoast', toastHandler);
         document.body.appendChild(element);
 
+        selectFacility(element, 'a01000000000001AAA');
+        setInputValue(element, '[data-field="role"]', 'Registered Nurse');
+        setInputValue(element, '[data-field="shiftDate"]', '2030-01-01');
         setInputValue(element, '[data-field="startTime"]', '08:30:00.000');
         await Promise.resolve();
         setInputValue(element, '[data-field="endTime"]', '08:30:00.000');
@@ -272,6 +309,11 @@ describe('c-request-staff-form', () => {
         const shiftDateInput = element.shadowRoot.querySelector('[data-field="shiftDate"]');
         expect(shiftDateInput.value).toBe('2026-08-14');
 
+        selectFacility(element, 'a01000000000001AAA');
+        setInputValue(element, '[data-field="role"]', 'Registered Nurse');
+        setInputValue(element, '[data-field="startTime"]', '07:00:00.000');
+        setInputValue(element, '[data-field="endTime"]', '15:00:00.000');
+
         const submitButton = element.shadowRoot.querySelector('lightning-button');
         submitButton.click();
 
@@ -298,6 +340,8 @@ describe('c-request-staff-form', () => {
         element.addEventListener('lightning__showtoast', toastHandler);
         document.body.appendChild(element);
 
+        fillRequiredFields(element);
+
         const submitButton = element.shadowRoot.querySelector('lightning-button');
         submitButton.click();
 
@@ -319,6 +363,8 @@ describe('c-request-staff-form', () => {
         element.addEventListener('lightning__showtoast', toastHandler);
         document.body.appendChild(element);
 
+        fillRequiredFields(element);
+
         const submitButton = element.shadowRoot.querySelector('lightning-button');
         submitButton.click();
 
@@ -334,11 +380,51 @@ describe('c-request-staff-form', () => {
         expect(banner.textContent).toBe('Validation failed');
     });
 
+    it('shows an inline error and does not submit when required fields are missing', async () => {
+        const element = createElement('c-request-staff-form', { is: RequestStaffForm });
+        const toastHandler = jest.fn();
+        element.addEventListener('lightning__showtoast', toastHandler);
+        document.body.appendChild(element);
+
+        const submitButton = element.shadowRoot.querySelector('lightning-button');
+        submitButton.click();
+
+        await Promise.resolve();
+
+        expect(createRequest).not.toHaveBeenCalled();
+        expect(toastHandler).toHaveBeenCalledTimes(1);
+        expect(toastHandler.mock.calls[0][0].detail.variant).toBe('error');
+
+        const banner = element.shadowRoot.querySelector('.request-staff-form__banner_error');
+        expect(banner.textContent).toBe(
+            'Please fill in: Facility, Role, Shift Date, Start Time, End Time.'
+        );
+    });
+
+    it('lists only the fields still missing once some required fields are filled in', async () => {
+        const element = createElement('c-request-staff-form', { is: RequestStaffForm });
+        document.body.appendChild(element);
+
+        selectFacility(element, 'a01000000000001AAA');
+        setInputValue(element, '[data-field="role"]', 'Registered Nurse');
+
+        const submitButton = element.shadowRoot.querySelector('lightning-button');
+        submitButton.click();
+
+        await Promise.resolve();
+
+        expect(createRequest).not.toHaveBeenCalled();
+        const banner = element.shadowRoot.querySelector('.request-staff-form__banner_error');
+        expect(banner.textContent).toBe('Please fill in: Shift Date, Start Time, End Time.');
+    });
+
     it('clears a previous banner when a new submit attempt starts', async () => {
         createRequest.mockRejectedValueOnce({ body: { message: 'Validation failed' } });
 
         const element = createElement('c-request-staff-form', { is: RequestStaffForm });
         document.body.appendChild(element);
+
+        fillRequiredFields(element);
 
         const submitButton = element.shadowRoot.querySelector('lightning-button');
         submitButton.click();

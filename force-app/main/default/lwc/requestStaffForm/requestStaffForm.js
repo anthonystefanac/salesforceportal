@@ -46,6 +46,23 @@ function todayIso() {
     return `${year}-${month}-${day}`;
 }
 
+// Mirrors Staffing_Request__c's own required fields (Facility__c is a
+// required Master-Detail relationship; Role__c/Shift_Date__c/Start_Time__c/
+// End_Time__c/Priority__c/Quantity__c are all required=true on the object).
+// Ward__c, Specialty__c, and Notes__c are genuinely optional, so they're
+// left out. Quantity/Priority always carry a default value, so in practice
+// they can't go blank through normal use - included anyway so this stays
+// correct if those defaults ever change.
+const REQUIRED_FIELDS = [
+    { key: 'facilityId', label: 'Facility' },
+    { key: 'role', label: 'Role' },
+    { key: 'shiftDate', label: 'Shift Date' },
+    { key: 'startTime', label: 'Start Time' },
+    { key: 'endTime', label: 'End Time' },
+    { key: 'quantity', label: 'Quantity' },
+    { key: 'priority', label: 'Priority' }
+];
+
 export default class RequestStaffForm extends LightningElement {
     roleOptions = ROLE_OPTIONS;
     priorityOptions = PRIORITY_OPTIONS;
@@ -133,8 +150,38 @@ export default class RequestStaffForm extends LightningElement {
             : 'request-staff-form__banner request-staff-form__banner_error';
     }
 
+    get missingRequiredFieldLabels() {
+        return REQUIRED_FIELDS.filter((field) => !this.formData[field.key]).map((field) => field.label);
+    }
+
     async handleSubmit() {
         this.bannerMessage = undefined;
+
+        // `required` on these inputs only drives native validation UI when
+        // something calls reportValidity() - report it for the "Complete
+        // this field" styling on the fields owned directly by this
+        // component (Facility/Ward live inside their own child components,
+        // whose internal validity can't be reached from here). The actual
+        // gate is the value check below, not this call's return value -
+        // same reasoning as the Subject fix on the Support form: native
+        // validity alone isn't trusted on this site type.
+        this.template.querySelectorAll('lightning-input, lightning-combobox').forEach((element) => {
+            element.reportValidity();
+        });
+
+        const missingLabels = this.missingRequiredFieldLabels;
+        if (missingLabels.length > 0) {
+            const message = `Please fill in: ${missingLabels.join(', ')}.`;
+            this.showBanner('error', message);
+            this.dispatchEvent(
+                new ShowToastEvent({
+                    title: 'Unable to submit request',
+                    message,
+                    variant: 'error'
+                })
+            );
+            return;
+        }
 
         if (this.formData.shiftDate && this.formData.shiftDate < todayIso()) {
             this.showBanner('error', 'Shift date cannot be in the past.');

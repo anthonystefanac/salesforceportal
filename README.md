@@ -58,9 +58,12 @@ Requests filtered to that shift date. It reuses the existing
 `Staffing_Request__c` object and `StaffingRequestController` — no new Apex or
 objects were needed for it.
 
-The Home dashboard's five tiles — **Open Requests**, **Unfilled Shifts**,
-**Filled Shifts**, **Cancelled Shifts**, and **Overdue Invoices** — the
-Calendar's Request Staff button, each Calendar booking, and Support's
+The Home dashboard's five tiles — **Open Requests**, **Unable to Fill
+Shifts** (the tile label — the underlying `unfilled` filter key and
+`unfilledShiftCount` field are unchanged, since renaming those would be
+churn for no visible benefit), **Filled Shifts**, **Cancelled Shifts**, and
+**Overdue Invoices** — the Calendar's Request Staff button, each Calendar
+booking, and Support's
 post-submit confirmation are all clickable/navigable and deep-link across
 pages: the four Staffing_Request__c tiles go to My Requests filtered to
 their matching status (`open` excludes Filled/Unable to Fill/Cancelled;
@@ -95,7 +98,14 @@ ever recreated or renamed, update the matching constant to its new API Name.
 request/facility/ward/role/specialty/status, or invoice number/status) and
 sortable column headers (click to sort ascending, click again to toggle
 descending) — both are client-side, layered on top of the existing deep-link
-filters, so no new Apex was needed. `myStaffingRequests` also paginates at 10
+filters, so no new Apex was needed. `myStaffingRequests` **defaults to
+sorting by Request number descending** (newest request first) rather than
+loading unsorted — set via `sortField`/`sortDirection`'s initial values
+rather than a click, so the "Request" column header shows as already
+sorted (▼) on first load. This relies on `Staffing_Request__c`'s Name
+auto-number format being zero-padded (`SR-{0000}`) — descending string
+comparison on a zero-padded number lines up with descending numeric order,
+up to 9,999 requests. `myStaffingRequests` also paginates at 10
 rows per page (Previous/Next, with a "Showing X–Y of Z" summary) — the table
 had no upper bound before this, and a client's request history only grows
 over time. Changing the search term, the sort column, or the active filter
@@ -493,6 +503,56 @@ via a single `Messaging.sendEmail` call, not one per record — Apex allows
 only 10 calls to that method per transaction, so batching avoids hitting
 that limit as request volume grows.
 
+### Date formatting
+
+All user-facing dates are explicit **DD/MM/YYYY** (and DD/MM/YYYY, HH:MM
+where a time is included), regardless of anyone's Salesforce Locale
+setting. Locale (Setup → Users → a user → Locale, e.g. "English
+(Australia)") looked like the obvious lever, but it doesn't reliably cover
+this whole app:
+- It's per-user. A portal user, an internal staff member, and whoever the
+  scheduled overdue job runs as can each have a different Locale, and
+  **Apex's `Date.format()`** (used in the notification/confirmation
+  emails) follows the Locale of whichever of *those* is running the code
+  at the time — not the portal recipient's.
+- Even where a component already used a Lightning date component
+  (`lightning-formatted-date-time` for My Requests/Reporting's "Last
+  Update" column), its day/month/year *order* is still Locale-driven, not
+  fixed by its format attributes — pinning `day="2-digit"` etc. controls
+  digit padding, not DD/MM vs MM/DD.
+- Several date cells (Shift Date; Invoice Date/Due Date) were plain
+  `{value}` interpolation of the raw ISO string from the wire — Locale
+  wouldn't touch those at all.
+
+Fixed with two small, explicit formatters instead of relying on Locale
+anywhere:
+- **`c/dateFormatUtils`** (new LWC module) — `formatDate`/`formatDateTime`,
+  used by `myStaffingRequests`, `staffingRequestReporting`, and
+  `invoiceList`.
+- **`DateFormatUtil.format(Date)`** (new Apex class) — used by
+  `StaffingRequestNotificationService` and `SupportRequestService` in
+  place of `Date.format()`.
+
+**The underlying ISO value is kept alongside the formatted one, not
+replaced by it.** Shift Date/Last Update (My Requests, Reporting) and
+Invoice Date/Due Date (Invoices) all still filter, sort, and — for
+Reporting's date-range preset math and CSV filename — compare correctly
+*only* because ISO (`YYYY-MM-DD...`) sorts lexicographically the same as
+it sorts chronologically; `DD/MM/YYYY` does not (`"05/07/2026"` would
+lexicographically look earlier than `"20/06/2026"`, which is backwards).
+So each row object carries both: e.g. `shiftDate` (raw ISO, used for
+filtering/sorting/comparison) and `shiftDateDisplay` (DD/MM/YYYY, used only
+by the table cell). Reporting's CSV export deliberately still uses the raw
+ISO columns too, not the Display ones — a spreadsheet import is exactly the
+context where an unlabelled DD/MM/YYYY value risks being misread as
+MM/DD/YYYY, so ISO is the safer choice for a machine-facing export even
+though the on-screen table (a human reading it directly) uses DD/MM/YYYY.
+
+The Calendar's day-detail heading (`requestStaffCalendar.js`) already used
+`toLocaleDateString('en-AU', ...)` — hardcoding the locale argument rather
+than relying on the runtime default — so it was already immune to this and
+didn't need changing.
+
 ### Experience Cloud site setup
 
 The actual Experience Builder site (pages, theme, navigation menu — the
@@ -612,8 +672,8 @@ npm install
 npm run test:unit
 ```
 
-115 Jest tests across all 14 LWCs (including the `sortTableUtils` shared
-module). This is the only thing in this project
+127 Jest tests across all 15 LWCs (including the `sortTableUtils` and
+`dateFormatUtils` shared modules). This is the only thing in this project
 that's actually been run and confirmed passing in this environment.
 
 ### Requires a connected org (not verified here)
@@ -645,7 +705,14 @@ All child objects are Master-Detail to their parent, so read sharing is
   not portal-readable — server-set only. `Assigned_Contact__c` (plain text,
   not a lookup — see "Screens → components" above) and
   `Cancellation_Requested__c` are portal-readable but not portal-editable —
-  both are set only by trusted server-side Apex.
+  both are set only by trusted server-side Apex. `Role__c` is a
+  **restricted** picklist (Clinical Nurse, Registered Nurse, Registered
+  Midwife, Enrolled Nurse, Nursing Assistant (AIN), Personal Care Assistant,
+  Kitchen Hand, Pantry, Food Services Assistant, Cleaner, Laundry, Assistant
+  Cook, Cook, Chef, Head Chef Supervisor, Allied Health) — being restricted
+  means `requestStaffForm`'s `ROLE_OPTIONS` must exactly match the field's
+  valueSet, or picking a value the field doesn't allow would submit fine
+  client-side and only fail once it reaches Apex/the database.
 - **Invoice__c** (MD → Account) — read-only in Phase 1.
   `External_Invoice_Id__c` is not portal-readable. The PDF itself is a
   standard `ContentVersion`/`ContentDocumentLink`, not a custom field.

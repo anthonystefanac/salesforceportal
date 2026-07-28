@@ -2,7 +2,7 @@ import { LightningElement, wire } from 'lwc';
 import { refreshApex } from '@salesforce/apex';
 import { CurrentPageReference } from 'lightning/navigation';
 import { formatTime } from 'c/timeFormatUtils';
-import { formatDate, formatDateTime } from 'c/dateFormatUtils';
+import { formatDate, formatDateTime, todayIso } from 'c/dateFormatUtils';
 import { sortRecords, toggleSort, buildSortableColumns } from 'c/sortTableUtils';
 import getMyRequests from '@salesforce/apex/StaffingRequestController.getMyRequests';
 import createCase from '@salesforce/apex/SupportRequestController.createCase';
@@ -44,12 +44,12 @@ export default class MyStaffingRequests extends LightningElement {
     activeFilter;
     dateFilter;
     searchTerm = '';
-    // Default sort: newest request number first (SR-0004 needs the account's
-    // Name auto-number to actually be zero-padded so descending string
-    // comparison lines up with numeric order - Staffing_Request__c's is
-    // "SR-{0000}", so this holds up to 9999 requests).
-    sortField = 'name';
-    sortDirection = 'desc';
+    // Default sort: soonest shift first. Paired with upcomingRequests below -
+    // shifts before today have already been worked, cancelled, or marked
+    // Unable to Fill, so they're excluded here entirely and are only found
+    // in Reporting from now on.
+    sortField = 'shiftDate';
+    sortDirection = 'asc';
     currentPage = 1;
     cancellingRequestId;
     bannerMessage;
@@ -115,23 +115,32 @@ export default class MyStaffingRequests extends LightningElement {
         }
     }
 
+    // Shifts before today have already been worked, cancelled, or marked
+    // Unable to Fill - that history lives in Reporting now, so every view of
+    // this page (default, status filters, and deep-linked date filters
+    // alike) is scoped to today onwards.
+    get upcomingRequests() {
+        const today = todayIso();
+        return this.allRequests.filter((request) => request.shiftDate >= today);
+    }
+
     get filteredRequests() {
         if (this.dateFilter) {
-            return this.allRequests.filter((request) => request.shiftDate === this.dateFilter);
+            return this.upcomingRequests.filter((request) => request.shiftDate === this.dateFilter);
         }
         if (this.activeFilter === 'open') {
-            return this.allRequests.filter((request) => !NOT_OPEN_STATUSES.includes(request.status));
+            return this.upcomingRequests.filter((request) => !NOT_OPEN_STATUSES.includes(request.status));
         }
         if (this.activeFilter === 'unfilled') {
-            return this.allRequests.filter((request) => request.status === 'Unable to Fill');
+            return this.upcomingRequests.filter((request) => request.status === 'Unable to Fill');
         }
         if (this.activeFilter === 'filled') {
-            return this.allRequests.filter((request) => request.status === 'Filled');
+            return this.upcomingRequests.filter((request) => request.status === 'Filled');
         }
         if (this.activeFilter === 'cancelled') {
-            return this.allRequests.filter((request) => request.status === 'Cancelled');
+            return this.upcomingRequests.filter((request) => request.status === 'Cancelled');
         }
-        return this.allRequests;
+        return this.upcomingRequests;
     }
 
     get sortedRequests() {
@@ -212,7 +221,7 @@ export default class MyStaffingRequests extends LightningElement {
         }
         return this.hasActiveFilter
             ? `No requests match "${this.activeFilterLabel}".`
-            : 'No staffing requests yet.';
+            : 'No upcoming staffing requests. Looking for a past request? Check Reporting.';
     }
 
     get hasError() {

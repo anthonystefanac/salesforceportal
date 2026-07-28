@@ -1,6 +1,10 @@
 <template>
     <div class="my-requests">
         <h1 class="my-requests__title">My Requests</h1>
+        <p class="my-requests__subtitle">
+            Showing today's and upcoming shifts, soonest first. Past shifts - filled, cancelled, or unable to
+            fill - are in Reporting.
+        </p>
         <template if:true={hasActiveFilter}>
             <div class="my-requests__filter-banner">
                 <span>Showing: {activeFilterLabel}</span>

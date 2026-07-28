@@ -21,6 +21,17 @@ export function formatDate(value) {
     return `${day}/${month}/${year}`;
 }
 
+// Today's date as 'YYYY-MM-DD', matching the shape Shift_Date__c comes back
+// as - so it can be compared lexicographically against a request's raw
+// shiftDate to decide whether that shift is still current or already past.
+export function todayIso() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
 // Datetime fields come back as a full ISO string with a time/zone component -
 // `new Date(value)` here is intentional, converting to the viewer's local
 // time the same way lightning-formatted-date-time already did.

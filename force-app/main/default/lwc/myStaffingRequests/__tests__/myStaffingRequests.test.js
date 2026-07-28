@@ -5,7 +5,38 @@ import { formatDate, formatDateTime } from 'c/dateFormatUtils';
 import getMyRequests from '@salesforce/apex/StaffingRequestController.getMyRequests';
 import createCase from '@salesforce/apex/SupportRequestController.createCase';
 
-const mockRequests = require('./data/getMyRequests.json');
+const rawMockRequests = require('./data/getMyRequests.json');
+
+function isoOffset(days) {
+    const date = new Date();
+    date.setDate(date.getDate() + days);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+// Shift_Date__c now gates visibility (myStaffingRequests hides anything
+// before today), so the fixture's dates can't be static year-2026 literals -
+// they're recomputed relative to whenever the suite actually runs. SR-0004
+// stays unambiguously in the past (the "excluded" case); SR-0003 lands
+// exactly on today (the inclusive boundary); the rest are in the future.
+const SHIFT_DATE_OFFSET_DAYS = {
+    'SR-0001': 30,
+    'SR-0002': 1,
+    'SR-0003': 0,
+    'SR-0004': -6,
+    'SR-0005': 2
+};
+
+const mockRequests = rawMockRequests.map((request) => ({
+    ...request,
+    Shift_Date__c: isoOffset(SHIFT_DATE_OFFSET_DAYS[request.Name])
+}));
+
+function findByName(name) {
+    return mockRequests.find((request) => request.Name === name);
+}
 
 jest.mock(
     '@salesforce/apex/StaffingRequestController.getMyRequests',
@@ -35,7 +66,7 @@ describe('c-my-staffing-requests', () => {
         }
     });
 
-    it('renders a row per request with a status badge, unfiltered by default', () => {
+    it('renders a row per upcoming request with a status badge, unfiltered by default', () => {
         const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
         document.body.appendChild(element);
 
@@ -43,12 +74,14 @@ describe('c-my-staffing-requests', () => {
 
         return Promise.resolve().then(() => {
             const rows = element.shadowRoot.querySelectorAll('tbody tr');
+            // SR-0004 is the only fixture row dated before today - excluded.
             expect(rows).toHaveLength(4);
+            expect(Array.from(rows).some((row) => row.textContent.includes('SR-0004'))).toBe(false);
             expect(element.shadowRoot.querySelector('.my-requests__filter-banner')).toBeNull();
         });
     });
 
-    it('defaults to sorting by request number descending', () => {
+    it('defaults to sorting by shift date ascending, soonest first', () => {
         const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
         document.body.appendChild(element);
 
@@ -56,15 +89,42 @@ describe('c-my-staffing-requests', () => {
 
         return Promise.resolve().then(() => {
             const rows = element.shadowRoot.querySelectorAll('tbody tr');
-            expect(rows[0].textContent).toContain('SR-0004');
-            expect(rows[1].textContent).toContain('SR-0003');
-            expect(rows[2].textContent).toContain('SR-0002');
+            // Ascending by shift date: SR-0003 (today), SR-0002 (+1),
+            // SR-0005 (+2), SR-0001 (+30). SR-0004 (before today) is excluded.
+            expect(rows[0].textContent).toContain('SR-0003');
+            expect(rows[1].textContent).toContain('SR-0002');
+            expect(rows[2].textContent).toContain('SR-0005');
             expect(rows[3].textContent).toContain('SR-0001');
 
-            const requestHeader = Array.from(element.shadowRoot.querySelectorAll('th')).find((th) =>
-                th.textContent.includes('Request')
+            const shiftDateHeader = Array.from(element.shadowRoot.querySelectorAll('th')).find((th) =>
+                th.textContent.includes('Shift Date')
             );
-            expect(requestHeader.getAttribute('aria-sort')).toBe('descending');
+            expect(shiftDateHeader.getAttribute('aria-sort')).toBe('ascending');
+        });
+    });
+
+    it('excludes a shiftDate deep link that points to a date before today', () => {
+        const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
+        document.body.appendChild(element);
+
+        CurrentPageReference.emit({ state: { shiftDate: findByName('SR-0004').Shift_Date__c } });
+        getMyRequests.emit(mockRequests);
+
+        return Promise.resolve().then(() => {
+            const rows = element.shadowRoot.querySelectorAll('tbody tr');
+            expect(rows).toHaveLength(0);
+        });
+    });
+
+    it('mentions Reporting in the default empty state message', () => {
+        const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
+        document.body.appendChild(element);
+
+        getMyRequests.emit([]);
+
+        return Promise.resolve().then(() => {
+            const empty = element.shadowRoot.querySelector('.my-requests__empty');
+            expect(empty.textContent).toContain('Reporting');
         });
     });
 
@@ -75,15 +135,16 @@ describe('c-my-staffing-requests', () => {
         getMyRequests.emit(mockRequests);
 
         return Promise.resolve().then(() => {
-            // Default sort is descending by request number, so the first row is SR-0004.
+            // Default sort is ascending by shift date, so the first row is SR-0003 (today).
             const firstRow = element.shadowRoot.querySelector('tbody tr');
             const cells = firstRow.querySelectorAll('td');
+            const sr0003 = findByName('SR-0003');
             // Action, Request, Facility, Ward, Role, Specialty, Shift Date, Start Time, ...
-            expect(cells[6].textContent).toBe(formatDate(mockRequests[3].Shift_Date__c));
+            expect(cells[6].textContent).toBe(formatDate(sr0003.Shift_Date__c));
             expect(cells[6].textContent).toMatch(/^\d{2}\/\d{2}\/\d{4}$/);
             // ..., Last Update is the final column.
             const lastCell = cells[cells.length - 1];
-            expect(lastCell.textContent).toBe(formatDateTime(mockRequests[3].Last_Status_Update__c));
+            expect(lastCell.textContent).toBe(formatDateTime(sr0003.Last_Status_Update__c));
         });
     });
 
@@ -109,12 +170,13 @@ describe('c-my-staffing-requests', () => {
         getMyRequests.emit(mockRequests);
 
         return Promise.resolve().then(() => {
+            // Default sort is ascending by shift date, so the first row is SR-0003 (today).
             const firstRow = element.shadowRoot.querySelector('tbody tr');
             const cells = firstRow.querySelectorAll('td');
             // Action, Request, Facility, Ward, Role, Specialty, Shift Date, Start Time, End Time, Quantity, Priority, ...
             expect(cells[5].textContent).toBe('—');
             expect(cells[9].textContent).toBe('1');
-            expect(cells[10].textContent).toBe('Medium');
+            expect(cells[10].textContent).toBe('High');
             // ..., Assigned Contact, Status, Broadcasted, Cancellation Requested, Last Update
             expect(cells[11].textContent).toBe('—');
             expect(cells[14].textContent).toBe('No');
@@ -204,7 +266,8 @@ describe('c-my-staffing-requests', () => {
         const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
         document.body.appendChild(element);
 
-        CurrentPageReference.emit({ state: { shiftDate: '2026-07-29' } });
+        const sr0002 = findByName('SR-0002');
+        CurrentPageReference.emit({ state: { shiftDate: sr0002.Shift_Date__c } });
         getMyRequests.emit(mockRequests);
 
         return Promise.resolve().then(() => {
@@ -213,7 +276,7 @@ describe('c-my-staffing-requests', () => {
             expect(rows[0].textContent).toContain('SR-0002');
 
             const banner = element.shadowRoot.querySelector('.my-requests__filter-banner');
-            expect(banner.textContent).toContain('Shift Date: 29/07/2026');
+            expect(banner.textContent).toContain(`Shift Date: ${formatDate(sr0002.Shift_Date__c)}`);
         });
     });
 
@@ -306,23 +369,46 @@ describe('c-my-staffing-requests', () => {
         getMyRequests.emit(mockRequests);
 
         return Promise.resolve().then(() => {
-            const shiftDateHeader = Array.from(element.shadowRoot.querySelectorAll('th')).find(
-                (th) => th.textContent.includes('Shift Date')
+            // Shift Date is already the default sort, so exercise the toggle
+            // via a different column - Request (name).
+            const requestHeader = Array.from(element.shadowRoot.querySelectorAll('th')).find((th) =>
+                th.textContent.includes('Request')
+            );
+            requestHeader.click();
+
+            return Promise.resolve().then(() => {
+                let rows = element.shadowRoot.querySelectorAll('tbody tr');
+                expect(rows[0].textContent).toContain('SR-0001'); // ascending, earliest name
+                expect(rows[3].textContent).toContain('SR-0005'); // ascending, latest name
+
+                requestHeader.click();
+
+                return Promise.resolve().then(() => {
+                    rows = element.shadowRoot.querySelectorAll('tbody tr');
+                    expect(rows[0].textContent).toContain('SR-0005');
+                    expect(rows[3].textContent).toContain('SR-0001');
+                });
+            });
+        });
+    });
+
+    it('toggles Shift Date to descending when its already-sorted header is clicked', () => {
+        const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
+        document.body.appendChild(element);
+
+        getMyRequests.emit(mockRequests);
+
+        return Promise.resolve().then(() => {
+            const shiftDateHeader = Array.from(element.shadowRoot.querySelectorAll('th')).find((th) =>
+                th.textContent.includes('Shift Date')
             );
             shiftDateHeader.click();
 
             return Promise.resolve().then(() => {
-                let rows = element.shadowRoot.querySelectorAll('tbody tr');
-                expect(rows[0].textContent).toContain('SR-0004'); // 2026-07-22, earliest
-                expect(rows[3].textContent).toContain('SR-0001'); // 2026-08-01, latest
-
-                shiftDateHeader.click();
-
-                return Promise.resolve().then(() => {
-                    rows = element.shadowRoot.querySelectorAll('tbody tr');
-                    expect(rows[0].textContent).toContain('SR-0001');
-                    expect(rows[3].textContent).toContain('SR-0004');
-                });
+                const rows = element.shadowRoot.querySelectorAll('tbody tr');
+                expect(rows[0].textContent).toContain('SR-0001'); // +30 days, latest
+                expect(rows[3].textContent).toContain('SR-0003'); // today, earliest
+                expect(shiftDateHeader.getAttribute('aria-sort')).toBe('descending');
             });
         });
     });
@@ -422,10 +508,10 @@ describe('c-my-staffing-requests', () => {
 
         return Promise.resolve().then(() => {
             const rows = element.shadowRoot.querySelectorAll('tbody tr');
-            // Default sort is by request number descending, so rows render
-            // SR-0004, SR-0003, SR-0002, SR-0001. SR-0001 is Broadcasted
-            // (cancellable); SR-0002 Filled, SR-0003 Unable to Fill, SR-0004
-            // Cancelled are all terminal statuses.
+            // Default sort is by shift date ascending, so rows render SR-0003,
+            // SR-0002, SR-0005, SR-0001. SR-0001 is Broadcasted (cancellable);
+            // SR-0003 Unable to Fill, SR-0002 Filled, SR-0005 Cancelled are
+            // all terminal statuses.
             expect(rows[0].querySelector('lightning-button-menu')).toBeNull();
             expect(rows[1].querySelector('lightning-button-menu')).toBeNull();
             expect(rows[2].querySelector('lightning-button-menu')).toBeNull();

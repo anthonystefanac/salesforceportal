@@ -65,16 +65,25 @@ churn for no visible benefit), **Filled Shifts**, **Cancelled Shifts**, and
 **Overdue Invoices** — the Calendar's Request Staff button, each Calendar
 booking, and Support's
 post-submit confirmation are all clickable/navigable and deep-link across
-pages: the four Staffing_Request__c tiles go to My Requests filtered to
+pages: **Open**, **Filled**, and **Cancelled** go to My Requests filtered to
 their matching status (`open` excludes Filled/Unable to Fill/Cancelled;
-`unfilled`/`filled`/`cancelled` are exact `Status__c` matches), Overdue
+`filled`/`cancelled` are exact `Status__c` matches). **Unable to Fill Shifts**
+is the one exception — it goes to **Reporting** instead (`REPORTING_PAGE_NAME`
+in `TILE_NAVIGATION`, no `state`), since My Requests now only shows shifts
+from today onwards (see below) and the daily overdue job only ever sets
+Unable to Fill on a shift whose date has already passed — routing that tile
+to My Requests would always land on an empty page. Overdue
 Invoices goes to Invoices, a selected Calendar day goes to Request Staff
 with that date pre-filled, a Calendar booking goes to My Requests filtered
 to its shift date, and a submitted Support request offers a "View My
 Requests" button — each filtered destination has a "Show all" control to
 clear the filter. `PortalDashboardController.getDashboardSummary()` counts
 all four statuses with the same `Facility__r.Account__c = :accountId`
-pattern as the existing Open Requests/Unfilled Shifts counts — no new
+pattern as the existing Open Requests/Unfilled Shifts counts, and adds
+`AND Shift_Date__c >= TODAY` to the Filled and Cancelled counts specifically
+so they match what My Requests' own today-onwards scope will actually show
+after clicking through (Unable to Fill stays an all-time count, since it's
+inherently historical and routes to Reporting anyway) — no new
 object or sharing considerations, since they're the same object and field
 already covered by the Sharing Set. The tile grid caps at **3 columns**
 (`grid-template-columns: repeat(3, ...)` in `portalHomeDashboard.css`, not
@@ -89,23 +98,31 @@ destination component reads back via `@wire(CurrentPageReference)`
 Experience Builder page API names** (`My_Requests__c`, `Invoices__c` in
 `TILE_NAVIGATION` inside `portalHomeDashboard.js`) confirmed from the live
 site, **except `Request_Staff__c`** (`REQUEST_STAFF_PAGE_NAME` in
-`requestStaffCalendar.js`), which is still a placeholder — confirm/update it
-the same way the other two were, from the Request Staff page's own Settings
-panel in Experience Builder once that page exists. If any of these pages is
+`requestStaffCalendar.js`) **and `Reporting__c`** (`REPORTING_PAGE_NAME` in
+`portalHomeDashboard.js`), which are still placeholders — confirm/update
+them the same way the other two were, from each page's own Settings panel
+in Experience Builder once it exists. If any of these pages is
 ever recreated or renamed, update the matching constant to its new API Name.
 
 `myStaffingRequests` and `invoiceList` both have a search box (matches
 request/facility/ward/role/specialty/status, or invoice number/status) and
 sortable column headers (click to sort ascending, click again to toggle
 descending) — both are client-side, layered on top of the existing deep-link
-filters, so no new Apex was needed. `myStaffingRequests` **defaults to
-sorting by Request number descending** (newest request first) rather than
-loading unsorted — set via `sortField`/`sortDirection`'s initial values
-rather than a click, so the "Request" column header shows as already
-sorted (▼) on first load. This relies on `Staffing_Request__c`'s Name
-auto-number format being zero-padded (`SR-{0000}`) — descending string
-comparison on a zero-padded number lines up with descending numeric order,
-up to 9,999 requests. `myStaffingRequests` also paginates at 10
+filters, so no new Apex was needed. `myStaffingRequests` **only shows shifts
+from today onwards, sorted by Shift Date ascending** (soonest first) by
+default — set via `sortField`/`sortDirection`'s initial values rather than a
+click, so the "Shift Date" column header shows as already sorted (▲) on
+first load. This is a hard floor applied before any other filter, search,
+or deep link (a `get upcomingRequests()` getter that every other filter
+branch reads from instead of the raw wire data) rather than just the
+unfiltered view's default, since a shift dated before today has, by
+definition, already been worked, cancelled, or marked Unable to Fill — that
+history now belongs to **Reporting**, not My Requests. A subtitle under the
+page title says as much. This previously defaulted to sorting by Request
+number descending (newest first, relying on `Staffing_Request__c`'s
+zero-padded `SR-{0000}` Name format so descending string comparison lines
+up with descending numeric order) — that behavior is superseded by the
+shift-date default above. `myStaffingRequests` also paginates at 10
 rows per page (Previous/Next, with a "Showing X–Y of Z" summary) — the table
 had no upper bound before this, and a client's request history only grows
 over time. Changing the search term, the sort column, or the active filter
@@ -672,7 +689,7 @@ npm install
 npm run test:unit
 ```
 
-127 Jest tests across all 15 LWCs (including the `sortTableUtils` and
+131 Jest tests across all 15 LWCs (including the `sortTableUtils` and
 `dateFormatUtils` shared modules). This is the only thing in this project
 that's actually been run and confirmed passing in this environment.
 

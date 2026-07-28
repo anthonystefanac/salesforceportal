@@ -1,4 +1,4 @@
-import { formatDate, formatDateTime } from 'c/dateFormatUtils';
+import { formatDate, formatDateTime, todayIso } from 'c/dateFormatUtils';
 
 describe('dateFormatUtils', () => {
     describe('formatDate', () => {
@@ -35,6 +35,16 @@ describe('dateFormatUtils', () => {
 
         it('returns an empty string for an unparseable value', () => {
             expect(formatDateTime('not-a-date')).toBe('');
+        });
+    });
+
+    describe('todayIso', () => {
+        it('returns the current date as YYYY-MM-DD', () => {
+            const now = new Date();
+            const expected = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(
+                now.getDate()
+            ).padStart(2, '0')}`;
+            expect(todayIso()).toBe(expected);
         });
     });
 });

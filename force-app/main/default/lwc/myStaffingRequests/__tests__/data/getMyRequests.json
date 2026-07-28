@@ -66,5 +66,22 @@
         "Broadcasted_Date__c": null,
         "Last_Status_Update__c": "2026-07-21T10:00:00.000Z",
         "Cancellation_Requested__c": false
+    },
+    {
+        "Id": "a02000000000005AAA",
+        "Name": "SR-0005",
+        "Facility__r": { "Name": "Test Hospital" },
+        "Ward__r": null,
+        "Role__c": "Cleaner",
+        "Specialty__c": null,
+        "Shift_Date__c": "2026-07-30",
+        "Start_Time__c": 25200000,
+        "End_Time__c": 54000000,
+        "Quantity__c": 1,
+        "Priority__c": "Low",
+        "Status__c": "Cancelled",
+        "Broadcasted_Date__c": null,
+        "Last_Status_Update__c": "2026-07-26T10:00:00.000Z",
+        "Cancellation_Requested__c": false
     }
 ]

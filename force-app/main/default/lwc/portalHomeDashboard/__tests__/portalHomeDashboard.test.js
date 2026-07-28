@@ -59,7 +59,7 @@ describe('c-portal-home-dashboard', () => {
         });
     });
 
-    it('navigates to My Requests with the matching filter when the unfilled tile is clicked', () => {
+    it('navigates to Reporting when the unfilled tile is clicked, since Unable to Fill is always historical', () => {
         const element = createElement('c-portal-home-dashboard', {
             is: PortalHomeDashboard
         });
@@ -74,8 +74,7 @@ describe('c-portal-home-dashboard', () => {
             expect(mockNavigate).toHaveBeenCalledTimes(1);
             const pageReference = mockNavigate.mock.calls[0][0];
             expect(pageReference.type).toBe('comm__namedPage');
-            expect(pageReference.attributes.name).toBe('My_Requests__c');
-            expect(pageReference.state.filter).toBe('unfilled');
+            expect(pageReference.attributes.name).toBe('Reporting__c');
         });
     });
 

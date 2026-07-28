@@ -40,11 +40,17 @@ public with sharing class PortalDashboardController {
         ];
         summary.unfilledShiftCount = (Integer) unfilledShifts[0].get('total');
 
+        // Filled/Cancelled are scoped to today onwards, matching My Requests -
+        // both can still be in the future (a shift can be filled or
+        // cancelled well before its date), unlike Unable to Fill below,
+        // which the daily overdue job only ever sets on a shift whose date
+        // has already passed, so it's left as an all-time count.
         List<AggregateResult> filledShifts = [
             SELECT COUNT(Id) total
             FROM Staffing_Request__c
             WHERE Facility__r.Account__c = :accountId
             AND Status__c = 'Filled'
+            AND Shift_Date__c >= TODAY
             WITH SECURITY_ENFORCED
         ];
         summary.filledShiftCount = (Integer) filledShifts[0].get('total');
@@ -54,6 +60,7 @@ public with sharing class PortalDashboardController {
             FROM Staffing_Request__c
             WHERE Facility__r.Account__c = :accountId
             AND Status__c = 'Cancelled'
+            AND Shift_Date__c >= TODAY
             WITH SECURITY_ENFORCED
         ];
         summary.cancelledShiftCount = (Integer) cancelledShifts[0].get('total');

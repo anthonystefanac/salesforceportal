@@ -2,8 +2,14 @@
     font-size: 1.75rem;
     font-weight: 700;
     color: #16325c;
-    margin: 0 0 1.25rem 0;
+    margin: 0 0 0.35rem 0;
     letter-spacing: -0.01em;
+}
+
+.my-requests__subtitle {
+    font-size: 0.85rem;
+    color: #6b7d99;
+    margin: 0 0 1.25rem 0;
 }
 
 .my-requests {

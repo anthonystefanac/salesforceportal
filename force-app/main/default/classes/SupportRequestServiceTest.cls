@@ -84,6 +84,53 @@ private class SupportRequestServiceTest {
     }
 
     @isTest
+    static void testDoesNotFlagAStaffingRequestFromAnotherAccount() {
+        Account ownAccount = TestDataFactory.createAccount('Test Aged Care Group');
+        Contact con = TestDataFactory.createContact(ownAccount.Id, 'Portal', 'Tester');
+
+        Account otherAccount = TestDataFactory.createAccount('A Different Client');
+        Facility__c otherFacility = TestDataFactory.createFacility(otherAccount.Id, 'A Different Facility');
+        Staffing_Request__c otherRequest = TestDataFactory.createStaffingRequest(otherFacility.Id, con.Id);
+
+        Id portalProfileId = TestDataFactory.getPortalProfileIdOrNull();
+        if (portalProfileId == null) {
+            return; // Experience Cloud site/license not yet enabled in this org - see TestDataFactory.
+        }
+        User portalUser = TestDataFactory.createPortalUser(portalProfileId, con.Id, 'supportcasetest4');
+
+        Case newCase = new Case(
+            Subject = 'Need to cancel a shift',
+            Description = 'Overstaffed for this shift.',
+            Portal_Request_Type__c = 'Cancellation Request',
+            Related_Staffing_Request__c = otherRequest.Id
+        );
+
+        Test.startTest();
+        Id newCaseId;
+        System.runAs(portalUser) {
+            newCaseId = SupportRequestService.submitNewCase(newCase);
+        }
+        Test.stopTest();
+
+        System.assertNotEquals(
+            null,
+            newCaseId,
+            'The Case itself must still be created even when the related request belongs to another Account'
+        );
+
+        Staffing_Request__c unchangedRequest = [
+            SELECT Cancellation_Requested__c
+            FROM Staffing_Request__c
+            WHERE Id = :otherRequest.Id
+        ];
+        System.assertEquals(
+            false,
+            unchangedRequest.Cancellation_Requested__c,
+            'A Staffing_Request__c from another Account must never be flagged, no matter what a client submits'
+        );
+    }
+
+    @isTest
     static void testSubmitNewCaseWithoutRelatedRequestStillSucceeds() {
         Account acct = TestDataFactory.createAccount('Test Hospital Group');
         Contact con = TestDataFactory.createContact(acct.Id, 'Portal', 'Tester');

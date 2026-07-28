@@ -8,6 +8,18 @@
 
 .dashboard__tiles {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 1.25rem;
+}
+
+@media (max-width: 56rem) {
+    .dashboard__tiles {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 40rem) {
+    .dashboard__tiles {
+        grid-template-columns: 1fr;
+    }
 }

@@ -73,7 +73,11 @@ clear the filter. `PortalDashboardController.getDashboardSummary()` counts
 all four statuses with the same `Facility__r.Account__c = :accountId`
 pattern as the existing Open Requests/Unfilled Shifts counts — no new
 object or sharing considerations, since they're the same object and field
-already covered by the Sharing Set. This uses
+already covered by the Sharing Set. The tile grid caps at **3 columns**
+(`grid-template-columns: repeat(3, ...)` in `portalHomeDashboard.css`, not
+the auto-fit/minmax it used before) so 5 tiles wrap to 2 rows instead of
+spreading across one on wide screens, with breakpoints down to 2 columns
+and then 1 on narrower viewports. This uses
 `NavigationMixin` with `comm__namedPage` and a `state` parameter, which the
 destination component reads back via `@wire(CurrentPageReference)`
 (`myStaffingRequests` reads both `state.filter` and `state.shiftDate`;

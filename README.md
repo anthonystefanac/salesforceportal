@@ -386,6 +386,35 @@ access to that Facility/Ward — check `Contact.AccountId` against the
 Facility's `Account__c` in that org; that's a data/sharing question, not a
 code one.
 
+**`TestDataFactory.createPortalUser` now assigns the permission set.** The
+first real `sf apex run test` run against a connected org surfaced this: it
+created the test portal `User` but never assigned it
+`Alliance_Client_Portal_User`, so every FLS/CRUD-dependent test failed —
+just in different-looking ways depending on which Apex API noticed the
+missing grants first: a `WITH SECURITY_ENFORCED` query throws a hard
+`QueryException` the moment *any* selected field is inaccessible
+(`StaffingRequestController`/`FacilityController`/`InvoiceController`/
+`PortalDashboardController`'s tests), `Security.stripInaccessible` throws
+`NoAccessException` when the user has *zero* object-level access at all
+(`StaffingRequestServiceTest`'s create-a-request tests), and it silently
+strips just the one inaccessible field, no exception at all, when the
+object still has *some* baseline access
+(`SupportRequestServiceTest.testSubmitNewCaseAsPortalUserWithRelatedRequest`
+— `Related_Staffing_Request__c` came back `null` on the inserted Case with
+no error, because `stripInaccessible` quietly dropped it). None of this was
+caused by the Facility/Ward or Subject/required-field work above — it's a
+gap in the shared test fixture, now fixed by looking up the permission set
+by name and inserting a `PermissionSetAssignment` right after the user is
+created.
+
+This is also worth checking for the **real** portal user who first hit the
+"insufficient access rights on cross-reference id" error live: the same
+gap — a user that exists but was never actually assigned
+`Alliance_Client_Portal_User` in Setup — is a simpler, very plausible
+explanation than a genuine cross-Account sharing mismatch. Setup → find
+that User → Permission Set Assignments related list is the quickest way to
+confirm.
+
 ### Notifications
 
 `StaffingRequestTrigger` (after insert, after update on `Staffing_Request__c`)

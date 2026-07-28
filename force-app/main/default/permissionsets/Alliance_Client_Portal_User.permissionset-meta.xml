@@ -83,6 +83,24 @@
         <viewAllRecords>false</viewAllRecords>
         <modifyAllRecords>false</modifyAllRecords>
     </objectPermissions>
+    <!-- ContentVersion: read-only, needed for InvoiceController.getInvoiceFileData
+         to read an invoice's attached PDF bytes. Confirmed against a real
+         connected org that without this, WithoutSharingFileAccess's queries
+         (which already bypass sharing) still silently returned nothing for
+         a portal user, even though the exact same query found the record
+         fine when run as an admin - object-level CRUD, not sharing, was the
+         actual remaining gap. ContentDocumentLink itself isn't a grantable
+         object in Permission Set Object Settings (its access is derived,
+         not a direct CRUD grant), so there's no separate entry for it. -->
+    <objectPermissions>
+        <object>ContentVersion</object>
+        <allowRead>true</allowRead>
+        <allowCreate>false</allowCreate>
+        <allowEdit>false</allowEdit>
+        <allowDelete>false</allowDelete>
+        <viewAllRecords>false</viewAllRecords>
+        <modifyAllRecords>false</modifyAllRecords>
+    </objectPermissions>
 
     <!-- Facility__c: read-only, used to populate the facility picker.
          Facility_Type__c is a required field - like Master-Detail fields,

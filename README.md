@@ -159,27 +159,37 @@ CSV text. A failed fetch (no file, wrong Account, etc.) shows a guaranteed
 inline error banner rather than a toast, consistent with the rest of the
 app.
 
-**A genuine sharing gap was confirmed against a real connected org**:
-`ContentDocumentLink`'s own row-level visibility for a portal/Community
-user doesn't reliably follow the linked record's sharing the way the
-standard Files related list UI does. A `with sharing` query against
-`ContentDocumentLink` returned zero rows for a portal user in testing, for
-a file that same user could see fine through the Invoice record's own
-Files related list — so `getInvoiceFileIds()` and `getInvoiceFileData()`
-both showed "View" for every invoice instead of "Download PDF", with no
-error at all (the query succeeds, it just returns nothing). The fix is the
-same pattern already used for the `Staffing_Request__c`/`Facility__c`
-Sharing Set cascade gap (see "Data validation" above, and `WithoutSharingDml`):
-a new `WithoutSharingFileAccess` class runs the actual
-`ContentDocumentLink`/`ContentVersion` lookups **without sharing**, called
-only after `InvoiceController` has already confirmed (via its own `with
-sharing` query) that the invoice belongs to the running user's Account —
-ownership is what gates access here, not Apex's sharing enforcement on the
-file objects themselves. If `getInvoiceFileIds()` still
-fails for some other reason (an actual exception, not just an empty
-result), every row falls back to showing "View" instead of "Download PDF"
-rather than breaking the page - `wiredFileIds()` logs that to the browser
-console (`console.error`) so it's diagnosable rather than invisible.
+**Two access gaps were found and fixed testing this against a real
+connected org**, both silent - the query succeeds and just returns
+nothing, no exception, no console error - which made this genuinely hard
+to diagnose:
+
+1. **Row-level sharing.** `ContentDocumentLink`'s own visibility for a
+   portal/Community user doesn't reliably follow the linked record's
+   sharing the way the standard Files related list UI does. A new
+   `WithoutSharingFileAccess` class runs the actual
+   `ContentDocumentLink`/`ContentVersion` lookups **without sharing**,
+   called only after `InvoiceController` has already confirmed (via its
+   own `with sharing` query) that the invoice belongs to the running
+   user's Account - ownership is what gates access here, the same pattern
+   already used for the `Staffing_Request__c`/`Facility__c` Sharing Set
+   cascade gap (see "Data validation" above, and `WithoutSharingDml`).
+2. **Object-level CRUD.** `without sharing` only bypasses sharing rules,
+   not whether the running user's profile/permission set can read the
+   object at all. Confirmed via `System.debug` in Execute Anonymous: the
+   exact same query found the file instantly as an admin, but the portal
+   user got nothing even through `WithoutSharingFileAccess` until
+   `ContentVersion` was granted **Read** in `Alliance_Client_Portal_User`
+   (`objectPermissions` - see that permission set). `ContentDocumentLink`
+   itself isn't a grantable object in Permission Set Object Settings at
+   all (its access is derived, not a direct CRUD grant), so there's no
+   separate entry needed for it.
+
+If `getInvoiceFileIds()` still fails for some other reason (an actual
+exception, not just an empty result), every row falls back to showing
+"View" instead of "Download PDF" rather than breaking the page -
+`wiredFileIds()` logs that to the browser console (`console.error`) so
+it's diagnosable rather than invisible.
 
 **A second, separate issue found in testing**: the "View" fallback itself
 (`standard__recordPage` navigation to the Invoice record) can also land on

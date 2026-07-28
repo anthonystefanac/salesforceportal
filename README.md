@@ -58,14 +58,22 @@ Requests filtered to that shift date. It reuses the existing
 `Staffing_Request__c` object and `StaffingRequestController` — no new Apex or
 objects were needed for it.
 
-The Home dashboard's three tiles, the Calendar's Request Staff button, each
-Calendar booking, and Support's post-submit confirmation are all
-clickable/navigable and deep-link across pages: Open Requests and Unfilled
-Shifts go to My Requests, Overdue Invoices goes to Invoices, a selected
-Calendar day goes to Request Staff with that date pre-filled, a Calendar
-booking goes to My Requests filtered to its shift date, and a submitted
-Support request offers a "View My Requests" button — each filtered
-destination has a "Show all" control to clear the filter. This uses
+The Home dashboard's five tiles — **Open Requests**, **Unfilled Shifts**,
+**Filled Shifts**, **Cancelled Shifts**, and **Overdue Invoices** — the
+Calendar's Request Staff button, each Calendar booking, and Support's
+post-submit confirmation are all clickable/navigable and deep-link across
+pages: the four Staffing_Request__c tiles go to My Requests filtered to
+their matching status (`open` excludes Filled/Unable to Fill/Cancelled;
+`unfilled`/`filled`/`cancelled` are exact `Status__c` matches), Overdue
+Invoices goes to Invoices, a selected Calendar day goes to Request Staff
+with that date pre-filled, a Calendar booking goes to My Requests filtered
+to its shift date, and a submitted Support request offers a "View My
+Requests" button — each filtered destination has a "Show all" control to
+clear the filter. `PortalDashboardController.getDashboardSummary()` counts
+all four statuses with the same `Facility__r.Account__c = :accountId`
+pattern as the existing Open Requests/Unfilled Shifts counts — no new
+object or sharing considerations, since they're the same object and field
+already covered by the Sharing Set. This uses
 `NavigationMixin` with `comm__namedPage` and a `state` parameter, which the
 destination component reads back via `@wire(CurrentPageReference)`
 (`myStaffingRequests` reads both `state.filter` and `state.shiftDate`;
@@ -600,7 +608,7 @@ npm install
 npm run test:unit
 ```
 
-111 Jest tests across all 14 LWCs (including the new `sortTableUtils` shared
+115 Jest tests across all 14 LWCs (including the `sortTableUtils` shared
 module). This is the only thing in this project
 that's actually been run and confirmed passing in this environment.
 

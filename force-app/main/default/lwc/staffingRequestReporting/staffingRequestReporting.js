@@ -1,6 +1,7 @@
 import { LightningElement, wire } from 'lwc';
 import { refreshApex } from '@salesforce/apex';
 import { formatTime } from 'c/timeFormatUtils';
+import { sortRecords, toggleSort, buildSortableColumns } from 'c/sortTableUtils';
 import getMyRequests from '@salesforce/apex/StaffingRequestController.getMyRequests';
 
 const PRESETS = [
@@ -163,45 +164,15 @@ export default class StaffingRequestReporting extends LightningElement {
         );
     }
 
-    // Same sort implementation as myStaffingRequests - sorts on top of
-    // whatever the date-range filter above has already narrowed down to.
+    // Same sort implementation as myStaffingRequests (shared via
+    // sortTableUtils) - sorts on top of whatever the date-range filter
+    // above has already narrowed down to.
     get sortedRequests() {
-        const filtered = this.filteredRequests;
-        if (!this.sortField) {
-            return filtered;
-        }
-        const field = this.sortField;
-        const direction = this.sortDirection === 'desc' ? -1 : 1;
-        return [...filtered].sort((a, b) => {
-            const valueA = a[field];
-            const valueB = b[field];
-            if (valueA == null && valueB == null) {
-                return 0;
-            }
-            if (valueA == null) {
-                return -1 * direction;
-            }
-            if (valueB == null) {
-                return 1 * direction;
-            }
-            if (typeof valueA === 'number' && typeof valueB === 'number') {
-                return (valueA - valueB) * direction;
-            }
-            return String(valueA).localeCompare(String(valueB)) * direction;
-        });
+        return sortRecords(this.filteredRequests, this.sortField, this.sortDirection);
     }
 
     get columns() {
-        return CSV_COLUMNS.map((column) => {
-            const isSorted = this.sortField === column.key;
-            const direction = isSorted ? this.sortDirection : undefined;
-            return {
-                ...column,
-                cssClass: isSorted ? 'reporting__th reporting__th_sorted' : 'reporting__th',
-                ariaSort: isSorted ? (direction === 'desc' ? 'descending' : 'ascending') : 'none',
-                indicator: isSorted ? (direction === 'desc' ? '▼' : '▲') : ''
-            };
-        });
+        return buildSortableColumns(CSV_COLUMNS, this.sortField, this.sortDirection, 'reporting__th');
     }
 
     get hasRequests() {
@@ -243,12 +214,9 @@ export default class StaffingRequestReporting extends LightningElement {
         if (!field) {
             return;
         }
-        if (this.sortField === field) {
-            this.sortDirection = this.sortDirection === 'desc' ? 'asc' : 'desc';
-        } else {
-            this.sortField = field;
-            this.sortDirection = 'asc';
-        }
+        const next = toggleSort(this.sortField, this.sortDirection, field);
+        this.sortField = next.field;
+        this.sortDirection = next.direction;
     }
 
     handleDownload() {

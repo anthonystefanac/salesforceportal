@@ -22,17 +22,19 @@ public without sharing class WithoutSharingFileAccess {
             return contentDocumentIdByLinkedEntityId;
         }
 
-        // Ordered by the link's own CreatedDate, not ContentDocument's
-        // ContentModifiedDate - that would traverse into the ContentDocument
-        // object via relationship, which needs its own object permission
-        // grant on top of ContentVersion's; ContentDocumentLink.CreatedDate
-        // avoids that entirely (when a file was linked to this record is a
-        // fine proxy for "most recent" here anyway).
+        // Ordered by the link's own SystemModstamp - ContentDocumentLink is
+        // a restricted junction object with no CreatedDate/LastModifiedDate
+        // field at all, only SystemModstamp. Deliberately not
+        // ContentDocument.ContentModifiedDate: that would traverse into the
+        // ContentDocument object via relationship, needing its own object
+        // permission grant on top of ContentVersion's. SystemModstamp avoids
+        // that entirely (when a file was linked to this record is a fine
+        // proxy for "most recent" here anyway).
         List<ContentDocumentLink> links = [
             SELECT LinkedEntityId, ContentDocumentId
             FROM ContentDocumentLink
             WHERE LinkedEntityId IN :linkedEntityIds
-            ORDER BY CreatedDate DESC
+            ORDER BY SystemModstamp DESC
         ];
         for (ContentDocumentLink link : links) {
             if (!contentDocumentIdByLinkedEntityId.containsKey(link.LinkedEntityId)) {

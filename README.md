@@ -187,10 +187,13 @@ Each was found and fixed one at a time as testing revealed the next layer:
    `ORDER BY ContentDocument.ContentModifiedDate DESC` traverses into
    `ContentDocument`, not just `ContentDocumentLink`/`ContentVersion`.
    Rather than add yet another object permission grant (and `ContentDocument`
-   isn't reliably grantable in Permission Set Object Settings either),
-   the query now orders by `ContentDocumentLink.CreatedDate` instead -
-   a field on the object already being queried, so no relationship
-   traversal and no extra permission needed at all.
+   isn't reliably grantable in Permission Set Object Settings either), the
+   query now orders by `ContentDocumentLink.SystemModstamp` instead - a
+   field on the object already being queried, so no relationship traversal
+   and no extra permission needed at all. (`CreatedDate` was tried first and
+   doesn't compile at all - `ContentDocumentLink` is a restricted junction
+   object with no `CreatedDate`/`LastModifiedDate` field, only
+   `SystemModstamp`.)
 
 If `getInvoiceFileIds()` still fails for some other reason (an actual
 exception, not just an empty result), every row falls back to showing

@@ -157,17 +157,29 @@ via a plain in-page anchor click — the same technique Reporting's CSV
 export already uses reliably on this site, just with file bytes instead of
 CSV text. A failed fetch (no file, wrong Account, etc.) shows a guaranteed
 inline error banner rather than a toast, consistent with the rest of the
-app. **Not yet verified against a real connected org**: whether a
-portal/Community user can query `ContentDocumentLink`/`ContentVersion`
-directly the way both Apex methods do, and whether the uploaded file's own
-sharing needs anything beyond the Invoice record's existing Sharing Set for
-an external user to actually read it — test this by uploading a file to one
-pilot Invoice record's Files related list, then downloading it while logged
-in as the portal user, not as an internal admin. If `getInvoiceFileIds()`
-does fail silently for this reason, every row falls back to showing "View"
-instead of "Download PDF" rather than breaking the page - `wiredFileIds()`
-logs that failure to the browser console (`console.error`) specifically so
-it's diagnosable rather than invisible.
+app.
+
+**A genuine sharing gap was confirmed against a real connected org**:
+`ContentDocumentLink`'s own row-level visibility for a portal/Community
+user doesn't reliably follow the linked record's sharing the way the
+standard Files related list UI does. A `with sharing` query against
+`ContentDocumentLink` returned zero rows for a portal user in testing, for
+a file that same user could see fine through the Invoice record's own
+Files related list — so `getInvoiceFileIds()` and `getInvoiceFileData()`
+both showed "View" for every invoice instead of "Download PDF", with no
+error at all (the query succeeds, it just returns nothing). The fix is the
+same pattern already used for the `Staffing_Request__c`/`Facility__c`
+Sharing Set cascade gap (see "Data validation" above, and `WithoutSharingDml`):
+a new `WithoutSharingFileAccess` class runs the actual
+`ContentDocumentLink`/`ContentVersion` lookups **without sharing**, called
+only after `InvoiceController` has already confirmed (via its own `with
+sharing` query) that the invoice belongs to the running user's Account —
+ownership is what gates access here, not Apex's sharing enforcement on the
+file objects themselves. If `getInvoiceFileIds()` still
+fails for some other reason (an actual exception, not just an empty
+result), every row falls back to showing "View" instead of "Download PDF"
+rather than breaking the page - `wiredFileIds()` logs that to the browser
+console (`console.error`) so it's diagnosable rather than invisible.
 
 **A second, separate issue found in testing**: the "View" fallback itself
 (`standard__recordPage` navigation to the Invoice record) can also land on

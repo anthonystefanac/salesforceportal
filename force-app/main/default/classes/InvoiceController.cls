@@ -27,15 +27,16 @@ public with sharing class InvoiceController {
     // Download" button knows whether to show "Download PDF" or fall back to
     // "View" (the record page). Invoice Ids are scoped to the running user's
     // own Account first, the same ownership check getInvoices() already
-    // relies on, so ContentDocumentLink itself doesn't need a separate
-    // WITH SECURITY_ENFORCED - it's only ever filtered down to records this
-    // user is already allowed to see.
+    // relies on - that's the real access control here, since a "with
+    // sharing" query against ContentDocumentLink itself returned zero rows
+    // for a portal user in testing even for a file they could see fine
+    // through the record's own Files related list. See
+    // WithoutSharingFileAccess for why the actual lookup runs there instead.
     @AuraEnabled(cacheable=true)
     public static Map<Id, Id> getInvoiceFileIds() {
-        Map<Id, Id> fileIdsByInvoiceId = new Map<Id, Id>();
         Id accountId = PortalUserContext.getCurrentAccountId();
         if (accountId == null) {
-            return fileIdsByInvoiceId;
+            return new Map<Id, Id>();
         }
 
         Set<Id> invoiceIds = new Map<Id, Invoice__c>([
@@ -46,21 +47,10 @@ public with sharing class InvoiceController {
             LIMIT 200
         ]).keySet();
         if (invoiceIds.isEmpty()) {
-            return fileIdsByInvoiceId;
+            return new Map<Id, Id>();
         }
 
-        List<ContentDocumentLink> links = [
-            SELECT LinkedEntityId, ContentDocumentId
-            FROM ContentDocumentLink
-            WHERE LinkedEntityId IN :invoiceIds
-            ORDER BY ContentDocument.ContentModifiedDate DESC
-        ];
-        for (ContentDocumentLink link : links) {
-            if (!fileIdsByInvoiceId.containsKey(link.LinkedEntityId)) {
-                fileIdsByInvoiceId.put(link.LinkedEntityId, link.ContentDocumentId);
-            }
-        }
-        return fileIdsByInvoiceId;
+        return WithoutSharingFileAccess.getLatestContentDocumentIdsByLinkedEntity(invoiceIds);
     }
 
     // Fetches the actual file bytes on demand (imperative, not cacheable -
@@ -91,24 +81,17 @@ public with sharing class InvoiceController {
             throw new AuraHandledException('Invoice not found.');
         }
 
-        List<ContentDocumentLink> links = [
-            SELECT ContentDocumentId
-            FROM ContentDocumentLink
-            WHERE LinkedEntityId = :invoiceId
-            ORDER BY ContentDocument.ContentModifiedDate DESC
-            LIMIT 1
-        ];
-        if (links.isEmpty()) {
+        Map<Id, Id> contentDocumentIds = WithoutSharingFileAccess.getLatestContentDocumentIdsByLinkedEntity(
+            new Set<Id>{ invoiceId }
+        );
+        if (!contentDocumentIds.containsKey(invoiceId)) {
             throw new AuraHandledException('No file is attached to this invoice.');
         }
 
-        ContentVersion version = [
-            SELECT Title, FileExtension, VersionData
-            FROM ContentVersion
-            WHERE ContentDocumentId = :links[0].ContentDocumentId
-            AND IsLatest = true
-            LIMIT 1
-        ];
+        ContentVersion version = WithoutSharingFileAccess.getLatestContentVersion(contentDocumentIds.get(invoiceId));
+        if (version == null) {
+            throw new AuraHandledException('No file is attached to this invoice.');
+        }
 
         InvoiceFile file = new InvoiceFile();
         file.fileName = String.isNotBlank(version.FileExtension)

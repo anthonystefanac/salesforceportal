@@ -65,25 +65,25 @@ churn for no visible benefit), **Filled Shifts**, **Cancelled Shifts**, and
 **Overdue Invoices** — the Calendar's Request Staff button, each Calendar
 booking, and Support's
 post-submit confirmation are all clickable/navigable and deep-link across
-pages: **Open**, **Filled**, and **Cancelled** go to My Requests filtered to
+pages: the four Staffing_Request__c tiles go to My Requests filtered to
 their matching status (`open` excludes Filled/Unable to Fill/Cancelled;
-`filled`/`cancelled` are exact `Status__c` matches). **Unable to Fill Shifts**
-is the one exception — it goes to **Reporting** instead (`REPORTING_PAGE_NAME`
-in `TILE_NAVIGATION`, no `state`), since My Requests now only shows shifts
-from today onwards (see below) and the daily overdue job only ever sets
-Unable to Fill on a shift whose date has already passed — routing that tile
-to My Requests would always land on an empty page. Overdue
+`unfilled`/`filled`/`cancelled` are exact `Status__c` matches). Unable to
+Fill isn't only ever historical — the daily overdue job sets it on a shift
+whose date has already passed, but Bullhorn can also flag a future shift
+Unable to Fill ahead of time if no staff are available for it, so that tile
+correctly still routes to My Requests (which will show the future-dated
+ones; the historical ones remain visible in Reporting instead, which isn't
+scoped to today onwards). Overdue
 Invoices goes to Invoices, a selected Calendar day goes to Request Staff
 with that date pre-filled, a Calendar booking goes to My Requests filtered
 to its shift date, and a submitted Support request offers a "View My
 Requests" button — each filtered destination has a "Show all" control to
 clear the filter. `PortalDashboardController.getDashboardSummary()` counts
 all four statuses with the same `Facility__r.Account__c = :accountId`
-pattern as the existing Open Requests/Unfilled Shifts counts, and adds
-`AND Shift_Date__c >= TODAY` to the Filled and Cancelled counts specifically
-so they match what My Requests' own today-onwards scope will actually show
-after clicking through (Unable to Fill stays an all-time count, since it's
-inherently historical and routes to Reporting anyway) — no new
+pattern as the existing Open Requests count, and adds `AND Shift_Date__c >=
+TODAY` to the Unable to Fill, Filled, and Cancelled counts so each matches
+what My Requests' own today-onwards scope will actually show after clicking
+through — no new
 object or sharing considerations, since they're the same object and field
 already covered by the Sharing Set. The tile grid caps at **3 columns**
 (`grid-template-columns: repeat(3, ...)` in `portalHomeDashboard.css`, not
@@ -98,10 +98,9 @@ destination component reads back via `@wire(CurrentPageReference)`
 Experience Builder page API names** (`My_Requests__c`, `Invoices__c` in
 `TILE_NAVIGATION` inside `portalHomeDashboard.js`) confirmed from the live
 site, **except `Request_Staff__c`** (`REQUEST_STAFF_PAGE_NAME` in
-`requestStaffCalendar.js`) **and `Reporting__c`** (`REPORTING_PAGE_NAME` in
-`portalHomeDashboard.js`), which are still placeholders — confirm/update
-them the same way the other two were, from each page's own Settings panel
-in Experience Builder once it exists. If any of these pages is
+`requestStaffCalendar.js`), which is still a placeholder — confirm/update it
+the same way the other two were, from the Request Staff page's own Settings
+panel in Experience Builder once that page exists. If any of these pages is
 ever recreated or renamed, update the matching constant to its new API Name.
 
 `myStaffingRequests` and `invoiceList` both have a search box (matches

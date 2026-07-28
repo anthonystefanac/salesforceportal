@@ -20,7 +20,7 @@ private class StaffingRequestServiceTest {
             Start_Time__c = Time.newInstance(6, 0, 0, 0),
             End_Time__c = Time.newInstance(14, 0, 0, 0),
             Quantity__c = 2,
-            Priority__c = 'High'
+            Priority__c = 'Urgent'
         );
 
         Test.startTest();
@@ -59,7 +59,7 @@ private class StaffingRequestServiceTest {
             Start_Time__c = Time.newInstance(7, 0, 0, 0),
             End_Time__c = Time.newInstance(7, 0, 0, 0),
             Quantity__c = 1,
-            Priority__c = 'Medium'
+            Priority__c = 'Standard'
         );
 
         Test.startTest();
@@ -101,7 +101,7 @@ private class StaffingRequestServiceTest {
             Start_Time__c = Time.newInstance(6, 0, 0, 0),
             End_Time__c = Time.newInstance(14, 0, 0, 0),
             Quantity__c = 1,
-            Priority__c = 'Medium'
+            Priority__c = 'Standard'
         );
 
         Test.startTest();
@@ -147,7 +147,7 @@ private class StaffingRequestServiceTest {
             Start_Time__c = Time.newInstance(6, 0, 0, 0),
             End_Time__c = Time.newInstance(14, 0, 0, 0),
             Quantity__c = 1,
-            Priority__c = 'Medium'
+            Priority__c = 'Standard'
         );
 
         Test.startTest();

@@ -176,7 +176,7 @@ describe('c-my-staffing-requests', () => {
             // Action, Request, Facility, Ward, Role, Specialty, Shift Date, Start Time, End Time, Quantity, Priority, ...
             expect(cells[5].textContent).toBe('—');
             expect(cells[9].textContent).toBe('1');
-            expect(cells[10].textContent).toBe('High');
+            expect(cells[10].textContent).toBe('Urgent');
             // ..., Assigned Contact, Status, Broadcasted, Cancellation Requested, Last Update
             expect(cells[11].textContent).toBe('—');
             expect(cells[14].textContent).toBe('No');

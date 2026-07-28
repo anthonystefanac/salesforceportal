@@ -12,7 +12,7 @@ const DEFAULT_FORM = {
     startTime: undefined,
     endTime: undefined,
     quantity: '1',
-    priority: 'Medium',
+    priority: 'Standard',
     notes: undefined
 };
 
@@ -38,10 +38,11 @@ const ROLE_OPTIONS = [
     { label: 'Allied Health', value: 'Allied Health' }
 ];
 
+// Must exactly match Staffing_Request__c.Priority__c's restricted picklist
+// values - a mismatch here means the option would submit fine client-side
+// but fail server-side with a picklist validation error.
 const PRIORITY_OPTIONS = [
-    { label: 'Low', value: 'Low' },
-    { label: 'Medium', value: 'Medium' },
-    { label: 'High', value: 'High' },
+    { label: 'Standard', value: 'Standard' },
     { label: 'Urgent', value: 'Urgent' }
 ];
 

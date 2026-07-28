@@ -828,7 +828,11 @@ All child objects are Master-Detail to their parent, so read sharing is
   Cook, Cook, Chef, Head Chef Supervisor, Allied Health) — being restricted
   means `requestStaffForm`'s `ROLE_OPTIONS` must exactly match the field's
   valueSet, or picking a value the field doesn't allow would submit fine
-  client-side and only fail once it reaches Apex/the database.
+  client-side and only fail once it reaches Apex/the database. `Priority__c`
+  is likewise a **restricted** picklist, with just two values: **Standard**
+  (the default) and **Urgent** — narrowed down from an earlier four-value
+  Low/Medium/High/Urgent set. Same constraint as Role__c: `requestStaffForm`'s
+  `PRIORITY_OPTIONS` must exactly match the field's valueSet.
 - **Invoice__c** (MD → Account) — read-only in Phase 1.
   `External_Invoice_Id__c` is not portal-readable. The PDF itself is a
   standard `ContentVersion`/`ContentDocumentLink`, not a custom field.

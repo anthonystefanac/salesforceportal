@@ -24,7 +24,7 @@ function selectFacility(element, facilityId) {
 // Fills every required field with a valid value (a far-future Shift Date so
 // it's never accidentally in the past relative to whenever the suite runs).
 // Quantity and Priority are left alone - they already default to '1' and
-// 'Medium'.
+// 'Standard'.
 function fillRequiredFields(element, overrides = {}) {
     selectFacility(element, overrides.facilityId || 'a01000000000001AAA');
     setInputValue(element, '[data-field="role"]', overrides.role || 'Registered Nurse');

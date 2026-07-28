@@ -240,3 +240,14 @@
     font-weight: 600;
     white-space: nowrap;
 }
+
+.my-requests__priority_urgent {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    background: #fde3e3;
+    color: #97101f;
+    border: 1px solid #f6c6c6;
+    font-weight: 700;
+}

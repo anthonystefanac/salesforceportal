@@ -238,6 +238,15 @@ once a shift is filled. It's read-only to the portal, same as Status. It's
 also included in the Filled/Unable to Fill/Cancelled notification emails
 whenever it's populated.
 
+An **Urgent** Priority is visually called out in `myStaffingRequests`'
+Priority column — rendered as a small red pill (same red used elsewhere for
+errors/Cancelled) rather than plain text, so an urgent request doesn't blend
+in with the rest of the table. Standard priority stays plain text. This is a
+client-side-only style keyed off `request.priority === 'Urgent'`
+(`request.priorityClass` in `myStaffingRequests.js`) — Reporting's Priority
+column is unaffected, kept plain since that screen is a data extract rather
+than something scanned for action.
+
 Each row in `myStaffingRequests` also has a **Request Cancellation** action
 — this used to live on the Support/Query screen as a "Cancellation Request"
 type, but now lives directly on the row it applies to, since that's a more

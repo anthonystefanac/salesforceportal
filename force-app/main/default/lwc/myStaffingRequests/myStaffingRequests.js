@@ -170,7 +170,11 @@ export default class MyStaffingRequests extends LightningElement {
         return this.sortedRequests.slice(start, start + PAGE_SIZE).map((request) => ({
             ...request,
             isCancelling: this.cancellingRequestId === request.id,
-            cancelMenuLabel: this.cancellingRequestId === request.id ? 'Cancelling…' : 'Request Cancellation'
+            cancelMenuLabel: this.cancellingRequestId === request.id ? 'Cancelling…' : 'Request Cancellation',
+            priorityClass:
+                request.priority === 'Urgent'
+                    ? 'my-requests__priority my-requests__priority_urgent'
+                    : 'my-requests__priority'
         }));
     }
 

@@ -85,7 +85,9 @@
                                 <td>{request.startTime}</td>
                                 <td>{request.endTime}</td>
                                 <td>{request.quantity}</td>
-                                <td>{request.priority}</td>
+                                <td>
+                                    <span class={request.priorityClass}>{request.priority}</span>
+                                </td>
                                 <td>{request.assignedContact}</td>
                                 <td>
                                     <c-request-status-badge status={request.status}></c-request-status-badge>

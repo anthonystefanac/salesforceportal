@@ -99,6 +99,27 @@ public class TestDataFactory {
             LastName = 'Portal Test User'
         );
         insert portalUser;
+
+        // Every real portal user needs Alliance_Client_Portal_User assigned
+        // in Setup for FLS/CRUD to work at all - without it here too, every
+        // WITH SECURITY_ENFORCED query and Security.stripInaccessible call
+        // in the classes under test sees this fixture as if it had none of
+        // the permission set's grants, which fails in three different ways
+        // depending on the call: a hard QueryException (secure query hit an
+        // inaccessible field), a NoAccessException (stripInaccessible found
+        // zero object-level access at all), or a silent, unannounced field
+        // strip (an object that still has *some* baseline access, just not
+        // that specific field - e.g. Case.Related_Staffing_Request__c).
+        List<PermissionSet> portalPermissionSets = [
+            SELECT Id FROM PermissionSet WHERE Name = 'Alliance_Client_Portal_User' LIMIT 1
+        ];
+        if (!portalPermissionSets.isEmpty()) {
+            insert new PermissionSetAssignment(
+                AssigneeId = portalUser.Id,
+                PermissionSetId = portalPermissionSets[0].Id
+            );
+        }
+
         return portalUser;
     }
 }

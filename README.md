@@ -551,6 +551,46 @@ and wire up navigation matching the 6 screens. Also in Setup:
   Account name via the existing `PortalUserContext` helper (the same
   Contact → Account lookup every other controller already uses).
 
+## Code cleanup pass
+
+A self-review pass looking specifically for duplication and best-practice
+gaps across the whole codebase turned up three genuine repeats, all now
+extracted into shared utilities:
+
+- **`sortRecords`/`toggleSort`/`buildSortableColumns`** (new `c/sortTableUtils`
+  LWC module) — `myStaffingRequests`, `staffingRequestReporting`, and
+  `invoiceList` had all independently grown the exact same client-side sort
+  comparator, sort-direction-toggle logic, and sortable-column-header
+  decoration. All three now import the shared module instead; each keeps its
+  own column definitions and CSS class prefix (passed in as a parameter),
+  since those genuinely differ per component.
+- **`TimeFormatUtil.format(Time)`** (new Apex class) — `StaffingRequestNotificationService`
+  and `SupportRequestService` each had their own byte-identical private
+  `formatTime` helper (Apex's `Time` class has no `.format()` method, unlike
+  `Date`/`Datetime`). Both now call the shared class instead.
+- **`WithoutSharingDml.insertRecord`/`updateRecord`** (new Apex class) —
+  `StaffingRequestService` and `SupportRequestService` had each grown their
+  own private `without sharing` inner class for the exact same reason (see
+  "Facility/Ward access" and "Cancellation_Requested__c" above). Consolidated
+  into one top-level `without sharing` class with plain static methods —
+  which also fixes needing an inner-class instance in the first place, since
+  Apex doesn't allow `static` methods on inner classes at all.
+
+Also reviewed and found already in good shape: every non-test Apex class
+declares `with sharing`/`without sharing`/`inherited sharing` explicitly
+(the only classes without one are the two integration interfaces and their
+mock/factory implementations, none of which do any SOQL/DML at all so the
+declaration wouldn't do anything); the trigger and validation/notification
+services are all properly bulkified (no SOQL/DML inside loops); every
+`for:each` has a `key`; no leftover `console.log`/`debugger`/`TODO`s.
+
+One gap noted but *not* fixed here, since it's a larger, separate addition
+rather than a cleanup of existing code: this project has no ESLint/Prettier
+config at all (`sf project generate` normally scaffolds
+`@salesforce/eslint-config-lwc` and a `.eslintrc.json` automatically; this
+project never went through that path). Worth adding if useful going
+forward — ask if you'd like it set up.
+
 ## Verification
 
 ### Runs locally right now — no org needed
@@ -560,7 +600,8 @@ npm install
 npm run test:unit
 ```
 
-99 Jest tests across all 13 LWCs. This is the only thing in this project
+111 Jest tests across all 14 LWCs (including the new `sortTableUtils` shared
+module). This is the only thing in this project
 that's actually been run and confirmed passing in this environment.
 
 ### Requires a connected org (not verified here)

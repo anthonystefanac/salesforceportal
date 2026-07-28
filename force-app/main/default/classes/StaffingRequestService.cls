@@ -16,15 +16,24 @@ public with sharing class StaffingRequestService {
         sanitizedRequest.Requested_By_Contact__c = PortalUserContext.getCurrentContactId();
         sanitizedRequest.Status__c = 'Submitted';
 
+        // Facility/Ward come straight from client input (the id of whatever
+        // the user picked). stripInaccessible only checks field/object level
+        // security, not whether this specific Facility/Ward record is one
+        // this user's Account can actually see - a stale or cross-account id
+        // would otherwise reach the insert below and fail there with a raw
+        // "insufficient access rights on cross-reference id" DmlException,
+        // which is technically correct but not an actionable message for a
+        // portal user. Checking it here turns that into a clear message
+        // pointing at what to do (refresh and re-select).
+        validateFacilityAndWardAccess(sanitizedRequest);
+
         try {
             insert sanitizedRequest;
         } catch (DmlException dmlError) {
             // Surfaces StaffingRequestValidationService's addError() message
             // to the LWC cleanly - an uncaught DmlException instead reaches
             // the client as a generic, unhelpful "Script-thrown exception".
-            AuraHandledException friendlyError = new AuraHandledException(dmlError.getDmlMessage(0));
-            friendlyError.setMessage(dmlError.getDmlMessage(0));
-            throw friendlyError;
+            throw friendlyError(dmlError.getDmlMessage(0));
         }
 
         IWorkforceManagementService wfmService = WorkforceManagementServiceFactory.getService();
@@ -33,5 +42,44 @@ public with sharing class StaffingRequestService {
         update sanitizedRequest;
 
         return sanitizedRequest.Id;
+    }
+
+    private static void validateFacilityAndWardAccess(Staffing_Request__c request) {
+        if (request.Facility__c == null) {
+            return;
+        }
+
+        Id currentAccountId = PortalUserContext.getCurrentAccountId();
+        List<Facility__c> accessibleFacilities = [
+            SELECT Id
+            FROM Facility__c
+            WHERE Id = :request.Facility__c AND Account__c = :currentAccountId
+            WITH SECURITY_ENFORCED
+            LIMIT 1
+        ];
+        if (accessibleFacilities.isEmpty()) {
+            throw friendlyError('The selected facility is no longer available to you. Please refresh the page and choose a facility again.');
+        }
+
+        if (request.Ward__c == null) {
+            return;
+        }
+
+        List<Ward__c> accessibleWards = [
+            SELECT Id
+            FROM Ward__c
+            WHERE Id = :request.Ward__c AND Facility__c = :request.Facility__c
+            WITH SECURITY_ENFORCED
+            LIMIT 1
+        ];
+        if (accessibleWards.isEmpty()) {
+            throw friendlyError('The selected ward is no longer available for this facility. Please refresh the page and choose a ward again.');
+        }
+    }
+
+    private static AuraHandledException friendlyError(String message) {
+        AuraHandledException error = new AuraHandledException(message);
+        error.setMessage(message);
+        return error;
     }
 }

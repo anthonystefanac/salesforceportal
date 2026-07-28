@@ -124,7 +124,13 @@ created, regardless of which screen submitted it.
 **The Action column is the first column, titled "Action".** It started as
 a trailing, unlabeled column; it's now the leading column with a header, so
 it's the first thing a user sees for each row rather than something they
-have to scroll to find.
+have to scroll to find. The dropdown's `menu-alignment` also moved from
+`right` to `left` — `right` was correct while this was the *last* column
+(it opens the menu leftward from the button, staying inside the table), but
+once Action became the *first* column that same alignment opened the menu
+off the left edge of the table, where it got clipped by the table wrapper's
+`overflow-x: auto`. `left` opens it rightward into the table instead, where
+there's room.
 
 The `myStaffingRequests` table container also has defensive
 `max-width: 100%`/`overflow-x: auto` CSS on its wrapper elements, so any

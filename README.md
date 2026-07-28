@@ -362,6 +362,30 @@ being updated for an unrelated reason (like that same overdue job setting
 Status to Unable to Fill). Without that distinction, the daily overdue job
 would break the moment this validation deployed.
 
+**Facility/Ward access is checked before insert, with a friendly error.**
+`Facility__c` and `Ward__c` on a new request are ids the client sends
+straight from whatever the user picked in `facilityPicker`/`wardPicker`.
+`Security.stripInaccessible` (already run beforehand) only checks field/object
+level security, not whether *this specific* Facility or Ward record is one
+the submitting user's Account can actually see — a stale id (e.g. cached
+from a previous session/user) or a genuine cross-Account mismatch reaches
+the `insert` and fails with a raw
+`insufficient access rights on cross-reference id: <id>` DmlException. That
+message is exactly what it sounds like — a sharing violation on the
+referenced record, not a validation rule failing — and since
+`StaffingRequestService.submitNewRequest` already catches and rethrows
+`DmlException` (added when the Start/End Time rule was built), that raw
+Salesforce text was already reaching the LWC's error banner verbatim,
+technically correct but not actionable for a portal user. `submitNewRequest`
+now checks `Facility__c` belongs to the user's own Account and (if set)
+`Ward__c` belongs to that Facility *before* the insert, throwing a clear
+"...refresh the page and choose a facility/ward again" message instead of
+letting the raw DML error through. If this still surfaces for a specific
+user, it means their Contact's Account genuinely doesn't have Sharing Set
+access to that Facility/Ward — check `Contact.AccountId` against the
+Facility's `Account__c` in that org; that's a data/sharing question, not a
+code one.
+
 ### Notifications
 
 `StaffingRequestTrigger` (after insert, after update on `Staffing_Request__c`)

@@ -362,58 +362,68 @@ being updated for an unrelated reason (like that same overdue job setting
 Status to Unable to Fill). Without that distinction, the daily overdue job
 would break the moment this validation deployed.
 
-**Facility/Ward access is checked before insert, with a friendly error.**
-`Facility__c` and `Ward__c` on a new request are ids the client sends
-straight from whatever the user picked in `facilityPicker`/`wardPicker`.
-`Security.stripInaccessible` (already run beforehand) only checks field/object
-level security, not whether *this specific* Facility or Ward record is one
-the submitting user's Account can actually see — a stale id (e.g. cached
-from a previous session/user) or a genuine cross-Account mismatch reaches
-the `insert` and fails with a raw
-`insufficient access rights on cross-reference id: <id>` DmlException. That
-message is exactly what it sounds like — a sharing violation on the
-referenced record, not a validation rule failing — and since
-`StaffingRequestService.submitNewRequest` already catches and rethrows
-`DmlException` (added when the Start/End Time rule was built), that raw
-Salesforce text was already reaching the LWC's error banner verbatim,
-technically correct but not actionable for a portal user. `submitNewRequest`
-now checks `Facility__c` belongs to the user's own Account and (if set)
-`Ward__c` belongs to that Facility *before* the insert, throwing a clear
-"...refresh the page and choose a facility/ward again" message instead of
-letting the raw DML error through. If this still surfaces for a specific
-user, it means their Contact's Account genuinely doesn't have Sharing Set
-access to that Facility/Ward — check `Contact.AccountId` against the
-Facility's `Account__c` in that org; that's a data/sharing question, not a
-code one.
+**Facility/Ward access is checked before insert, and the insert itself runs
+without sharing.** `Facility__c` and `Ward__c` on a new request are ids the
+client sends straight from whatever the user picked in
+`facilityPicker`/`wardPicker`. `Security.stripInaccessible` (already run
+beforehand) only checks field/object level security, not whether *this
+specific* Facility or Ward record is one the submitting user's Account can
+actually see. `submitNewRequest` now checks that `Facility__c` belongs to
+the user's own Account and, if set, that `Ward__c` belongs to that Facility
+*before* the insert, throwing a clear "...refresh the page and choose a
+facility/ward again" message rather than a raw DML error if either check
+fails.
 
-**`TestDataFactory.createPortalUser` now assigns the permission set.** The
-first real `sf apex run test` run against a connected org surfaced this: it
-created the test portal `User` but never assigned it
-`Alliance_Client_Portal_User`, so every FLS/CRUD-dependent test failed —
-just in different-looking ways depending on which Apex API noticed the
-missing grants first: a `WITH SECURITY_ENFORCED` query throws a hard
-`QueryException` the moment *any* selected field is inaccessible
-(`StaffingRequestController`/`FacilityController`/`InvoiceController`/
-`PortalDashboardController`'s tests), `Security.stripInaccessible` throws
-`NoAccessException` when the user has *zero* object-level access at all
-(`StaffingRequestServiceTest`'s create-a-request tests), and it silently
-strips just the one inaccessible field, no exception at all, when the
-object still has *some* baseline access
-(`SupportRequestServiceTest.testSubmitNewCaseAsPortalUserWithRelatedRequest`
+That check turned out to be necessary but not sufficient. On a real
+connected org, a portal user confirmed to already have
+`Alliance_Client_Portal_User` assigned still hit
+`insufficient access rights on cross-reference id: <id>` on submit, for a
+Facility that check had *just* verified belonged to their own Account. The
+Facility itself was even readable moments earlier through the exact same
+"with sharing" query used by that check and by `facilityPicker`'s own list
+— so this isn't a data/Account mismatch, and it isn't a missing permission
+set assignment either. `Staffing_Request__c` is two Master-Detail hops from
+`Account` (`Staffing_Request__c` → `Facility__c` → `Account`), and the
+Sharing Set's cascade wasn't extending far enough to satisfy Salesforce's
+own cross-reference check specifically at **DML** time, even though plain
+reads of the same record work fine. Since `validateFacilityAndWardAccess`
+already independently proves the Facility/Ward genuinely belong to the
+user's own Account — that check *is* the real access control here — the
+insert and the follow-up `update` (setting `External_Demand_Id__c`/
+`Last_Status_Update__c`) now run through a `private without sharing class
+DmlHelper` nested inside `StaffingRequestService`, bypassing Salesforce's
+sharing check for just those two DML statements rather than depending on a
+mechanism proven not to cover this case. Triggers still fire as normal —
+`without sharing` only affects row-level visibility/CRUD-adjacent checks
+made by the calling Apex, not trigger execution — so
+`StaffingRequestValidationService`'s Start/End Time and Shift Date rules
+are unaffected.
+
+**`TestDataFactory.createPortalUser` now assigns the permission set — in a
+way that avoids `MIXED_DML_OPERATION`.** The first real `sf apex run test`
+run against a connected org surfaced the missing assignment: every
+FLS/CRUD-dependent test failed in different-looking ways depending on which
+Apex API noticed the missing grants first — a `WITH SECURITY_ENFORCED`
+query throws a hard `QueryException` the moment *any* selected field is
+inaccessible (`StaffingRequestController`/`FacilityController`/
+`InvoiceController`/`PortalDashboardController`'s tests),
+`Security.stripInaccessible` throws `NoAccessException` when the user has
+*zero* object-level access at all (`StaffingRequestServiceTest`'s
+create-a-request tests), and it silently strips just the one inaccessible
+field, no exception at all, when the object still has *some* baseline
+access (`SupportRequestServiceTest.testSubmitNewCaseAsPortalUserWithRelatedRequest`
 — `Related_Staffing_Request__c` came back `null` on the inserted Case with
-no error, because `stripInaccessible` quietly dropped it). None of this was
-caused by the Facility/Ward or Subject/required-field work above — it's a
-gap in the shared test fixture, now fixed by looking up the permission set
-by name and inserting a `PermissionSetAssignment` right after the user is
-created.
-
-This is also worth checking for the **real** portal user who first hit the
-"insufficient access rights on cross-reference id" error live: the same
-gap — a user that exists but was never actually assigned
-`Alliance_Client_Portal_User` in Setup — is a simpler, very plausible
-explanation than a genuine cross-Account sharing mismatch. Setup → find
-that User → Permission Set Assignments related list is the quickest way to
-confirm.
+no error). None of this was caused by the Facility/Ward or
+Subject/required-field work above — it's a gap in the shared test fixture.
+The first attempt at fixing it (inserting a `PermissionSetAssignment` right
+after the `User`) broke nearly every test a second way:
+`MIXED_DML_OPERATION`, because `User`/`PermissionSetAssignment` are "setup
+objects" and can't be inserted in the same transaction as the
+Account/Contact/Facility a test already created. Both inserts now run
+inside `System.runAs(new User(Id = UserInfo.getUserId()))`, which opens a
+transaction scope exempt from that restriction — the standard,
+Salesforce-documented workaround for exactly this "create a test user, then
+assign it a permission set" pattern.
 
 ### Notifications
 

@@ -121,7 +121,7 @@ public without sharing class StaffingRequestNotificationService {
             + 'Facility: ' + (request.Facility__r != null ? request.Facility__r.Name : '') + '\n'
             + 'Ward: ' + (request.Ward__r != null ? request.Ward__r.Name : 'N/A') + '\n'
             + 'Role: ' + request.Role__c + '\n'
-            + 'Shift Date: ' + (request.Shift_Date__c != null ? request.Shift_Date__c.format() : '') + '\n'
+            + 'Shift Date: ' + DateFormatUtil.format(request.Shift_Date__c) + '\n'
             + 'Start Time: ' + TimeFormatUtil.format(request.Start_Time__c) + '\n'
             + 'End Time: ' + TimeFormatUtil.format(request.End_Time__c) + '\n'
             + 'Quantity: ' + request.Quantity__c + '\n'

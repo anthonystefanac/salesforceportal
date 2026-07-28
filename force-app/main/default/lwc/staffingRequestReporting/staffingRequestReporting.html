@@ -79,7 +79,7 @@
                                         <td>{request.wardName}</td>
                                         <td>{request.role}</td>
                                         <td>{request.specialty}</td>
-                                        <td>{request.shiftDate}</td>
+                                        <td>{request.shiftDateDisplay}</td>
                                         <td>{request.startTime}</td>
                                         <td>{request.endTime}</td>
                                         <td>{request.quantity}</td>
@@ -90,11 +90,7 @@
                                         </td>
                                         <td>{request.broadcasted}</td>
                                         <td>{request.cancellationRequested}</td>
-                                        <td>
-                                            <lightning-formatted-date-time
-                                                value={request.lastUpdate}
-                                            ></lightning-formatted-date-time>
-                                        </td>
+                                        <td>{request.lastUpdateDisplay}</td>
                                     </tr>
                                 </template>
                             </tbody>

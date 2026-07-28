@@ -58,6 +58,21 @@ describe('c-invoice-list', () => {
         });
     });
 
+    it('shows Invoice Date and Due Date in DD/MM/YYYY format regardless of Locale', () => {
+        const element = createElement('c-invoice-list', { is: InvoiceList });
+        document.body.appendChild(element);
+
+        getInvoices.emit(mockInvoices);
+
+        return Promise.resolve().then(() => {
+            const rows = element.shadowRoot.querySelectorAll('tbody tr');
+            const cells = rows[0].querySelectorAll('td');
+            // Invoice Number, Invoice Date, Due Date, ...
+            expect(cells[1].textContent).toBe('01/07/2026');
+            expect(cells[2].textContent).toBe('15/07/2026');
+        });
+    });
+
     it('shows only overdue invoices when the page reference filter is "overdue"', () => {
         const element = createElement('c-invoice-list', { is: InvoiceList });
         document.body.appendChild(element);

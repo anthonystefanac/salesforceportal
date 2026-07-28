@@ -52,8 +52,8 @@
                         <template for:each={invoices} for:item="invoice">
                             <tr key={invoice.Id}>
                                 <td>{invoice.Invoice_Number__c}</td>
-                                <td>{invoice.Invoice_Date__c}</td>
-                                <td>{invoice.Due_Date__c}</td>
+                                <td>{invoice.invoiceDateDisplay}</td>
+                                <td>{invoice.dueDateDisplay}</td>
                                 <td>
                                     <lightning-formatted-number
                                         value={invoice.Amount__c}

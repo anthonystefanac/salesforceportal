@@ -1,6 +1,7 @@
 import { LightningElement, wire } from 'lwc';
 import { refreshApex } from '@salesforce/apex';
 import { NavigationMixin, CurrentPageReference } from 'lightning/navigation';
+import { formatDate } from 'c/dateFormatUtils';
 import { sortRecords, toggleSort, buildSortableColumns } from 'c/sortTableUtils';
 import getInvoices from '@salesforce/apex/InvoiceController.getInvoices';
 
@@ -39,7 +40,14 @@ export default class InvoiceList extends NavigationMixin(LightningElement) {
         this._wiredInvoicesResult = result;
         const { data, error } = result;
         if (data) {
-            this.allInvoices = data;
+            // Invoice_Date__c/Due_Date__c stay raw ISO (sorting depends on
+            // lexicographic = chronological order) - the Display fields are
+            // DD/MM/YYYY purely for the table cells.
+            this.allInvoices = data.map((invoice) => ({
+                ...invoice,
+                invoiceDateDisplay: formatDate(invoice.Invoice_Date__c),
+                dueDateDisplay: formatDate(invoice.Due_Date__c)
+            }));
             this.error = undefined;
         } else if (error) {
             this.error = error;

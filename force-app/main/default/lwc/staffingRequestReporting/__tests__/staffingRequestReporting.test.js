@@ -203,6 +203,55 @@ describe('c-staffing-request-reporting', () => {
         });
     });
 
+    it('shows Shift Date in DD/MM/YYYY format regardless of Locale', () => {
+        const element = createElement('c-staffing-request-reporting', { is: StaffingRequestReporting });
+        document.body.appendChild(element);
+
+        getMyRequests.emit(mockRequests);
+
+        return Promise.resolve().then(() => {
+            const allButton = Array.from(element.shadowRoot.querySelectorAll('.reporting__preset')).find(
+                (button) => button.textContent === 'All'
+            );
+            allButton.click();
+
+            return Promise.resolve().then(() => {
+                const rows = element.shadowRoot.querySelectorAll('tbody tr');
+                const sr0001Row = Array.from(rows).find((row) => row.textContent.includes('SR-0001'));
+                const cells = sr0001Row.querySelectorAll('td');
+                // Request, Facility, Ward, Role, Specialty, Shift Date, ...
+                expect(cells[5].textContent).toBe('27/07/2026');
+            });
+        });
+    });
+
+    it('formats the empty-state date range as DD/MM/YYYY', () => {
+        const element = createElement('c-staffing-request-reporting', { is: StaffingRequestReporting });
+        document.body.appendChild(element);
+
+        getMyRequests.emit(mockRequests);
+
+        return Promise.resolve().then(() => {
+            const customButton = Array.from(element.shadowRoot.querySelectorAll('.reporting__preset')).find(
+                (button) => button.textContent === 'Custom Range'
+            );
+            customButton.click();
+
+            return Promise.resolve().then(() => {
+                const [fromInput, toInput] = element.shadowRoot.querySelectorAll('lightning-input');
+                fromInput.value = '2020-01-01';
+                fromInput.dispatchEvent(new CustomEvent('change'));
+                toInput.value = '2020-01-02';
+                toInput.dispatchEvent(new CustomEvent('change'));
+
+                return Promise.resolve().then(() => {
+                    const empty = element.shadowRoot.querySelector('.reporting__empty');
+                    expect(empty.textContent).toBe('No staffing requests between 01/01/2020 to 02/01/2020.');
+                });
+            });
+        });
+    });
+
     it('prompts for both dates when Custom Range is selected with nothing entered yet', () => {
         const element = createElement('c-staffing-request-reporting', { is: StaffingRequestReporting });
         document.body.appendChild(element);

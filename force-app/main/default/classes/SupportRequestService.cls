@@ -103,7 +103,7 @@ public with sharing class SupportRequestService {
 
         Staffing_Request__c relatedRequest = relatedRequests[0];
         return '\nRelated Staffing Request:\n'
-            + 'Date: ' + (relatedRequest.Shift_Date__c != null ? relatedRequest.Shift_Date__c.format() : '') + '\n'
+            + 'Date: ' + DateFormatUtil.format(relatedRequest.Shift_Date__c) + '\n'
             + 'Facility: ' + (relatedRequest.Facility__r != null ? relatedRequest.Facility__r.Name : '') + '\n'
             + 'Ward: ' + (relatedRequest.Ward__r != null ? relatedRequest.Ward__r.Name : 'N/A') + '\n'
             + 'Role: ' + relatedRequest.Role__c + '\n'

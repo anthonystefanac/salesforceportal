@@ -1,6 +1,7 @@
 import { LightningElement, wire } from 'lwc';
 import { refreshApex } from '@salesforce/apex';
 import { formatTime } from 'c/timeFormatUtils';
+import { formatDate, formatDateTime } from 'c/dateFormatUtils';
 import { sortRecords, toggleSort, buildSortableColumns } from 'c/sortTableUtils';
 import getMyRequests from '@salesforce/apex/StaffingRequestController.getMyRequests';
 
@@ -71,7 +72,12 @@ export default class StaffingRequestReporting extends LightningElement {
                 wardName: request.Ward__r ? request.Ward__r.Name : '—',
                 role: request.Role__c,
                 specialty: request.Specialty__c || '—',
+                // shiftDate/lastUpdate stay raw ISO (used for date-range
+                // filtering/comparison, sorting, and the CSV export); the
+                // *Display variants are DD/MM/YYYY purely for the on-screen
+                // table cells.
                 shiftDate: request.Shift_Date__c,
+                shiftDateDisplay: formatDate(request.Shift_Date__c),
                 startTime: formatTime(request.Start_Time__c),
                 endTime: formatTime(request.End_Time__c),
                 quantity: request.Quantity__c,
@@ -80,7 +86,8 @@ export default class StaffingRequestReporting extends LightningElement {
                 status: request.Status__c,
                 broadcasted: request.Broadcasted_Date__c ? 'Yes' : 'No',
                 cancellationRequested: request.Cancellation_Requested__c ? 'Yes' : 'No',
-                lastUpdate: request.Last_Status_Update__c
+                lastUpdate: request.Last_Status_Update__c,
+                lastUpdateDisplay: formatDateTime(request.Last_Status_Update__c)
             }));
             this.error = undefined;
         } else if (error) {
@@ -148,7 +155,7 @@ export default class StaffingRequestReporting extends LightningElement {
 
     get rangeLabel() {
         const { from, to } = this.effectiveRange;
-        return this.hasCompleteRange ? `${from} to ${to}` : '';
+        return this.hasCompleteRange ? `${formatDate(from)} to ${formatDate(to)}` : '';
     }
 
     get filteredRequests() {

@@ -29,8 +29,10 @@ public with sharing class StaffingRequestService {
         // comment on DmlHelper).
         validateFacilityAndWardAccess(sanitizedRequest);
 
+        DmlHelper dmlHelper = new DmlHelper();
+
         try {
-            DmlHelper.insertWithoutSharing(sanitizedRequest);
+            dmlHelper.insertWithoutSharing(sanitizedRequest);
         } catch (DmlException dmlError) {
             // Surfaces StaffingRequestValidationService's addError() message
             // to the LWC cleanly - an uncaught DmlException instead reaches
@@ -41,7 +43,7 @@ public with sharing class StaffingRequestService {
         IWorkforceManagementService wfmService = WorkforceManagementServiceFactory.getService();
         sanitizedRequest.External_Demand_Id__c = wfmService.submitDemandRequest(sanitizedRequest);
         sanitizedRequest.Last_Status_Update__c = Datetime.now();
-        DmlHelper.updateWithoutSharing(sanitizedRequest);
+        dmlHelper.updateWithoutSharing(sanitizedRequest);
 
         return sanitizedRequest.Id;
     }
@@ -103,11 +105,11 @@ public with sharing class StaffingRequestService {
      * has already made safe.
      */
     private without sharing class DmlHelper {
-        static void insertWithoutSharing(Staffing_Request__c request) {
+        void insertWithoutSharing(Staffing_Request__c request) {
             insert request;
         }
 
-        static void updateWithoutSharing(Staffing_Request__c request) {
+        void updateWithoutSharing(Staffing_Request__c request) {
             update request;
         }
     }

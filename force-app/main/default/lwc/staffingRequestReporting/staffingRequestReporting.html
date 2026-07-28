@@ -58,25 +58,21 @@
                         <table class="reporting__table">
                             <thead>
                                 <tr>
-                                    <th>Request</th>
-                                    <th>Facility</th>
-                                    <th>Ward</th>
-                                    <th>Role</th>
-                                    <th>Specialty</th>
-                                    <th>Shift Date</th>
-                                    <th>Start Time</th>
-                                    <th>End Time</th>
-                                    <th>Quantity</th>
-                                    <th>Priority</th>
-                                    <th>Assigned Contact</th>
-                                    <th>Status</th>
-                                    <th>Broadcasted</th>
-                                    <th>Cancellation Requested</th>
-                                    <th>Last Update</th>
+                                    <template for:each={columns} for:item="column">
+                                        <th
+                                            key={column.key}
+                                            class={column.cssClass}
+                                            data-field={column.key}
+                                            onclick={handleSort}
+                                            aria-sort={column.ariaSort}
+                                        >
+                                            {column.label}<span class="reporting__sort-indicator">{column.indicator}</span>
+                                        </th>
+                                    </template>
                                 </tr>
                             </thead>
                             <tbody>
-                                <template for:each={filteredRequests} for:item="request">
+                                <template for:each={sortedRequests} for:item="request">
                                     <tr key={request.id}>
                                         <td>{request.name}</td>
                                         <td>{request.facilityName}</td>

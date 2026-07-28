@@ -53,6 +53,8 @@ export default class StaffingRequestReporting extends LightningElement {
     activePreset = 'last7';
     customFrom;
     customTo;
+    sortField;
+    sortDirection = 'asc';
 
     _wiredRequestsResult;
 
@@ -161,6 +163,47 @@ export default class StaffingRequestReporting extends LightningElement {
         );
     }
 
+    // Same sort implementation as myStaffingRequests - sorts on top of
+    // whatever the date-range filter above has already narrowed down to.
+    get sortedRequests() {
+        const filtered = this.filteredRequests;
+        if (!this.sortField) {
+            return filtered;
+        }
+        const field = this.sortField;
+        const direction = this.sortDirection === 'desc' ? -1 : 1;
+        return [...filtered].sort((a, b) => {
+            const valueA = a[field];
+            const valueB = b[field];
+            if (valueA == null && valueB == null) {
+                return 0;
+            }
+            if (valueA == null) {
+                return -1 * direction;
+            }
+            if (valueB == null) {
+                return 1 * direction;
+            }
+            if (typeof valueA === 'number' && typeof valueB === 'number') {
+                return (valueA - valueB) * direction;
+            }
+            return String(valueA).localeCompare(String(valueB)) * direction;
+        });
+    }
+
+    get columns() {
+        return CSV_COLUMNS.map((column) => {
+            const isSorted = this.sortField === column.key;
+            const direction = isSorted ? this.sortDirection : undefined;
+            return {
+                ...column,
+                cssClass: isSorted ? 'reporting__th reporting__th_sorted' : 'reporting__th',
+                ariaSort: isSorted ? (direction === 'desc' ? 'descending' : 'ascending') : 'none',
+                indicator: isSorted ? (direction === 'desc' ? '▼' : '▲') : ''
+            };
+        });
+    }
+
     get hasRequests() {
         return this.filteredRequests.length > 0;
     }
@@ -195,8 +238,21 @@ export default class StaffingRequestReporting extends LightningElement {
         this.customTo = event.target.value;
     }
 
+    handleSort(event) {
+        const field = event.currentTarget.dataset.field;
+        if (!field) {
+            return;
+        }
+        if (this.sortField === field) {
+            this.sortDirection = this.sortDirection === 'desc' ? 'asc' : 'desc';
+        } else {
+            this.sortField = field;
+            this.sortDirection = 'asc';
+        }
+    }
+
     handleDownload() {
-        const rows = this.filteredRequests;
+        const rows = this.sortedRequests;
         const header = CSV_COLUMNS.map((column) => escapeCsvValue(column.label)).join(',');
         const body = rows
             .map((row) => CSV_COLUMNS.map((column) => escapeCsvValue(row[column.key])).join(','))

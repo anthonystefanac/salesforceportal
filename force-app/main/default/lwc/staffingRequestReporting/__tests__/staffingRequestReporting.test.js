@@ -96,6 +96,71 @@ describe('c-staffing-request-reporting', () => {
         });
     });
 
+    it('sorts by a clicked column, toggling direction on a second click', () => {
+        const element = createElement('c-staffing-request-reporting', { is: StaffingRequestReporting });
+        document.body.appendChild(element);
+
+        getMyRequests.emit(mockRequests);
+
+        return Promise.resolve().then(() => {
+            const allButton = Array.from(element.shadowRoot.querySelectorAll('.reporting__preset')).find(
+                (button) => button.textContent === 'All'
+            );
+            allButton.click();
+
+            return Promise.resolve().then(() => {
+                const shiftDateHeader = Array.from(element.shadowRoot.querySelectorAll('th')).find((th) =>
+                    th.textContent.includes('Shift Date')
+                );
+                shiftDateHeader.click();
+
+                return Promise.resolve().then(() => {
+                    let rows = element.shadowRoot.querySelectorAll('tbody tr');
+                    expect(rows[0].textContent).toContain('SR-0005'); // 2026-05-01, earliest
+                    expect(rows[4].textContent).toContain('SR-0001'); // 2026-07-27, latest
+
+                    shiftDateHeader.click();
+
+                    return Promise.resolve().then(() => {
+                        rows = element.shadowRoot.querySelectorAll('tbody tr');
+                        expect(rows[0].textContent).toContain('SR-0001');
+                        expect(rows[4].textContent).toContain('SR-0005');
+                    });
+                });
+            });
+        });
+    });
+
+    it('downloads the CSV in the currently sorted order', () => {
+        const element = createElement('c-staffing-request-reporting', { is: StaffingRequestReporting });
+        document.body.appendChild(element);
+
+        getMyRequests.emit(mockRequests);
+
+        return Promise.resolve().then(() => {
+            const allButton = Array.from(element.shadowRoot.querySelectorAll('.reporting__preset')).find(
+                (button) => button.textContent === 'All'
+            );
+            allButton.click();
+
+            return Promise.resolve().then(() => {
+                const shiftDateHeader = Array.from(element.shadowRoot.querySelectorAll('th')).find((th) =>
+                    th.textContent.includes('Shift Date')
+                );
+                shiftDateHeader.click();
+
+                return Promise.resolve().then(() => {
+                    const downloadButton = element.shadowRoot.querySelector('lightning-button');
+                    downloadButton.click();
+
+                    const csvContent = decodeURIComponent(createdLinks[0].href);
+                    const firstDataRow = csvContent.split('\n')[1];
+                    expect(firstDataRow).toContain('SR-0005');
+                });
+            });
+        });
+    });
+
     it('shows the previous calendar week (Mon-Sun) when Last Week is selected', () => {
         const element = createElement('c-staffing-request-reporting', { is: StaffingRequestReporting });
         document.body.appendChild(element);

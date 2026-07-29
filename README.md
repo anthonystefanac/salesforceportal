@@ -329,6 +329,16 @@ existing unit tests (which only assert the `_expanded` class was toggled,
 not the resulting visual `display`) passed throughout and couldn't have
 caught this.
 
+`invoiceList` gets the same mobile card treatment, but simpler: it only has
+6 columns to begin with (Invoice Number, Invoice Date, Due Date, Amount,
+Status, and the View/Download action), so there's nothing worth hiding
+behind a "Show more" toggle — every field just shows directly on the card,
+with no `*__cell_secondary`/`expandedIds`/toggle machinery at all. Same
+`data-label`/`::before` labelling and `48rem` breakpoint as the other two
+screens for visual consistency, and re-verified the same way (a real
+Chromium instance, computed `display` before/after the breakpoint) given
+the specificity mistake above.
+
 **Error/success feedback doesn't rely solely on toasts.** Both forms
 originally surfaced validation and Apex errors only via
 `lightning/platformShowToastEvent`. That's a problem here specifically

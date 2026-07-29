@@ -54,18 +54,18 @@
                     <tbody>
                         <template for:each={invoices} for:item="invoice">
                             <tr key={invoice.Id}>
-                                <td>{invoice.Invoice_Number__c}</td>
-                                <td>{invoice.invoiceDateDisplay}</td>
-                                <td>{invoice.dueDateDisplay}</td>
-                                <td>
+                                <td data-label="Invoice Number">{invoice.Invoice_Number__c}</td>
+                                <td data-label="Invoice Date">{invoice.invoiceDateDisplay}</td>
+                                <td data-label="Due Date">{invoice.dueDateDisplay}</td>
+                                <td data-label="Amount">
                                     <lightning-formatted-number
                                         value={invoice.Amount__c}
                                         format-style="currency"
                                         currency-code="AUD"
                                     ></lightning-formatted-number>
                                 </td>
-                                <td>{invoice.Status__c}</td>
-                                <td>
+                                <td data-label="Status">{invoice.Status__c}</td>
+                                <td class="invoice-list__action-cell">
                                     <lightning-button
                                         label={invoice.viewLabel}
                                         data-id={invoice.Id}

@@ -126,3 +126,59 @@
     max-width: 26rem;
     margin-bottom: 1.25rem;
 }
+
+/* Mobile card layout - same approach as myStaffingRequests/
+   staffingRequestReporting, but with no secondary/expand split at all:
+   Invoices only has 6 columns (Invoice Number, Invoice Date, Due Date,
+   Amount, Status, and the View/Download action), so unlike those two
+   screens there's nothing to hide behind a "Show more" toggle - every
+   field is shown on the card directly. */
+@media (max-width: 48rem) {
+    .invoice-list__table-wrap {
+        overflow-x: visible;
+    }
+
+    .invoice-list__table,
+    .invoice-list__table tbody,
+    .invoice-list__table tr,
+    .invoice-list__table td {
+        display: block;
+        width: auto !important;
+    }
+
+    .invoice-list__table thead {
+        display: none;
+    }
+
+    .invoice-list__table tbody tr {
+        border: 1px solid #e4e8f0;
+        border-radius: 0.6rem;
+        box-shadow: 0 1px 2px rgba(22, 50, 92, 0.05);
+        margin-bottom: 0.75rem;
+        padding: 0.85rem 1rem;
+    }
+
+    .invoice-list__table tbody tr:last-child {
+        margin-bottom: 0;
+    }
+
+    .invoice-list__table td {
+        border-bottom: none;
+        padding: 0.4rem 0;
+    }
+
+    .invoice-list__table td[data-label]::before {
+        content: attr(data-label);
+        display: block;
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #6b7d99;
+        margin-bottom: 0.2rem;
+    }
+
+    .invoice-list__action-cell {
+        padding-top: 0.6rem;
+    }
+}

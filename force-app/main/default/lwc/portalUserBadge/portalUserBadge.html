@@ -1,39 +1,41 @@
 <template>
-    <div class="portal-user-badge">
-        <button
-            type="button"
-            class="portal-user-badge__trigger"
-            onclick={handleToggleMenu}
-            aria-haspopup="true"
-            aria-expanded={expandedState}
-        >
-            <span class="portal-user-badge__avatar">{initials}</span>
-            <span class="portal-user-badge__meta">
-                <span class="portal-user-badge__name">{userName}</span>
-                <template if:true={hasAccountName}>
-                    <span class="portal-user-badge__account">{accountName}</span>
-                </template>
-            </span>
-            <lightning-icon
-                icon-name="utility:chevrondown"
-                size="xx-small"
-                class="portal-user-badge__chevron"
-            ></lightning-icon>
-        </button>
-        <template if:true={isMenuOpen}>
-            <div class="portal-user-badge__menu">
-                <button type="button" class="portal-user-badge__menu-item portal-user-badge__menu-item_disabled" disabled>
-                    View Profile
-                    <span class="portal-user-badge__menu-item-tag">Coming soon</span>
-                </button>
-                <button
-                    type="button"
-                    class="portal-user-badge__menu-item portal-user-badge__menu-item_danger"
-                    onclick={handleLogout}
-                >
-                    Log Out
-                </button>
-            </div>
-        </template>
-    </div>
+    <template if:true={hasUser}>
+        <div class="portal-user-badge">
+            <button
+                type="button"
+                class="portal-user-badge__trigger"
+                onclick={handleToggleMenu}
+                aria-haspopup="true"
+                aria-expanded={expandedState}
+            >
+                <span class="portal-user-badge__avatar">{initials}</span>
+                <span class="portal-user-badge__meta">
+                    <span class="portal-user-badge__name">{userName}</span>
+                    <template if:true={hasAccountName}>
+                        <span class="portal-user-badge__account">{accountName}</span>
+                    </template>
+                </span>
+                <lightning-icon
+                    icon-name="utility:chevrondown"
+                    size="xx-small"
+                    class="portal-user-badge__chevron"
+                ></lightning-icon>
+            </button>
+            <template if:true={isMenuOpen}>
+                <div class="portal-user-badge__menu">
+                    <button type="button" class="portal-user-badge__menu-item portal-user-badge__menu-item_disabled" disabled>
+                        View Profile
+                        <span class="portal-user-badge__menu-item-tag">Coming soon</span>
+                    </button>
+                    <button
+                        type="button"
+                        class="portal-user-badge__menu-item portal-user-badge__menu-item_danger"
+                        onclick={handleLogout}
+                    >
+                        Log Out
+                    </button>
+                </div>
+            </template>
+        </div>
+    </template>
 </template>

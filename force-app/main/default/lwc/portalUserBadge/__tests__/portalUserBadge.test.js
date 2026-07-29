@@ -58,6 +58,17 @@ describe('c-portal-user-badge', () => {
         });
     });
 
+    it('renders nothing at all (no avatar, no Log Out) when there is no logged-in user - e.g. the Guest User context on the Login page', () => {
+        const element = createElement('c-portal-user-badge', { is: PortalUserBadge });
+        document.body.appendChild(element);
+
+        getCurrentUserBadge.emit({ userName: null, accountName: null });
+
+        return Promise.resolve().then(() => {
+            expect(element.shadowRoot.querySelector('.portal-user-badge')).toBeNull();
+        });
+    });
+
     it('does not render an account line when there is no linked Account', () => {
         const element = createElement('c-portal-user-badge', { is: PortalUserBadge });
         document.body.appendChild(element);

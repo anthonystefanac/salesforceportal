@@ -37,6 +37,16 @@ export default class PortalUserBadge extends LightningElement {
         return !!this.accountName;
     }
 
+    // Guards the whole badge, not just the account line - the Apex side
+    // returns an empty (null userName) badge for the Guest User running
+    // context (see PortalUserBadgeController), so this hides the avatar,
+    // name, and Log Out action entirely on any page reached before a real
+    // portal user has logged in, rather than showing a Log Out button that
+    // makes no sense pre-authentication.
+    get hasUser() {
+        return !!this.userName;
+    }
+
     get expandedState() {
         return this.isMenuOpen ? 'true' : 'false';
     }

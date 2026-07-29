@@ -12,6 +12,24 @@ private class PortalUserBadgeControllerTest {
     }
 
     @isTest
+    static void testReturnsEmptyBadgeForGuestUserRunningContext() {
+        User guestUser = TestDataFactory.getGuestUserOrNull();
+        if (guestUser == null) {
+            return; // Experience Cloud site not yet set up in this org - see TestDataFactory.
+        }
+
+        Test.startTest();
+        PortalUserBadgeController.PortalUserBadge badge;
+        System.runAs(guestUser) {
+            badge = PortalUserBadgeController.getCurrentUserBadge();
+        }
+        Test.stopTest();
+
+        System.assertEquals(null, badge.userName, 'Guest User running context should not resolve a Name');
+        System.assertEquals(null, badge.accountName, 'Guest User running context should not resolve an Account');
+    }
+
+    @isTest
     static void testReturnsUserAndAccountNameForPortalUser() {
         Account acct = TestDataFactory.createAccount('Test Corporate Client');
         Contact con = TestDataFactory.createContact(acct.Id, 'Portal', 'Tester');

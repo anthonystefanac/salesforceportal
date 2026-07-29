@@ -85,6 +85,25 @@ public class TestDataFactory {
         return portalProfiles.isEmpty() ? null : portalProfiles[0].Id;
     }
 
+    /**
+     * Returns this org's Experience Cloud site Guest User if a site already
+     * exists (only true once one has been created in Setup - a manual step
+     * outside version control, same caveat as getPortalProfileIdOrNull
+     * above), otherwise null. Tests use this to verify pre-login/Guest User
+     * behaviour when possible and degrade gracefully when no site exists yet
+     * to have provisioned one. Unlike a portal user, the Guest User record
+     * itself can't be created by a test - it's auto-provisioned once per
+     * site - so this looks up the existing one rather than inserting it.
+     */
+    public static User getGuestUserOrNull() {
+        List<Profile> guestProfiles = [SELECT Id FROM Profile WHERE UserType = 'Guest' LIMIT 1];
+        if (guestProfiles.isEmpty()) {
+            return null;
+        }
+        List<User> guestUsers = [SELECT Id FROM User WHERE ProfileId = :guestProfiles[0].Id LIMIT 1];
+        return guestUsers.isEmpty() ? null : guestUsers[0];
+    }
+
     public static User createPortalUser(Id profileId, Id contactId, String uniqueName) {
         User portalUser = new User(
             ProfileId = profileId,

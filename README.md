@@ -832,6 +832,30 @@ and wire up navigation matching the 6 screens. Also in Setup:
   Account name via the existing `PortalUserContext` helper (the same
   Contact → Account lookup every other controller already uses).
 
+  **A Log Out button showed up on the Login page.** Reported from the live
+  site: the badge, dropdown and all, was rendering on the (unauthenticated)
+  Login screen, offering a working Log Out action before anyone had actually
+  logged in. Root cause: `getCurrentUserBadge()` unconditionally queried and
+  returned `UserInfo.getUserId()`'s `User.Name`, with no concept of "nobody's
+  logged in" — and Experience Cloud pages reached pre-login (the Login page
+  in particular) still run under the site's **Guest User**, which is a real,
+  queryable `User` record with a real `Name`, not an absent/null running
+  user. So if the site Header (which contains this component) is shared with
+  the Login page — whether deliberately, or because the Login page's Header
+  toggle was left on in Experience Builder's Page Properties — the badge had
+  no way to tell the difference and rendered as if someone were logged in
+  regardless. Fixed at the component level so this can't recur even if a
+  future page ends up sharing the Header again: `getCurrentUserBadge()` now
+  checks `UserInfo.getUserType() == 'Guest'` first and returns an empty badge
+  (skipping the query) whenever that's true, and the LWC itself now guards
+  its *entire* markup — avatar, name, dropdown, Log Out — behind a
+  `hasUser` getter (`!!this.userName`), not just the account-name line it
+  already conditionally showed. **This is a defence in depth, not a
+  substitute for checking Experience Builder**: worth still confirming the
+  Login page's own Page Properties (Header toggle) reflects what's actually
+  intended — if the Header genuinely shouldn't appear there at all, that's a
+  separate, non-code fix regardless of this change.
+
 ## Code cleanup pass
 
 A self-review pass looking specifically for duplication and best-practice
@@ -881,9 +905,10 @@ npm install
 npm run test:unit
 ```
 
-134 Jest tests across all 15 LWCs (including the `sortTableUtils` and
-`dateFormatUtils` shared modules). This is the only thing in this project
-that's actually been run and confirmed passing in this environment.
+143 Jest tests across all 16 LWCs (including the `sortTableUtils`,
+`dateFormatUtils`, and `fileDownloadUtils` shared modules). This is the only
+thing in this project that's actually been run and confirmed passing in
+this environment.
 
 ### Requires a connected org (not verified here)
 

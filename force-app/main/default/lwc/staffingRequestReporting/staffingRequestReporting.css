@@ -258,11 +258,16 @@
         margin-bottom: 0.2rem;
     }
 
-    .reporting__cell_secondary {
+    /* Specificity matters here: plain ".reporting__cell_secondary" (one
+       class) loses the cascade to ".reporting__table td" above (a class
+       plus an element, so a higher specificity) and never actually hides -
+       every field stays visible regardless of expanded state. Qualifying
+       both selectors with "td"/"tr" pushes them above that rule instead. */
+    .reporting__table td.reporting__cell_secondary {
         display: none;
     }
 
-    .reporting__row_expanded .reporting__cell_secondary {
+    .reporting__table tr.reporting__row_expanded td.reporting__cell_secondary {
         display: block;
     }
 

@@ -310,6 +310,25 @@ mobile — it's collapsed by default and one tap away, and the same primary/
 secondary field split is used on both screens for consistency. Desktop
 behaviour (every column shown, no toggle) is completely unchanged.
 
+**The secondary cells didn't actually hide on the first pass** — confirmed
+on a real device, every column still showed regardless of a card's expanded
+state, which also made the toggle look broken (there was nothing further to
+reveal). Root cause was CSS specificity, not the media query itself: the
+layout rule `.my-requests__table td { display: block; }` (a class plus an
+element, specificity 0-1-1) was cascading over the hide rule
+`.my-requests__cell_secondary { display: none; }` (one class alone,
+specificity 0-1-0) — the *higher*-specificity rule wins regardless of source
+order, so the "hidden by default" declaration silently lost every time.
+Fixed by qualifying both the hide and reveal selectors with `td`/`tr`
+(`.my-requests__table td.my-requests__cell_secondary`, `.my-requests__table
+tr.my-requests__row_expanded td.my-requests__cell_secondary`) so they
+outrank the layout rule instead. Confirmed with a real Chromium instance
+(Playwright) checking `getComputedStyle(...).display` before/after adding
+the expanded class — Jest/jsdom doesn't compute CSS cascade at all, so the
+existing unit tests (which only assert the `_expanded` class was toggled,
+not the resulting visual `display`) passed throughout and couldn't have
+caught this.
+
 **Error/success feedback doesn't rely solely on toasts.** Both forms
 originally surfaced validation and Apex errors only via
 `lightning/platformShowToastEvent`. That's a problem here specifically

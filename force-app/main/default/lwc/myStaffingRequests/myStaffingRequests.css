@@ -311,11 +311,16 @@
         margin-bottom: 0.2rem;
     }
 
-    .my-requests__cell_secondary {
+    /* Specificity matters here: plain ".my-requests__cell_secondary" (one
+       class) loses the cascade to ".my-requests__table td" above (a class
+       plus an element, so a higher specificity) and never actually hides -
+       every field stays visible regardless of expanded state. Qualifying
+       both selectors with "td"/"tr" pushes them above that rule instead. */
+    .my-requests__table td.my-requests__cell_secondary {
         display: none;
     }
 
-    .my-requests__row_expanded .my-requests__cell_secondary {
+    .my-requests__table tr.my-requests__row_expanded td.my-requests__cell_secondary {
         display: block;
     }
 

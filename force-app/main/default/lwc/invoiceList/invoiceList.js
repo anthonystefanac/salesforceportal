@@ -6,6 +6,7 @@ import { sortRecords, toggleSort, buildSortableColumns } from 'c/sortTableUtils'
 import getInvoices from '@salesforce/apex/InvoiceController.getInvoices';
 import getInvoiceFileIds from '@salesforce/apex/InvoiceController.getInvoiceFileIds';
 import getInvoiceFileData from '@salesforce/apex/InvoiceController.getInvoiceFileData';
+import { triggerDataUriDownload } from 'c/fileDownloadUtils';
 
 const FILTER_LABELS = {
     overdue: 'Overdue Invoices'
@@ -187,12 +188,12 @@ export default class InvoiceList extends NavigationMixin(LightningElement) {
                 // building a data: URI here avoids that entirely - the same
                 // technique Reporting's CSV download already uses
                 // reliably on this site.
-                const link = document.createElement('a');
-                link.href = `data:application/octet-stream;base64,${file.base64Data}`;
-                link.download = file.fileName;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                // application/pdf (rather than a generic octet-stream) lets
+                // iOS's own PDF viewer render it when fileDownloadUtils
+                // opens it directly instead of clicking an <a download> -
+                // see that module for why iOS needs different handling here.
+                const contentType = /\.pdf$/i.test(file.fileName) ? 'application/pdf' : 'application/octet-stream';
+                triggerDataUriDownload(`data:${contentType};base64,${file.base64Data}`, file.fileName);
             } catch (error) {
                 this.downloadError =
                     (error && error.body && error.body.message) || 'Unable to download this file right now.';

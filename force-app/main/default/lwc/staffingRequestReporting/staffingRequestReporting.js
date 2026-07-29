@@ -3,6 +3,7 @@ import { refreshApex } from '@salesforce/apex';
 import { formatTime } from 'c/timeFormatUtils';
 import { formatDate, formatDateTime } from 'c/dateFormatUtils';
 import { sortRecords, toggleSort, buildSortableColumns } from 'c/sortTableUtils';
+import { triggerDataUriDownload } from 'c/fileDownloadUtils';
 import getMyRequests from '@salesforce/apex/StaffingRequestController.getMyRequests';
 
 const PRESETS = [
@@ -273,11 +274,13 @@ export default class StaffingRequestReporting extends LightningElement {
         const rangeSuffix =
             this.activePreset === 'all' ? 'all' : `${this.effectiveRange.from}-to-${this.effectiveRange.to}`;
 
-        const link = document.createElement('a');
-        link.href = `data:text/csv;charset=utf-8,${encodeURIComponent(csvContent)}`;
-        link.download = `staffing-requests-${rangeSuffix}.csv`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        // fileDownloadUtils works around iOS Safari never honouring an <a
+        // download> attribute (data: URI or otherwise) - see that module.
+        // Desktop/Android behaviour (this exact anchor-click technique) is
+        // unchanged.
+        triggerDataUriDownload(
+            `data:text/csv;charset=utf-8,${encodeURIComponent(csvContent)}`,
+            `staffing-requests-${rangeSuffix}.csv`
+        );
     }
 }

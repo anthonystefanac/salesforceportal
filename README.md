@@ -30,9 +30,9 @@ force-app/main/default/
                        current screens (including an added Calendar screen for
                        reviewing bookings by day, a header user/account badge -
                        portalUserBadge, and a Reporting screen -
-                       staffingRequestReporting) plus 3 shared, non-visual
+                       staffingRequestReporting) plus 4 shared, non-visual
                        helper modules (dateFormatUtils, sortTableUtils,
-                       timeFormatUtils)
+                       timeFormatUtils, fileDownloadUtils)
   permissionsets/      Alliance_Client_Portal_User — assign to every portal Contact's User
   sharingSets/         Grants same-Account contacts shared read access
   tabs/                Custom object tabs
@@ -157,12 +157,41 @@ Instead, `InvoiceController.getInvoiceFileData(invoiceId)` is called
 imperatively (not a wire — only fetched on click, not preloaded for every
 row) and returns the file's bytes base64-encoded (`EncodingUtil.base64Encode`
 on the `ContentVersion.VersionData` Blob) plus its filename; the LWC builds
-a `data:application/octet-stream;base64,...` URI and triggers the download
-via a plain in-page anchor click — the same technique Reporting's CSV
-export already uses reliably on this site, just with file bytes instead of
-CSV text. A failed fetch (no file, wrong Account, etc.) shows a guaranteed
-inline error banner rather than a toast, consistent with the rest of the
-app.
+a `data:application/pdf;base64,...` URI (`application/octet-stream` if the
+filename doesn't end in `.pdf` — see `WithoutSharingFileAccess`/
+`ContentVersion.FileExtension`, which isn't guaranteed to always be a PDF)
+and triggers the download via `c/fileDownloadUtils` — the same shared helper
+Reporting's CSV export uses (see "iOS Safari can't download from a data:
+URI at all" below), just with file bytes instead of CSV text. A failed
+fetch (no file, wrong Account, etc.) shows a guaranteed inline error banner
+rather than a toast, consistent with the rest of the app.
+
+**iOS Safari can't download from a data: URI at all.** Both this button and
+Reporting's Download CSV button silently did nothing useful on an iPhone/
+iPad — confirmed as a real, long-standing WebKit platform limitation, not
+something fixed in a newer iOS version: `<a download="...">` is simply
+never honoured on iOS (any browser there — Chrome/Firefox on iOS are all
+Safari underneath), regardless of whether the `href` is a `data:` URI, a
+`blob:` URL, or a same-origin file. Clicking such a link just navigates to/
+opens the URI instead of saving anything. Desktop and Android don't have
+this problem — the existing anchor-click technique already documented
+throughout this file works fine there and is completely unchanged.
+`c/fileDownloadUtils` (new shared LWC module, `isIosDevice`/
+`triggerDataUriDownload`) branches only for iOS: `navigator.userAgent`
+matched against `/iPad|iPhone|iPod/i` (desktop Safari on a Mac isn't
+affected either, so this intentionally doesn't match on "Safari" generally,
+only the iOS device tokens). On iOS, instead of clicking an anchor,
+`window.open(dataUri, '_blank')` opens the same data: URI directly — there's
+no way to force a true "Save As" from pure client-side markup on iOS
+Safari, but this lets iOS's own viewer take over: a PDF opens in Safari's
+built-in PDF viewer, which has its own native Share/Save-to-Files button.
+CSV has no equivalent built-in iOS viewer, so the best available outcome
+there is the raw text opening in a new tab (viewable/selectable/shareable
+via Safari's own share sheet) rather than a literal file save — an
+improvement over doing nothing, but not a perfect "download" given this
+project has no backend to set a real `Content-Disposition` header. Every
+other browser (desktop Chrome/Firefox/Edge/Safari, Android Chrome) keeps
+using the original anchor-click path, untouched.
 
 **Getting this working against a real connected org took several rounds**,
 all silent failures - the query succeeds and just returns nothing, no

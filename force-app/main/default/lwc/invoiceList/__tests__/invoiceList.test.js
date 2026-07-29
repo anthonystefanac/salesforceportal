@@ -190,7 +190,7 @@ describe('c-invoice-list', () => {
         expect(getInvoiceFileData).toHaveBeenCalledWith({ invoiceId: mockInvoices[0].Id });
         expect(mockNavigate).not.toHaveBeenCalled();
         expect(createdLinks).toHaveLength(1);
-        expect(createdLinks[0].href).toBe('data:application/octet-stream;base64,ZmFrZS1wZGYtYnl0ZXM=');
+        expect(createdLinks[0].href).toBe('data:application/pdf;base64,ZmFrZS1wZGYtYnl0ZXM=');
         expect(createdLinks[0].download).toBe('INV-0001.pdf');
     });
 

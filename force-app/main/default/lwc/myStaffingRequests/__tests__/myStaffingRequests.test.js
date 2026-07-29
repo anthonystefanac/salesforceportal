@@ -142,9 +142,9 @@ describe('c-my-staffing-requests', () => {
             // Action, Request, Facility, Ward, Role, Specialty, Shift Date, Start Time, ...
             expect(cells[6].textContent).toBe(formatDate(sr0003.Shift_Date__c));
             expect(cells[6].textContent).toMatch(/^\d{2}\/\d{2}\/\d{4}$/);
-            // ..., Last Update is the final column.
-            const lastCell = cells[cells.length - 1];
-            expect(lastCell.textContent).toBe(formatDateTime(sr0003.Last_Status_Update__c));
+            // ..., Assigned Contact, Status, Broadcasted, Cancellation Requested, Last Update,
+            // then the mobile card layout's per-row "Show more" toggle (final column, desktop-hidden).
+            expect(cells[15].textContent).toBe(formatDateTime(sr0003.Last_Status_Update__c));
         });
     });
 
@@ -180,6 +180,36 @@ describe('c-my-staffing-requests', () => {
             // ..., Assigned Contact, Status, Broadcasted, Cancellation Requested, Last Update
             expect(cells[11].textContent).toBe('—');
             expect(cells[14].textContent).toBe('No');
+        });
+    });
+
+    it('toggles a row\'s secondary (mobile card layout) fields via its Show more/Show less button', () => {
+        const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
+        document.body.appendChild(element);
+
+        getMyRequests.emit(mockRequests);
+
+        return Promise.resolve().then(() => {
+            const firstRow = element.shadowRoot.querySelector('tbody tr');
+            expect(firstRow.classList).not.toContain('my-requests__row_expanded');
+            const toggle = firstRow.querySelector('.my-requests__toggle');
+            expect(toggle.textContent).toBe('Show more');
+
+            toggle.click();
+
+            return Promise.resolve().then(() => {
+                const expandedRow = element.shadowRoot.querySelector('tbody tr');
+                expect(expandedRow.classList).toContain('my-requests__row_expanded');
+                expect(expandedRow.querySelector('.my-requests__toggle').textContent).toBe('Show less');
+
+                expandedRow.querySelector('.my-requests__toggle').click();
+
+                return Promise.resolve().then(() => {
+                    const collapsedRow = element.shadowRoot.querySelector('tbody tr');
+                    expect(collapsedRow.classList).not.toContain('my-requests__row_expanded');
+                    expect(collapsedRow.querySelector('.my-requests__toggle').textContent).toBe('Show more');
+                });
+            });
         });
     });
 

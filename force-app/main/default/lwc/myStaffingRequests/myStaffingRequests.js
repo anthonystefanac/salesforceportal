@@ -54,6 +54,10 @@ export default class MyStaffingRequests extends LightningElement {
     cancellingRequestId;
     bannerMessage;
     bannerVariant;
+    // Ids of rows expanded to show their secondary fields on a narrow
+    // (mobile card layout) viewport - see the my-requests__cell_secondary
+    // CSS. Irrelevant at desktop widths, where every field is always shown.
+    expandedIds = [];
 
     @wire(CurrentPageReference)
     setCurrentPageReference(pageReference) {
@@ -167,15 +171,21 @@ export default class MyStaffingRequests extends LightningElement {
 
     get requests() {
         const start = (this.safeCurrentPage - 1) * PAGE_SIZE;
-        return this.sortedRequests.slice(start, start + PAGE_SIZE).map((request) => ({
-            ...request,
-            isCancelling: this.cancellingRequestId === request.id,
-            cancelMenuLabel: this.cancellingRequestId === request.id ? 'Cancelling…' : 'Request Cancellation',
-            priorityClass:
-                request.priority === 'Urgent'
-                    ? 'my-requests__priority my-requests__priority_urgent'
-                    : 'my-requests__priority'
-        }));
+        return this.sortedRequests.slice(start, start + PAGE_SIZE).map((request) => {
+            const isExpanded = this.expandedIds.includes(request.id);
+            return {
+                ...request,
+                isCancelling: this.cancellingRequestId === request.id,
+                cancelMenuLabel: this.cancellingRequestId === request.id ? 'Cancelling…' : 'Request Cancellation',
+                priorityClass:
+                    request.priority === 'Urgent'
+                        ? 'my-requests__priority my-requests__priority_urgent'
+                        : 'my-requests__priority',
+                isExpanded,
+                rowClass: isExpanded ? 'my-requests__row my-requests__row_expanded' : 'my-requests__row',
+                expandToggleLabel: isExpanded ? 'Show less' : 'Show more'
+            };
+        });
     }
 
     get hasMultiplePages() {
@@ -262,6 +272,15 @@ export default class MyStaffingRequests extends LightningElement {
         this.sortField = next.field;
         this.sortDirection = next.direction;
         this.currentPage = 1;
+    }
+
+    // Only reachable via the mobile card layout's per-row toggle - see the
+    // expandedIds field and the my-requests__cell_secondary CSS.
+    handleToggleExpand(event) {
+        const id = event.currentTarget.dataset.id;
+        this.expandedIds = this.expandedIds.includes(id)
+            ? this.expandedIds.filter((expandedId) => expandedId !== id)
+            : [...this.expandedIds, id];
     }
 
     handlePreviousPage() {

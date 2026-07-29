@@ -251,3 +251,89 @@
     border: 1px solid #f6c6c6;
     font-weight: 700;
 }
+
+/* The per-row "Show more" toggle only exists for the mobile card layout
+   below - hidden here so it doesn't appear as a stray extra column on the
+   desktop table. */
+.my-requests__toggle-cell {
+    display: none;
+}
+
+/* Mobile card layout: below this width the table is unreadable sideways-
+   scrolled, so each row instead becomes a self-contained card. Request,
+   Facility, Role, Shift Date, Start Time, Status, and the Action menu stay
+   visible - the rest (Ward, Specialty, End Time, Quantity, Priority,
+   Assigned Contact, Broadcasted, Cancellation Requested, Last Update) are
+   behind each card's own "Show more" toggle (my-requests__cell_secondary),
+   rather than requiring horizontal scrolling or dropping data entirely. */
+@media (max-width: 48rem) {
+    .my-requests__table-wrap {
+        overflow-x: visible;
+    }
+
+    .my-requests__table,
+    .my-requests__table tbody,
+    .my-requests__table tr,
+    .my-requests__table td {
+        display: block;
+        width: auto !important;
+    }
+
+    .my-requests__table thead {
+        display: none;
+    }
+
+    .my-requests__table tbody tr {
+        border: 1px solid #e4e8f0;
+        border-radius: 0.6rem;
+        box-shadow: 0 1px 2px rgba(22, 50, 92, 0.05);
+        margin-bottom: 0.75rem;
+        padding: 0.85rem 1rem;
+    }
+
+    .my-requests__table tbody tr:last-child {
+        margin-bottom: 0;
+    }
+
+    .my-requests__table td {
+        border-bottom: none;
+        padding: 0.4rem 0;
+    }
+
+    .my-requests__table td[data-label]::before {
+        content: attr(data-label);
+        display: block;
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #6b7d99;
+        margin-bottom: 0.2rem;
+    }
+
+    .my-requests__cell_secondary {
+        display: none;
+    }
+
+    .my-requests__row_expanded .my-requests__cell_secondary {
+        display: block;
+    }
+
+    .my-requests__toggle-cell {
+        display: block;
+        padding-top: 0.5rem;
+    }
+
+    .my-requests__toggle {
+        all: unset;
+        cursor: pointer;
+        color: #08417a;
+        font-weight: 600;
+        font-size: 0.8rem;
+    }
+
+    .my-requests__toggle:focus-visible {
+        outline: 2px solid #0b5cab;
+        outline-offset: 2px;
+    }
+}

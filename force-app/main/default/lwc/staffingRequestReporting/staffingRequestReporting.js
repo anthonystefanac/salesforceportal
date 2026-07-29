@@ -57,6 +57,10 @@ export default class StaffingRequestReporting extends LightningElement {
     customTo;
     sortField;
     sortDirection = 'asc';
+    // Ids of rows expanded to show their secondary fields on a narrow
+    // (mobile card layout) viewport - see the reporting__cell_secondary CSS.
+    // Irrelevant at desktop widths, where every field is always shown.
+    expandedIds = [];
 
     _wiredRequestsResult;
 
@@ -182,6 +186,21 @@ export default class StaffingRequestReporting extends LightningElement {
         return buildSortableColumns(CSV_COLUMNS, this.sortField, this.sortDirection, 'reporting__th');
     }
 
+    // sortedRequests itself stays plain data (also used by the CSV export)
+    // - this adds the mobile card layout's per-row expand state on top,
+    // for the template only.
+    get displayRequests() {
+        return this.sortedRequests.map((request) => {
+            const isExpanded = this.expandedIds.includes(request.id);
+            return {
+                ...request,
+                isExpanded,
+                rowClass: isExpanded ? 'reporting__row reporting__row_expanded' : 'reporting__row',
+                expandToggleLabel: isExpanded ? 'Show less' : 'Show more'
+            };
+        });
+    }
+
     get hasRequests() {
         return this.filteredRequests.length > 0;
     }
@@ -214,6 +233,15 @@ export default class StaffingRequestReporting extends LightningElement {
 
     handleCustomToChange(event) {
         this.customTo = event.target.value;
+    }
+
+    // Only reachable via the mobile card layout's per-row toggle - see the
+    // expandedIds field and the reporting__cell_secondary CSS.
+    handleToggleExpand(event) {
+        const id = event.currentTarget.dataset.id;
+        this.expandedIds = this.expandedIds.includes(id)
+            ? this.expandedIds.filter((expandedId) => expandedId !== id)
+            : [...this.expandedIds, id];
     }
 
     handleSort(event) {

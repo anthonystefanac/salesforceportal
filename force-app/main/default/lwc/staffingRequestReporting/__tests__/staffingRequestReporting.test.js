@@ -225,6 +225,35 @@ describe('c-staffing-request-reporting', () => {
         });
     });
 
+    it('toggles a row\'s secondary (mobile card layout) fields via its Show more/Show less button', () => {
+        const element = createElement('c-staffing-request-reporting', { is: StaffingRequestReporting });
+        document.body.appendChild(element);
+
+        getMyRequests.emit(mockRequests);
+
+        return Promise.resolve().then(() => {
+            const allButton = Array.from(element.shadowRoot.querySelectorAll('.reporting__preset')).find(
+                (button) => button.textContent === 'All'
+            );
+            allButton.click();
+
+            return Promise.resolve().then(() => {
+                const firstRow = element.shadowRoot.querySelector('tbody tr');
+                expect(firstRow.classList).not.toContain('reporting__row_expanded');
+                const toggle = firstRow.querySelector('.reporting__toggle');
+                expect(toggle.textContent).toBe('Show more');
+
+                toggle.click();
+
+                return Promise.resolve().then(() => {
+                    const expandedRow = element.shadowRoot.querySelector('tbody tr');
+                    expect(expandedRow.classList).toContain('reporting__row_expanded');
+                    expect(expandedRow.querySelector('.reporting__toggle').textContent).toBe('Show less');
+                });
+            });
+        });
+    });
+
     it('formats the empty-state date range as DD/MM/YYYY', () => {
         const element = createElement('c-staffing-request-reporting', { is: StaffingRequestReporting });
         document.body.appendChild(element);

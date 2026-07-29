@@ -284,6 +284,32 @@ The `myStaffingRequests` table container also has defensive
 wide row content scrolls within the table's own frame instead of stretching
 the surrounding page.
 
+**On a narrow (mobile) viewport, both `myStaffingRequests` and
+`staffingRequestReporting` switch from the wide table to a per-row card
+layout**, rather than leaving the 15+ column table to be scrolled sideways.
+Below a `48rem` (~768px) breakpoint (a CSS media query in each component's
+own CSS — Shadow DOM again means it can't be a shared file), the table's
+`<thead>` is hidden and each `<tr>` becomes a bordered card; a `data-label`
+attribute on every `<td>` (unused above the breakpoint) supplies a small
+label above its value via a `::before` rule, since the column headers are no
+longer visible to label them. Only **Request, Facility, Role, Shift Date,
+Start Time, Status**, and (on My Requests only) the **Action** menu are
+shown on the card by default — everything else (Ward, Specialty, End Time,
+Quantity, Priority, Assigned Contact, Broadcasted, Cancellation Requested,
+Last Update) is tagged with a `*__cell_secondary` class and hidden via that
+same media query, revealed only once that specific card is expanded. A
+**"Show more" / "Show less" toggle**, appended as an extra cell at the end
+of each row (`*__toggle-cell` — always `display: none` above the
+breakpoint, so it never appears as a stray extra column on the desktop
+table), flips that one row's expanded state; each component tracks expanded
+rows itself (`expandedIds`, an array of request Ids reassigned rather than
+mutated in place, since LWC only re-renders on property reassignment, not
+on mutating a Set/array already assigned to a tracked field) and derives a
+per-row `rowClass`/`expandToggleLabel` from it. No data is ever dropped on
+mobile — it's collapsed by default and one tap away, and the same primary/
+secondary field split is used on both screens for consistency. Desktop
+behaviour (every column shown, no toggle) is completely unchanged.
+
 **Error/success feedback doesn't rely solely on toasts.** Both forms
 originally surfaced validation and Apex errors only via
 `lightning/platformShowToastEvent`. That's a problem here specifically

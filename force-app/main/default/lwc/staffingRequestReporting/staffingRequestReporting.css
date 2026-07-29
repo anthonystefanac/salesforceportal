@@ -201,3 +201,86 @@
     padding: 1.5rem;
     margin: 0;
 }
+
+/* The per-row "Show more" toggle only exists for the mobile card layout
+   below - hidden here so it doesn't appear as a stray extra column on the
+   desktop table. */
+.reporting__toggle-cell {
+    display: none;
+}
+
+/* Mobile card layout - same approach and same field split (Request,
+   Facility, Role, Shift Date, Start Time, Status stay visible; the rest is
+   behind each card's own "Show more" toggle) as myStaffingRequests, so the
+   two screens behave consistently. */
+@media (max-width: 48rem) {
+    .reporting__table-wrap {
+        overflow-x: visible;
+    }
+
+    .reporting__table,
+    .reporting__table tbody,
+    .reporting__table tr,
+    .reporting__table td {
+        display: block;
+        width: auto !important;
+    }
+
+    .reporting__table thead {
+        display: none;
+    }
+
+    .reporting__table tbody tr {
+        border: 1px solid #e4e8f0;
+        border-radius: 0.6rem;
+        box-shadow: 0 1px 2px rgba(22, 50, 92, 0.05);
+        margin-bottom: 0.75rem;
+        padding: 0.85rem 1rem;
+    }
+
+    .reporting__table tbody tr:last-child {
+        margin-bottom: 0;
+    }
+
+    .reporting__table td {
+        border-bottom: none;
+        padding: 0.4rem 0;
+    }
+
+    .reporting__table td[data-label]::before {
+        content: attr(data-label);
+        display: block;
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #6b7d99;
+        margin-bottom: 0.2rem;
+    }
+
+    .reporting__cell_secondary {
+        display: none;
+    }
+
+    .reporting__row_expanded .reporting__cell_secondary {
+        display: block;
+    }
+
+    .reporting__toggle-cell {
+        display: block;
+        padding-top: 0.5rem;
+    }
+
+    .reporting__toggle {
+        all: unset;
+        cursor: pointer;
+        color: #08417a;
+        font-weight: 600;
+        font-size: 0.8rem;
+    }
+
+    .reporting__toggle:focus-visible {
+        outline: 2px solid #0b5cab;
+        outline-offset: 2px;
+    }
+}

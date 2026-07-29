@@ -72,25 +72,35 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <template for:each={sortedRequests} for:item="request">
-                                    <tr key={request.id}>
-                                        <td>{request.name}</td>
-                                        <td>{request.facilityName}</td>
-                                        <td>{request.wardName}</td>
-                                        <td>{request.role}</td>
-                                        <td>{request.specialty}</td>
-                                        <td>{request.shiftDateDisplay}</td>
-                                        <td>{request.startTime}</td>
-                                        <td>{request.endTime}</td>
-                                        <td>{request.quantity}</td>
-                                        <td>{request.priority}</td>
-                                        <td>{request.assignedContact}</td>
-                                        <td>
+                                <template for:each={displayRequests} for:item="request">
+                                    <tr key={request.id} class={request.rowClass}>
+                                        <td data-label="Request">{request.name}</td>
+                                        <td data-label="Facility">{request.facilityName}</td>
+                                        <td data-label="Ward" class="reporting__cell_secondary">{request.wardName}</td>
+                                        <td data-label="Role">{request.role}</td>
+                                        <td data-label="Specialty" class="reporting__cell_secondary">{request.specialty}</td>
+                                        <td data-label="Shift Date">{request.shiftDateDisplay}</td>
+                                        <td data-label="Start Time">{request.startTime}</td>
+                                        <td data-label="End Time" class="reporting__cell_secondary">{request.endTime}</td>
+                                        <td data-label="Quantity" class="reporting__cell_secondary">{request.quantity}</td>
+                                        <td data-label="Priority" class="reporting__cell_secondary">{request.priority}</td>
+                                        <td data-label="Assigned Contact" class="reporting__cell_secondary">{request.assignedContact}</td>
+                                        <td data-label="Status">
                                             <c-request-status-badge status={request.status}></c-request-status-badge>
                                         </td>
-                                        <td>{request.broadcasted}</td>
-                                        <td>{request.cancellationRequested}</td>
-                                        <td>{request.lastUpdateDisplay}</td>
+                                        <td data-label="Broadcasted" class="reporting__cell_secondary">{request.broadcasted}</td>
+                                        <td data-label="Cancellation Requested" class="reporting__cell_secondary">{request.cancellationRequested}</td>
+                                        <td data-label="Last Update" class="reporting__cell_secondary">{request.lastUpdateDisplay}</td>
+                                        <td class="reporting__toggle-cell">
+                                            <button
+                                                type="button"
+                                                class="reporting__toggle"
+                                                data-id={request.id}
+                                                onclick={handleToggleExpand}
+                                            >
+                                                {request.expandToggleLabel}
+                                            </button>
+                                        </td>
                                     </tr>
                                 </template>
                             </tbody>

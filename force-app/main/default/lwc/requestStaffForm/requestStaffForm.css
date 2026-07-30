@@ -53,8 +53,8 @@
     flex: 1 1 16rem;
     min-width: 16rem;
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1rem 1.25rem;
+    grid-template-columns: 1fr;
+    gap: 1rem;
 }
 
 .request-staff-form__submit-row {
@@ -81,10 +81,6 @@
 
 @media (max-width: 40rem) {
     .request-staff-form__grid {
-        grid-template-columns: 1fr;
-    }
-
-    .request-staff-form__date-fields {
         grid-template-columns: 1fr;
     }
 }

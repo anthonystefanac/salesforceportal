@@ -76,7 +76,27 @@
         grid-template-columns: 1fr;
     }
 
+    /* Flatten the calendar wrapper into direct items of the outer grid so
+       Start Time can be reordered to sit right below Shift Date, ahead of
+       End Time/Quantity/Priority/Requested By. */
+    .request-staff-form__date-wrapper,
     .request-staff-form__date-row {
-        grid-template-columns: 1fr;
+        display: contents;
+    }
+
+    .request-staff-form__date-calendar {
+        order: 1;
+    }
+
+    .request-staff-form__field_start-time {
+        order: 2;
+    }
+
+    .request-staff-form__date-fields {
+        order: 3;
+    }
+
+    .request-staff-form__field_notes {
+        order: 4;
     }
 }

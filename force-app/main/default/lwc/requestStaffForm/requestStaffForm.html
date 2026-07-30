@@ -30,7 +30,7 @@
                     onchange={handleFieldChange}
                 ></lightning-input>
             </div>
-            <div class="request-staff-form__field">
+            <div class="request-staff-form__field request-staff-form__field_start-time">
                 <lightning-input
                     type="time"
                     label="Start Time"
@@ -40,7 +40,7 @@
                     required
                 ></lightning-input>
             </div>
-            <div class="request-staff-form__field request-staff-form__field_full">
+            <div class="request-staff-form__field request-staff-form__field_full request-staff-form__date-wrapper">
                 <div class="request-staff-form__date-row">
                     <div class="request-staff-form__date-calendar">
                         <c-block-date-picker
@@ -91,7 +91,7 @@
                     </div>
                 </div>
             </div>
-            <div class="request-staff-form__field request-staff-form__field_full">
+            <div class="request-staff-form__field request-staff-form__field_full request-staff-form__field_notes">
                 <lightning-textarea
                     label="Notes"
                     data-field="notes"

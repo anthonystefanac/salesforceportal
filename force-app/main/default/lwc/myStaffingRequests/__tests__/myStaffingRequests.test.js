@@ -4,6 +4,7 @@ import { CurrentPageReference } from 'lightning/navigation';
 import { formatDate, formatDateTime } from 'c/dateFormatUtils';
 import getMyRequests from '@salesforce/apex/StaffingRequestController.getMyRequests';
 import createCase from '@salesforce/apex/SupportRequestController.createCase';
+import getCurrentUserBadge from '@salesforce/apex/PortalUserBadgeController.getCurrentUserBadge';
 
 const rawMockRequests = require('./data/getMyRequests.json');
 
@@ -52,6 +53,17 @@ jest.mock(
 jest.mock(
     '@salesforce/apex/SupportRequestController.createCase',
     () => ({ default: jest.fn() }),
+    { virtual: true }
+);
+
+jest.mock(
+    '@salesforce/apex/PortalUserBadgeController.getCurrentUserBadge',
+    () => {
+        const { createApexTestWireAdapter } = require('@salesforce/sfdx-lwc-jest');
+        return {
+            default: createApexTestWireAdapter(jest.fn())
+        };
+    },
     { virtual: true }
 );
 
@@ -587,6 +599,24 @@ describe('c-my-staffing-requests', () => {
             const row = element.shadowRoot.querySelector('tbody tr');
             expect(row.querySelector('lightning-button-menu')).toBeNull();
         });
+    });
+
+    it('pre-fills the cancellation prompt with the logged-in user\'s name', async () => {
+        createCase.mockResolvedValue('500000000000001AAA');
+        jest.spyOn(window, 'prompt').mockReturnValue('Jordan Michaels');
+
+        const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
+        document.body.appendChild(element);
+
+        getMyRequests.emit(mockRequests);
+        getCurrentUserBadge.emit({ userName: 'Jordan Michaels', accountName: 'Riverside Aged Care Group' });
+        await Promise.resolve();
+
+        const buttonMenu = element.shadowRoot.querySelector('lightning-button-menu');
+        selectCancel(buttonMenu);
+        await Promise.resolve();
+
+        expect(window.prompt.mock.calls[0][1]).toBe('Jordan Michaels');
     });
 
     it('requests a cancellation after entering who is requesting it, and refreshes the list', async () => {

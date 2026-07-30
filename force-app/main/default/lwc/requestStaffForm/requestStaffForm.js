@@ -2,6 +2,7 @@ import { LightningElement, api, track, wire } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import { CurrentPageReference } from 'lightning/navigation';
 import createRequest from '@salesforce/apex/StaffingRequestController.createRequest';
+import getCurrentUserBadge from '@salesforce/apex/PortalUserBadgeController.getCurrentUserBadge';
 
 const DEFAULT_FORM = {
     facilityId: undefined,
@@ -85,6 +86,25 @@ export default class RequestStaffForm extends LightningElement {
     isSubmitting = false;
 
     @track formData = { ...DEFAULT_FORM };
+
+    // Requested By defaults to whoever is actually logged in and submitting
+    // the request, rather than asking them to type their own name every
+    // time - still a plain editable input though, in case someone is
+    // submitting on behalf of a colleague and needs to change it. Kept
+    // separately from formData so resetAfterSuccess can re-apply it after
+    // DEFAULT_FORM wipes the field back to blank.
+    currentUserName;
+
+    @wire(getCurrentUserBadge)
+    wiredCurrentUserBadge({ data }) {
+        if (!data || !data.userName) {
+            return;
+        }
+        this.currentUserName = data.userName;
+        if (!this.formData.requestedBy) {
+            this.formData = { ...this.formData, requestedBy: data.userName };
+        }
+    }
 
     _defaultDate;
 
@@ -304,7 +324,11 @@ export default class RequestStaffForm extends LightningElement {
     // Re-apply defaultDate so a caller (e.g. requestStaffCalendar) can submit
     // more requests for the same selected day in a row.
     resetAfterSuccess() {
-        this.formData = { ...DEFAULT_FORM, shiftDates: this._defaultDate ? [this._defaultDate] : [] };
+        this.formData = {
+            ...DEFAULT_FORM,
+            shiftDates: this._defaultDate ? [this._defaultDate] : [],
+            requestedBy: this.currentUserName || DEFAULT_FORM.requestedBy
+        };
         const picker = this.template.querySelector('c-block-date-picker');
         if (picker) {
             picker.clearSelection();

@@ -450,6 +450,18 @@ up-front required-field check as everything else above. Because it's
 Security at all (the same reasoning already documented for Role__c/Shift_Date__c/etc.
 in the permission set), so no separate field permission grant was needed.
 
+**Pre-filled with the logged-in user, not typed from scratch.** The form
+wires `PortalUserBadgeController.getCurrentUserBadge()` (the same Apex
+method `portalUserBadge` already uses for the header) and, as soon as it
+resolves, sets `Requested By` to that user's `Name` (first and last name)
+if the field is still blank — it never overwrites a value the user already
+typed. The input stays a plain editable `lightning-input`, so it's a
+one-click default rather than a locked-in value, for the case where
+someone is submitting on behalf of a colleague at the same facility.
+`resetAfterSuccess` re-applies it after every successful submit, so a
+block of follow-up requests in the same session keeps the pre-fill instead
+of reverting to blank.
+
 **Booking a block of shifts across multiple days.** Request Staff used to
 have a single `lightning-input[type=date]` for Shift Date. It's now
 `c/blockDatePicker` — a small month-calendar component (adapted from
@@ -510,6 +522,13 @@ text field (the third field added to the standard Case object, alongside
 related `Staffing_Request__c.Cancelled_By__c` at the same moment it sets
 `Cancellation_Requested__c = true` — same portal-read-only, server-set-only
 treatment as that field already had.
+
+The prompt's default text is now **pre-filled with the logged-in user's
+name** (the same `getCurrentUserBadge` call `requestStaffForm` uses), so
+confirming a cancellation is a single click on the browser's OK button
+rather than retyping a name that's already known — still editable in the
+prompt itself for the rare case someone else is cancelling on a
+colleague's behalf.
 
 **Requested By and Cancelled By are now columns on both My Requests and
 Reporting**, inserted right after Cancellation Requested (before Last
@@ -989,7 +1008,7 @@ npm install
 npm run test:unit
 ```
 
-160 Jest tests across all 17 LWCs (including `blockDatePicker`'s own
+163 Jest tests across all 17 LWCs (including `blockDatePicker`'s own
 month-grid/multi-select suite, and the `sortTableUtils`, `dateFormatUtils`,
 and `fileDownloadUtils` shared modules). This is the only thing in this
 project that's actually been run and confirmed passing in this environment.

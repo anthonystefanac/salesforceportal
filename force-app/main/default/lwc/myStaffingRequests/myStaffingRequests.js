@@ -6,6 +6,7 @@ import { formatDate, formatDateTime, todayIso } from 'c/dateFormatUtils';
 import { sortRecords, toggleSort, buildSortableColumns } from 'c/sortTableUtils';
 import getMyRequests from '@salesforce/apex/StaffingRequestController.getMyRequests';
 import createCase from '@salesforce/apex/SupportRequestController.createCase';
+import getCurrentUserBadge from '@salesforce/apex/PortalUserBadgeController.getCurrentUserBadge';
 
 const NOT_OPEN_STATUSES = ['Filled', 'Unable to Fill', 'Cancelled'];
 const CANCELLATION_BLOCKED_STATUSES = ['Filled', 'Unable to Fill', 'Cancelled'];
@@ -66,6 +67,18 @@ export default class MyStaffingRequests extends LightningElement {
     cancellingRequestId;
     bannerMessage;
     bannerVariant;
+    // Pre-fills the Cancelled By prompt below with whoever is actually
+    // logged in, so confirming a cancellation is a single click rather than
+    // retyping a name that's already known.
+    currentUserName;
+
+    @wire(getCurrentUserBadge)
+    wiredCurrentUserBadge({ data }) {
+        if (data && data.userName) {
+            this.currentUserName = data.userName;
+        }
+    }
+
     // Ids of rows expanded to show their secondary fields on a narrow
     // (mobile card layout) viewport - see the my-requests__cell_secondary
     // CSS. Irrelevant at desktop widths, where every field is always shown.
@@ -343,11 +356,15 @@ export default class MyStaffingRequests extends LightningElement {
         // for no added benefit. Cancelling the prompt (its own Cancel
         // button, or the browser's Esc) returns null, exactly like declining
         // the old confirm() - a deliberate "never mind", not a validation
-        // failure, so it exits quietly with no banner either way.
+        // failure, so it exits quietly with no banner either way. The
+        // prompt's default text is pre-filled with the logged-in user's
+        // name, so confirming is just clicking OK - it's still editable for
+        // the rare case someone is cancelling on behalf of a colleague.
         // eslint-disable-next-line no-alert
         const cancelledByRaw = window.prompt(
             `Cancel ${request.name} (${request.role} at ${request.facilityName} on ${request.shiftDateDisplay})?\n\n` +
-                `Enter who is requesting this cancellation to confirm:`
+                `Enter who is requesting this cancellation to confirm:`,
+            this.currentUserName || ''
         );
         if (cancelledByRaw === null) {
             return;

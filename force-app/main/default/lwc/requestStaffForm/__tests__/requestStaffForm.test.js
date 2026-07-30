@@ -2,10 +2,22 @@ import { createElement } from 'lwc';
 import RequestStaffForm from 'c/requestStaffForm';
 import { CurrentPageReference } from 'lightning/navigation';
 import createRequest from '@salesforce/apex/StaffingRequestController.createRequest';
+import getCurrentUserBadge from '@salesforce/apex/PortalUserBadgeController.getCurrentUserBadge';
 
 jest.mock(
     '@salesforce/apex/StaffingRequestController.createRequest',
     () => ({ default: jest.fn() }),
+    { virtual: true }
+);
+
+jest.mock(
+    '@salesforce/apex/PortalUserBadgeController.getCurrentUserBadge',
+    () => {
+        const { createApexTestWireAdapter } = require('@salesforce/sfdx-lwc-jest');
+        return {
+            default: createApexTestWireAdapter(jest.fn())
+        };
+    },
     { virtual: true }
 );
 
@@ -321,6 +333,51 @@ describe('c-request-staff-form', () => {
         element.defaultDate = '2026-08-21';
         await Promise.resolve();
         expect(picker.defaultDate).toBe('2026-08-21');
+    });
+
+    it('pre-fills Requested By with the logged-in user, and re-applies it after a successful submit', async () => {
+        createRequest.mockResolvedValue('a02000000000001AAA');
+
+        const element = createElement('c-request-staff-form', { is: RequestStaffForm });
+        document.body.appendChild(element);
+
+        getCurrentUserBadge.emit({ userName: 'Jordan Michaels', accountName: 'Riverside Aged Care Group' });
+        await Promise.resolve();
+
+        const requestedByInput = element.shadowRoot.querySelector('[data-field="requestedBy"]');
+        expect(requestedByInput.value).toBe('Jordan Michaels');
+
+        selectFacility(element, 'a01000000000001AAA');
+        setInputValue(element, '[data-field="role"]', 'Registered Nurse');
+        selectShiftDates(element, ['2030-01-01']);
+        setInputValue(element, '[data-field="startTime"]', '07:00:00.000');
+        setInputValue(element, '[data-field="endTime"]', '15:00:00.000');
+
+        const submitButton = element.shadowRoot.querySelector('lightning-button');
+        submitButton.click();
+
+        await Promise.resolve();
+        await Promise.resolve();
+        await Promise.resolve();
+
+        expect(createRequest.mock.calls[0][0].newRequest.Requested_By__c).toBe('Jordan Michaels');
+        // The rest of the form resets to blank after a successful submit -
+        // Requested By is the one field that comes back pre-filled rather
+        // than blank, since it's still the same logged-in user submitting.
+        expect(requestedByInput.value).toBe('Jordan Michaels');
+    });
+
+    it('lets the logged-in user override the pre-filled Requested By value', async () => {
+        const element = createElement('c-request-staff-form', { is: RequestStaffForm });
+        document.body.appendChild(element);
+
+        getCurrentUserBadge.emit({ userName: 'Jordan Michaels', accountName: 'Riverside Aged Care Group' });
+        await Promise.resolve();
+
+        setInputValue(element, '[data-field="requestedBy"]', 'Pat Nguyen');
+
+        const requestedByInput = element.shadowRoot.querySelector('[data-field="requestedBy"]');
+        expect(requestedByInput.value).toBe('Pat Nguyen');
     });
 
     it('submits one request per selected date when a block of days is chosen', async () => {

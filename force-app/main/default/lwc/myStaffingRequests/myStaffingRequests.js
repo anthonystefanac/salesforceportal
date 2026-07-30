@@ -67,9 +67,8 @@ export default class MyStaffingRequests extends LightningElement {
     cancellingRequestId;
     bannerMessage;
     bannerVariant;
-    // Pre-fills the Cancelled By prompt below with whoever is actually
-    // logged in, so confirming a cancellation is a single click rather than
-    // retyping a name that's already known.
+    // Used as Cancelled_By__c below - whoever is actually logged in and
+    // confirming the cancellation, with no manual entry required.
     currentUserName;
 
     @wire(getCurrentUserBadge)
@@ -350,29 +349,22 @@ export default class MyStaffingRequests extends LightningElement {
 
         this.bannerMessage = undefined;
 
-        // A single native prompt replaces the old plain confirm() - typing a
-        // name and clicking OK already is the deliberate confirmation, so a
-        // separate yes/no dialog first would just be a second native popup
-        // for no added benefit. Cancelling the prompt (its own Cancel
-        // button, or the browser's Esc) returns null, exactly like declining
-        // the old confirm() - a deliberate "never mind", not a validation
-        // failure, so it exits quietly with no banner either way. The
-        // prompt's default text is pre-filled with the logged-in user's
-        // name, so confirming is just clicking OK - it's still editable for
-        // the rare case someone is cancelling on behalf of a colleague.
+        // Cancelled By is no longer typed in by hand - it's simply the
+        // logged-in user clicking this, same as Requested By on the Request
+        // Staff form - so a plain yes/no confirm is all the confirmation
+        // this needs. Declining (Cancel, or the browser's Esc) exits quietly
+        // with no banner, same as before.
         // eslint-disable-next-line no-alert
-        const cancelledByRaw = window.prompt(
-            `Cancel ${request.name} (${request.role} at ${request.facilityName} on ${request.shiftDateDisplay})?\n\n` +
-                `Enter who is requesting this cancellation to confirm:`,
-            this.currentUserName || ''
+        const confirmed = window.confirm(
+            `Cancel ${request.name} (${request.role} at ${request.facilityName} on ${request.shiftDateDisplay})?`
         );
-        if (cancelledByRaw === null) {
+        if (!confirmed) {
             return;
         }
-        const cancelledBy = cancelledByRaw.trim();
-        if (!cancelledBy) {
+
+        if (!this.currentUserName) {
             this.bannerVariant = 'error';
-            this.bannerMessage = 'Cancelled By is required to request a cancellation.';
+            this.bannerMessage = 'Unable to determine your name to record this cancellation - please try again in a moment.';
             return;
         }
 
@@ -381,11 +373,11 @@ export default class MyStaffingRequests extends LightningElement {
             const newCase = {
                 Portal_Request_Type__c: 'Cancellation Request',
                 Related_Staffing_Request__c: requestId,
-                Cancelled_By__c: cancelledBy,
+                Cancelled_By__c: this.currentUserName,
                 Subject: `Cancellation Request - ${request.name}`,
                 Description:
                     `Cancellation requested via My Requests for the ${request.role} shift ` +
-                    `at ${request.facilityName} on ${request.shiftDateDisplay}, requested by ${cancelledBy}.`
+                    `at ${request.facilityName} on ${request.shiftDateDisplay}, requested by ${this.currentUserName}.`
             };
             await createCase({ newCase });
             this.bannerVariant = 'success';

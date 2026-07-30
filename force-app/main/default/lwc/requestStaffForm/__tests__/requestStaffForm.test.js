@@ -61,7 +61,7 @@ function fillRequiredFields(element, overrides = {}) {
     selectShiftDates(element, overrides.shiftDates || [overrides.shiftDate || '2030-01-01']);
     setInputValue(element, '[data-field="startTime"]', overrides.startTime || '07:00:00.000');
     setInputValue(element, '[data-field="endTime"]', overrides.endTime || '15:00:00.000');
-    setInputValue(element, '[data-field="requestedBy"]', overrides.requestedBy || 'Jane Doe');
+    getCurrentUserBadge.emit({ userName: overrides.requestedBy || 'Jane Doe' });
 }
 
 describe('c-request-staff-form', () => {
@@ -91,7 +91,7 @@ describe('c-request-staff-form', () => {
         setInputValue(element, '[data-field="startTime"]', '07:00:00.000');
         setInputValue(element, '[data-field="endTime"]', '15:00:00.000');
         setInputValue(element, '[data-field="quantity"]', '3');
-        setInputValue(element, '[data-field="requestedBy"]', 'Jane Doe');
+        getCurrentUserBadge.emit({ userName: 'Jane Doe' });
 
         const submitButton = element.shadowRoot.querySelector('lightning-button');
         submitButton.click();
@@ -188,7 +188,7 @@ describe('c-request-staff-form', () => {
         selectShiftDates(element, ['2030-01-01']);
         setInputValue(element, '[data-field="startTime"]', '07:00:00.000');
         setInputValue(element, '[data-field="endTime"]', '15:00:00.000');
-        setInputValue(element, '[data-field="requestedBy"]', 'Jane Doe');
+        getCurrentUserBadge.emit({ userName: 'Jane Doe' });
 
         const submitButton = element.shadowRoot.querySelector('lightning-button');
         submitButton.click();
@@ -245,7 +245,7 @@ describe('c-request-staff-form', () => {
         selectFacility(element, 'a01000000000001AAA');
         setInputValue(element, '[data-field="role"]', 'Registered Nurse');
         selectShiftDates(element, ['2030-01-01']);
-        setInputValue(element, '[data-field="requestedBy"]', 'Jane Doe');
+        getCurrentUserBadge.emit({ userName: 'Jane Doe' });
 
         // Only Start Time is touched - End Time is never explicitly set by
         // the user, it's left at whatever the auto-fill applied.
@@ -273,7 +273,7 @@ describe('c-request-staff-form', () => {
         selectFacility(element, 'a01000000000001AAA');
         setInputValue(element, '[data-field="role"]', 'Registered Nurse');
         selectShiftDates(element, ['2030-01-01']);
-        setInputValue(element, '[data-field="requestedBy"]', 'Jane Doe');
+        getCurrentUserBadge.emit({ userName: 'Jane Doe' });
         setInputValue(element, '[data-field="startTime"]', '08:30:00.000');
         await Promise.resolve();
         setInputValue(element, '[data-field="endTime"]', '08:30:00.000');
@@ -313,7 +313,7 @@ describe('c-request-staff-form', () => {
         setInputValue(element, '[data-field="role"]', 'Registered Nurse');
         setInputValue(element, '[data-field="startTime"]', '07:00:00.000');
         setInputValue(element, '[data-field="endTime"]', '15:00:00.000');
-        setInputValue(element, '[data-field="requestedBy"]', 'Jane Doe');
+        getCurrentUserBadge.emit({ userName: 'Jane Doe' });
 
         const submitButton = element.shadowRoot.querySelector('lightning-button');
         submitButton.click();
@@ -367,17 +367,12 @@ describe('c-request-staff-form', () => {
         expect(requestedByInput.value).toBe('Jordan Michaels');
     });
 
-    it('lets the logged-in user override the pre-filled Requested By value', async () => {
+    it('renders Requested By as read-only, since it always mirrors the logged-in user', async () => {
         const element = createElement('c-request-staff-form', { is: RequestStaffForm });
         document.body.appendChild(element);
 
-        getCurrentUserBadge.emit({ userName: 'Jordan Michaels', accountName: 'Riverside Aged Care Group' });
-        await Promise.resolve();
-
-        setInputValue(element, '[data-field="requestedBy"]', 'Pat Nguyen');
-
         const requestedByInput = element.shadowRoot.querySelector('[data-field="requestedBy"]');
-        expect(requestedByInput.value).toBe('Pat Nguyen');
+        expect(requestedByInput.readOnly).toBe(true);
     });
 
     it('submits one request per selected date when a block of days is chosen', async () => {
@@ -391,7 +386,7 @@ describe('c-request-staff-form', () => {
         selectShiftDates(element, ['2030-01-01', '2030-01-03', '2030-01-08']);
         setInputValue(element, '[data-field="startTime"]', '07:00:00.000');
         setInputValue(element, '[data-field="endTime"]', '15:00:00.000');
-        setInputValue(element, '[data-field="requestedBy"]', 'Jane Doe');
+        getCurrentUserBadge.emit({ userName: 'Jane Doe' });
 
         const submitButton = element.shadowRoot.querySelector('lightning-button');
         submitButton.click();
@@ -430,7 +425,7 @@ describe('c-request-staff-form', () => {
         selectShiftDates(element, ['2030-01-01', '2030-01-03']);
         setInputValue(element, '[data-field="startTime"]', '07:00:00.000');
         setInputValue(element, '[data-field="endTime"]', '15:00:00.000');
-        setInputValue(element, '[data-field="requestedBy"]', 'Jane Doe');
+        getCurrentUserBadge.emit({ userName: 'Jane Doe' });
 
         const submitButton = element.shadowRoot.querySelector('lightning-button');
         submitButton.click();

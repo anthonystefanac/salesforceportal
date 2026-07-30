@@ -87,12 +87,10 @@ export default class RequestStaffForm extends LightningElement {
 
     @track formData = { ...DEFAULT_FORM };
 
-    // Requested By defaults to whoever is actually logged in and submitting
-    // the request, rather than asking them to type their own name every
-    // time - still a plain editable input though, in case someone is
-    // submitting on behalf of a colleague and needs to change it. Kept
-    // separately from formData so resetAfterSuccess can re-apply it after
-    // DEFAULT_FORM wipes the field back to blank.
+    // Requested By is always whoever is actually logged in and submitting
+    // the request - read-only on the form (see requestStaffForm.html), not
+    // typed in by hand. Kept separately from formData so resetAfterSuccess
+    // can re-apply it after DEFAULT_FORM wipes the field back to blank.
     currentUserName;
 
     @wire(getCurrentUserBadge)

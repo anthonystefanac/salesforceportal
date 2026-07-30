@@ -73,8 +73,8 @@ describe('c-my-staffing-requests', () => {
             document.body.removeChild(document.body.firstChild);
         }
         jest.clearAllMocks();
-        if (window.prompt && window.prompt.mockRestore) {
-            window.prompt.mockRestore();
+        if (window.confirm && window.confirm.mockRestore) {
+            window.confirm.mockRestore();
         }
     });
 
@@ -601,9 +601,36 @@ describe('c-my-staffing-requests', () => {
         });
     });
 
-    it('pre-fills the cancellation prompt with the logged-in user\'s name', async () => {
+    it('requests a cancellation after confirming, auto-filling Cancelled By with the logged-in user, and refreshes the list', async () => {
         createCase.mockResolvedValue('500000000000001AAA');
-        jest.spyOn(window, 'prompt').mockReturnValue('Jordan Michaels');
+        jest.spyOn(window, 'confirm').mockReturnValue(true);
+
+        const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
+        document.body.appendChild(element);
+
+        getMyRequests.emit(mockRequests);
+        getCurrentUserBadge.emit({ userName: 'Jordan Michaels', accountName: 'Riverside Aged Care Group' });
+        await Promise.resolve();
+
+        const buttonMenu = element.shadowRoot.querySelector('lightning-button-menu');
+        selectCancel(buttonMenu);
+        await Promise.resolve();
+        await Promise.resolve();
+
+        expect(window.confirm).toHaveBeenCalledTimes(1);
+        expect(createCase).toHaveBeenCalledTimes(1);
+        const newCase = createCase.mock.calls[0][0].newCase;
+        expect(newCase.Portal_Request_Type__c).toBe('Cancellation Request');
+        expect(newCase.Related_Staffing_Request__c).toBe(mockRequests[0].Id);
+        expect(newCase.Cancelled_By__c).toBe('Jordan Michaels');
+        expect(newCase.Subject).toContain('SR-0001');
+
+        const banner = element.shadowRoot.querySelector('.my-requests__banner_success');
+        expect(banner.textContent).toContain('SR-0001');
+    });
+
+    it('does not submit a cancellation if the confirm dialog is declined', async () => {
+        jest.spyOn(window, 'confirm').mockReturnValue(false);
 
         const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
         document.body.appendChild(element);
@@ -616,54 +643,11 @@ describe('c-my-staffing-requests', () => {
         selectCancel(buttonMenu);
         await Promise.resolve();
 
-        expect(window.prompt.mock.calls[0][1]).toBe('Jordan Michaels');
-    });
-
-    it('requests a cancellation after entering who is requesting it, and refreshes the list', async () => {
-        createCase.mockResolvedValue('500000000000001AAA');
-        jest.spyOn(window, 'prompt').mockReturnValue('Jordan Michaels');
-
-        const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
-        document.body.appendChild(element);
-
-        getMyRequests.emit(mockRequests);
-        await Promise.resolve();
-
-        const buttonMenu = element.shadowRoot.querySelector('lightning-button-menu');
-        selectCancel(buttonMenu);
-        await Promise.resolve();
-        await Promise.resolve();
-
-        expect(window.prompt).toHaveBeenCalledTimes(1);
-        expect(createCase).toHaveBeenCalledTimes(1);
-        const newCase = createCase.mock.calls[0][0].newCase;
-        expect(newCase.Portal_Request_Type__c).toBe('Cancellation Request');
-        expect(newCase.Related_Staffing_Request__c).toBe(mockRequests[0].Id);
-        expect(newCase.Cancelled_By__c).toBe('Jordan Michaels');
-        expect(newCase.Subject).toContain('SR-0001');
-
-        const banner = element.shadowRoot.querySelector('.my-requests__banner_success');
-        expect(banner.textContent).toContain('SR-0001');
-    });
-
-    it('does not submit a cancellation if the prompt is dismissed', async () => {
-        jest.spyOn(window, 'prompt').mockReturnValue(null);
-
-        const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
-        document.body.appendChild(element);
-
-        getMyRequests.emit(mockRequests);
-        await Promise.resolve();
-
-        const buttonMenu = element.shadowRoot.querySelector('lightning-button-menu');
-        selectCancel(buttonMenu);
-        await Promise.resolve();
-
         expect(createCase).not.toHaveBeenCalled();
     });
 
-    it('blocks the cancellation and shows an error banner if Cancelled By is left blank', async () => {
-        jest.spyOn(window, 'prompt').mockReturnValue('   ');
+    it('blocks the cancellation and shows an error banner if the logged-in user\'s name is not yet known', async () => {
+        jest.spyOn(window, 'confirm').mockReturnValue(true);
 
         const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
         document.body.appendChild(element);
@@ -677,7 +661,9 @@ describe('c-my-staffing-requests', () => {
 
         expect(createCase).not.toHaveBeenCalled();
         const banner = element.shadowRoot.querySelector('.my-requests__banner_error');
-        expect(banner.textContent).toBe('Cancelled By is required to request a cancellation.');
+        expect(banner.textContent).toBe(
+            'Unable to determine your name to record this cancellation - please try again in a moment.'
+        );
     });
 
     it('ignores a select event for anything other than the cancel menu item', async () => {
@@ -695,7 +681,7 @@ describe('c-my-staffing-requests', () => {
     });
 
     it('shows a saving state and an error banner if the cancellation request fails', async () => {
-        jest.spyOn(window, 'prompt').mockReturnValue('Jordan Michaels');
+        jest.spyOn(window, 'confirm').mockReturnValue(true);
         let rejectCreate;
         createCase.mockReturnValue(
             new Promise((_resolve, reject) => {
@@ -707,6 +693,7 @@ describe('c-my-staffing-requests', () => {
         document.body.appendChild(element);
 
         getMyRequests.emit(mockRequests);
+        getCurrentUserBadge.emit({ userName: 'Jordan Michaels', accountName: 'Riverside Aged Care Group' });
         await Promise.resolve();
 
         const buttonMenu = element.shadowRoot.querySelector('lightning-button-menu');

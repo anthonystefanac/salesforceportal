@@ -450,17 +450,16 @@ up-front required-field check as everything else above. Because it's
 Security at all (the same reasoning already documented for Role__c/Shift_Date__c/etc.
 in the permission set), so no separate field permission grant was needed.
 
-**Pre-filled with the logged-in user, not typed from scratch.** The form
-wires `PortalUserBadgeController.getCurrentUserBadge()` (the same Apex
-method `portalUserBadge` already uses for the header) and, as soon as it
-resolves, sets `Requested By` to that user's `Name` (first and last name)
-if the field is still blank — it never overwrites a value the user already
-typed. The input stays a plain editable `lightning-input`, so it's a
-one-click default rather than a locked-in value, for the case where
-someone is submitting on behalf of a colleague at the same facility.
-`resetAfterSuccess` re-applies it after every successful submit, so a
-block of follow-up requests in the same session keeps the pre-fill instead
-of reverting to blank.
+**Read-only, pre-filled with the logged-in user.** The form wires
+`PortalUserBadgeController.getCurrentUserBadge()` (the same Apex method
+`portalUserBadge` already uses for the header) and, as soon as it resolves,
+sets `Requested By` to that user's `Name` (first and last name) if the
+field is still blank. The `lightning-input` itself carries `read-only`, so
+it's simply a display of who is logged in and submitting the request, not
+something typed or edited — there's no scenario in this portal where one
+user submits a request "as" someone else. `resetAfterSuccess` re-applies
+the value after every successful submit, so a block of follow-up requests
+in the same session keeps it filled in rather than reverting to blank.
 
 **Booking a block of shifts across multiple days.** Request Staff used to
 have a single `lightning-input[type=date]` for Shift Date. It's now
@@ -503,32 +502,26 @@ that could never match anything shown here anyway. It shares the exact same
 `dateFilter` state and "Show all requests" clear control the deep-link path
 already used, so no new filtering logic was needed — only the input itself.
 
-**Cancelled By is now a mandatory part of requesting a cancellation.** The
-per-row Request Cancellation action used to be a single `window.confirm`
-("Request cancellation for X? ..."). It's now a single `window.prompt`
-asking who is requesting the cancellation, which replaces the old confirm
-dialog entirely rather than stacking a second native popup on top of it —
-typing a name and clicking OK already **is** the deliberate confirmation.
-Dismissing the prompt (its own Cancel, or Esc) behaves exactly like
-declining the old confirm — a quiet "never mind", no banner. Submitting a
-blank or whitespace-only value, though, is treated as a validation failure,
-not a dismissal: it shows the same guaranteed inline error banner
-("Cancelled By is required to request a cancellation.") this app uses
-everywhere else, and does not create the Case. The entered name travels
-through the existing Case-creation path as a new `Case.Cancelled_By__c`
-text field (the third field added to the standard Case object, alongside
-`Portal_Request_Type__c` and `Related_Staffing_Request__c`), and
+**Cancelled By is set automatically, with no typing involved.** The
+per-row Request Cancellation action briefly went through a `window.prompt`
+phase asking who was requesting the cancellation, but that's gone now —
+it's back to a plain `window.confirm` ("Cancel SR-0001 (...)"), and
+`Cancelled_By__c` is simply set to the logged-in user's name (the same
+`getCurrentUserBadge` wire `requestStaffForm` uses), exactly like
+Requested By. Declining the confirm (its own Cancel, or Esc) behaves like
+before — a quiet "never mind", no banner. If the current user's name
+hasn't resolved yet for some reason, the cancellation is blocked with an
+inline error ("Unable to determine your name to record this cancellation
+- please try again in a moment.") rather than creating a Case with a blank
+Cancelled By. The name travels through the existing Case-creation path as
+`Case.Cancelled_By__c` (the third field added to the standard Case object,
+alongside `Portal_Request_Type__c` and `Related_Staffing_Request__c`), and
 `SupportRequestService.flagCancellationRequested` copies it onto the
 related `Staffing_Request__c.Cancelled_By__c` at the same moment it sets
 `Cancellation_Requested__c = true` — same portal-read-only, server-set-only
-treatment as that field already had.
-
-The prompt's default text is now **pre-filled with the logged-in user's
-name** (the same `getCurrentUserBadge` call `requestStaffForm` uses), so
-confirming a cancellation is a single click on the browser's OK button
-rather than retyping a name that's already known — still editable in the
-prompt itself for the rare case someone else is cancelling on a
-colleague's behalf.
+treatment as that field already had. The value simply shows up in the My
+Requests / Reporting tables once the list refreshes after the Case is
+created — there's no separate entry cell for it anywhere on screen.
 
 **Requested By and Cancelled By are now columns on both My Requests and
 Reporting**, inserted right after Cancellation Requested (before Last
@@ -1008,7 +1001,7 @@ npm install
 npm run test:unit
 ```
 
-163 Jest tests across all 17 LWCs (including `blockDatePicker`'s own
+162 Jest tests across all 17 LWCs (including `blockDatePicker`'s own
 month-grid/multi-select suite, and the `sortTableUtils`, `dateFormatUtils`,
 and `fileDownloadUtils` shared modules). This is the only thing in this
 project that's actually been run and confirmed passing in this environment.

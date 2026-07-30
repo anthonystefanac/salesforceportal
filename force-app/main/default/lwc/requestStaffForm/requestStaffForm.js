@@ -71,10 +71,10 @@ const REQUIRED_FIELDS = [
     { key: 'facilityId', label: 'Facility' },
     { key: 'role', label: 'Role' },
     { key: 'shiftDates', label: 'Shift Date', isArray: true },
+    { key: 'priority', label: 'Priority' },
     { key: 'startTime', label: 'Start Time' },
     { key: 'endTime', label: 'End Time' },
     { key: 'quantity', label: 'Quantity' },
-    { key: 'priority', label: 'Priority' },
     { key: 'requestedBy', label: 'Requested By' }
 ];
 

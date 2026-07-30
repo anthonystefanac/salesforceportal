@@ -30,15 +30,15 @@
                     onchange={handleFieldChange}
                 ></lightning-input>
             </div>
-            <div class="request-staff-form__field request-staff-form__field_start-time">
-                <lightning-input
-                    type="time"
-                    label="Start Time"
-                    data-field="startTime"
-                    value={formData.startTime}
+            <div class="request-staff-form__field request-staff-form__field_priority">
+                <lightning-combobox
+                    label="Priority"
+                    data-field="priority"
+                    options={priorityOptions}
+                    value={formData.priority}
                     onchange={handleFieldChange}
                     required
-                ></lightning-input>
+                ></lightning-combobox>
             </div>
             <div class="request-staff-form__field request-staff-form__field_full request-staff-form__date-wrapper">
                 <div class="request-staff-form__date-row">
@@ -49,6 +49,16 @@
                         ></c-block-date-picker>
                     </div>
                     <div class="request-staff-form__date-fields">
+                        <div class="request-staff-form__field">
+                            <lightning-input
+                                type="time"
+                                label="Start Time"
+                                data-field="startTime"
+                                value={formData.startTime}
+                                onchange={handleFieldChange}
+                                required
+                            ></lightning-input>
+                        </div>
                         <div class="request-staff-form__field">
                             <lightning-input
                                 type="time"
@@ -65,16 +75,6 @@
                                 data-field="quantity"
                                 options={quantityOptions}
                                 value={formData.quantity}
-                                onchange={handleFieldChange}
-                                required
-                            ></lightning-combobox>
-                        </div>
-                        <div class="request-staff-form__field">
-                            <lightning-combobox
-                                label="Priority"
-                                data-field="priority"
-                                options={priorityOptions}
-                                value={formData.priority}
                                 onchange={handleFieldChange}
                                 required
                             ></lightning-combobox>

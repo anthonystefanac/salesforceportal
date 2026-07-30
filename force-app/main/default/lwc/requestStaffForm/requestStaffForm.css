@@ -36,7 +36,7 @@
 
 /* Mirrors the parent grid's two columns (same fr split and gap) so the
    calendar lines up under Ward/Specialty and its companion fields line up
-   under Role/Start Time above, instead of drifting right of that column. */
+   under Role/Priority above, instead of drifting right of that column. */
 .request-staff-form__date-row {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -77,8 +77,8 @@
     }
 
     /* Flatten the calendar wrapper into direct items of the outer grid so
-       Start Time can be reordered to sit right below Shift Date, ahead of
-       End Time/Quantity/Priority/Requested By. */
+       Priority can be reordered to sit right below Shift Date, ahead of
+       Start Time/End Time/Quantity/Requested By. */
     .request-staff-form__date-wrapper,
     .request-staff-form__date-row {
         display: contents;
@@ -88,7 +88,7 @@
         order: 1;
     }
 
-    .request-staff-form__field_start-time {
+    .request-staff-form__field_priority {
         order: 2;
     }
 

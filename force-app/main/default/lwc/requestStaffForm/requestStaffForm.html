@@ -30,6 +30,16 @@
                     onchange={handleFieldChange}
                 ></lightning-input>
             </div>
+            <div class="request-staff-form__field">
+                <lightning-input
+                    type="time"
+                    label="Start Time"
+                    data-field="startTime"
+                    value={formData.startTime}
+                    onchange={handleFieldChange}
+                    required
+                ></lightning-input>
+            </div>
             <div class="request-staff-form__field request-staff-form__field_full">
                 <div class="request-staff-form__date-row">
                     <div class="request-staff-form__date-calendar">
@@ -39,16 +49,6 @@
                         ></c-block-date-picker>
                     </div>
                     <div class="request-staff-form__date-fields">
-                        <div class="request-staff-form__field">
-                            <lightning-input
-                                type="time"
-                                label="Start Time"
-                                data-field="startTime"
-                                value={formData.startTime}
-                                onchange={handleFieldChange}
-                                required
-                            ></lightning-input>
-                        </div>
                         <div class="request-staff-form__field">
                             <lightning-input
                                 type="time"
@@ -79,7 +79,7 @@
                                 required
                             ></lightning-combobox>
                         </div>
-                        <div class="request-staff-form__field request-staff-form__field_full">
+                        <div class="request-staff-form__field">
                             <lightning-input
                                 label="Requested By"
                                 data-field="requestedBy"

@@ -34,24 +34,16 @@
     grid-column: 1 / -1;
 }
 
-/* The block-date-picker calendar is a fixed width, shorter than the full
-   row it used to have to itself - Start Time/End Time/Quantity/Priority/
-   Requested By now sit beside it instead of below it, filling what would
-   otherwise be empty space to its right. */
+/* Mirrors the parent grid's two columns (same fr split and gap) so the
+   calendar lines up under Ward/Specialty and its companion fields line up
+   under Role/Start Time above, instead of drifting right of that column. */
 .request-staff-form__date-row {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-start;
-    gap: 1.25rem;
-}
-
-.request-staff-form__date-calendar {
-    flex: 0 0 auto;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem 1.25rem;
 }
 
 .request-staff-form__date-fields {
-    flex: 1 1 16rem;
-    min-width: 16rem;
     display: grid;
     grid-template-columns: 1fr;
     gap: 1rem;
@@ -81,6 +73,10 @@
 
 @media (max-width: 40rem) {
     .request-staff-form__grid {
+        grid-template-columns: 1fr;
+    }
+
+    .request-staff-form__date-row {
         grid-template-columns: 1fr;
     }
 }

@@ -7,9 +7,10 @@
  *
  * Also the entry point for cancellation requests, whichever screen submits
  * one (myStaffingRequests' per-row action today) - a Cancellation Request
- * Case here also flags Staffing_Request__c.Cancellation_Requested__c on the
- * related record, since that field is portal read-only (server-set only)
- * and nothing else in the codebase ever sets it.
+ * Case here also flags Staffing_Request__c.Cancellation_Requested__c and
+ * copies Cancelled_By__c onto the related record, since both fields are
+ * portal read-only (server-set only) and nothing else in the codebase ever
+ * sets them.
  */
 public with sharing class SupportRequestService {
 
@@ -25,7 +26,7 @@ public with sharing class SupportRequestService {
 
         if (sanitizedCase.Portal_Request_Type__c == 'Cancellation Request'
             && sanitizedCase.Related_Staffing_Request__c != null) {
-            flagCancellationRequested(sanitizedCase.Related_Staffing_Request__c);
+            flagCancellationRequested(sanitizedCase.Related_Staffing_Request__c, sanitizedCase.Cancelled_By__c);
         }
 
         try {
@@ -50,7 +51,7 @@ public with sharing class SupportRequestService {
     // use, since the id always comes from the user's own My Requests list -
     // this skips the flag rather than failing the whole Case submission
     // over it.
-    private static void flagCancellationRequested(Id staffingRequestId) {
+    private static void flagCancellationRequested(Id staffingRequestId, String cancelledBy) {
         Id currentAccountId = PortalUserContext.getCurrentAccountId();
         List<Staffing_Request__c> ownRequests = [
             SELECT Id
@@ -63,7 +64,11 @@ public with sharing class SupportRequestService {
             return;
         }
 
-        WithoutSharingDml.updateRecord(new Staffing_Request__c(Id = staffingRequestId, Cancellation_Requested__c = true));
+        WithoutSharingDml.updateRecord(new Staffing_Request__c(
+            Id = staffingRequestId,
+            Cancellation_Requested__c = true,
+            Cancelled_By__c = cancelledBy
+        ));
     }
 
     private static void sendConfirmationEmail(Case submittedCase) {

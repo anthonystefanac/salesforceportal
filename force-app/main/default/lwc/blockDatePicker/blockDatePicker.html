@@ -1,0 +1,83 @@
+<template>
+    <div class="block-date-picker">
+        <span class="block-date-picker__label">Shift Date(s)</span>
+        <div class="block-date-picker__calendar">
+            <div class="block-date-picker__nav">
+                <lightning-button-icon
+                    data-action="prev"
+                    icon-name="utility:chevronleft"
+                    alternative-text="Previous month"
+                    onclick={handlePrevMonth}
+                ></lightning-button-icon>
+                <h3 class="block-date-picker__month">{monthLabel}</h3>
+                <lightning-button-icon
+                    data-action="next"
+                    icon-name="utility:chevronright"
+                    alternative-text="Next month"
+                    onclick={handleNextMonth}
+                ></lightning-button-icon>
+                <button type="button" class="block-date-picker__today" onclick={handleToday}>Today</button>
+            </div>
+
+            <div class="block-date-picker__weekday-row">
+                <template for:each={weekdayLabels} for:item="label">
+                    <span key={label} class="block-date-picker__weekday">{label}</span>
+                </template>
+            </div>
+
+            <template for:each={calendarWeeks} for:item="week">
+                <div class="block-date-picker__week" key={week.key}>
+                    <template for:each={week.days} for:item="day">
+                        <template if:true={day.isBlank}>
+                            <div key={day.key} class="block-date-picker__day block-date-picker__day_empty"></div>
+                        </template>
+                        <template if:false={day.isBlank}>
+                            <button
+                                key={day.key}
+                                type="button"
+                                class={day.cssClass}
+                                data-date={day.iso}
+                                disabled={day.isPast}
+                                onclick={handleToggleDay}
+                            >
+                                {day.day}
+                            </button>
+                        </template>
+                    </template>
+                </div>
+            </template>
+        </div>
+
+        <template if:true={hasSelectedDates}>
+            <div class="block-date-picker__selection">
+                <div class="block-date-picker__selection-header">
+                    <span class="block-date-picker__selection-count">{selectedCountLabel}</span>
+                    <button type="button" class="block-date-picker__clear-all" onclick={handleClearAll}>
+                        Clear all
+                    </button>
+                </div>
+                <ul class="block-date-picker__chips">
+                    <template for:each={selectedDateChips} for:item="chip">
+                        <li key={chip.iso} class="block-date-picker__chip">
+                            <span>{chip.label}</span>
+                            <button
+                                type="button"
+                                class="block-date-picker__chip-remove"
+                                data-date={chip.iso}
+                                aria-label="Remove"
+                                onclick={handleRemoveChip}
+                            >
+                                ×
+                            </button>
+                        </li>
+                    </template>
+                </ul>
+            </div>
+        </template>
+        <template if:false={hasSelectedDates}>
+            <p class="block-date-picker__empty">
+                Click one or more days above to book this same shift across a block of dates.
+            </p>
+        </template>
+    </div>
+</template>

@@ -14,7 +14,9 @@
         "Status__c": "Broadcasted",
         "Broadcasted_Date__c": "2026-07-25T10:00:00.000Z",
         "Last_Status_Update__c": "2026-07-25T10:00:00.000Z",
-        "Cancellation_Requested__c": false
+        "Cancellation_Requested__c": false,
+        "Requested_By__c": "Jane Doe",
+        "Cancelled_By__c": null
     },
     {
         "Id": "a02000000000002AAA",
@@ -31,7 +33,9 @@
         "Status__c": "Filled",
         "Broadcasted_Date__c": "2026-07-20T10:00:00.000Z",
         "Last_Status_Update__c": "2026-07-24T10:00:00.000Z",
-        "Cancellation_Requested__c": false
+        "Cancellation_Requested__c": false,
+        "Requested_By__c": "Jane Doe",
+        "Cancelled_By__c": null
     },
     {
         "Id": "a02000000000003AAA",
@@ -48,7 +52,9 @@
         "Status__c": "Unable to Fill",
         "Broadcasted_Date__c": "2026-07-19T10:00:00.000Z",
         "Last_Status_Update__c": "2026-07-23T10:00:00.000Z",
-        "Cancellation_Requested__c": false
+        "Cancellation_Requested__c": false,
+        "Requested_By__c": null,
+        "Cancelled_By__c": null
     },
     {
         "Id": "a02000000000004AAA",
@@ -65,7 +71,9 @@
         "Status__c": "Cancelled",
         "Broadcasted_Date__c": null,
         "Last_Status_Update__c": "2026-07-21T10:00:00.000Z",
-        "Cancellation_Requested__c": false
+        "Cancellation_Requested__c": false,
+        "Requested_By__c": "Sam Lee",
+        "Cancelled_By__c": "Pat Nguyen"
     },
     {
         "Id": "a02000000000005AAA",
@@ -82,6 +90,8 @@
         "Status__c": "Cancelled",
         "Broadcasted_Date__c": null,
         "Last_Status_Update__c": "2026-07-26T10:00:00.000Z",
-        "Cancellation_Requested__c": false
+        "Cancellation_Requested__c": false,
+        "Requested_By__c": "Sam Lee",
+        "Cancelled_By__c": "Pat Nguyen"
     }
 ]

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Cancelled_By__c</fullName>
+    <label>Cancelled By</label>
+    <type>Text</type>
+    <length>120</length>
+    <required>false</required>
+    <description>Name of the person who requested this shift be cancelled, captured when Cancellation_Requested__c is flagged. Portal read-only - set only by SupportRequestService.flagCancellationRequested, the same way Cancellation_Requested__c itself is set.</description>
+</CustomField>

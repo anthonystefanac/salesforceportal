@@ -61,8 +61,8 @@ describe('c-my-staffing-requests', () => {
             document.body.removeChild(document.body.firstChild);
         }
         jest.clearAllMocks();
-        if (window.confirm && window.confirm.mockRestore) {
-            window.confirm.mockRestore();
+        if (window.prompt && window.prompt.mockRestore) {
+            window.prompt.mockRestore();
         }
     });
 
@@ -142,9 +142,10 @@ describe('c-my-staffing-requests', () => {
             // Action, Request, Facility, Ward, Role, Specialty, Shift Date, Start Time, ...
             expect(cells[6].textContent).toBe(formatDate(sr0003.Shift_Date__c));
             expect(cells[6].textContent).toMatch(/^\d{2}\/\d{2}\/\d{4}$/);
-            // ..., Assigned Contact, Status, Broadcasted, Cancellation Requested, Last Update,
-            // then the mobile card layout's per-row "Show more" toggle (final column, desktop-hidden).
-            expect(cells[15].textContent).toBe(formatDateTime(sr0003.Last_Status_Update__c));
+            // ..., Assigned Contact, Status, Broadcasted, Cancellation Requested, Requested By,
+            // Cancelled By, Last Update, then the mobile card layout's per-row "Show more" toggle
+            // (final column, desktop-hidden).
+            expect(cells[17].textContent).toBe(formatDateTime(sr0003.Last_Status_Update__c));
         });
     });
 
@@ -180,6 +181,33 @@ describe('c-my-staffing-requests', () => {
             // ..., Assigned Contact, Status, Broadcasted, Cancellation Requested, Last Update
             expect(cells[11].textContent).toBe('—');
             expect(cells[14].textContent).toBe('No');
+        });
+    });
+
+    it('shows Requested By and Cancelled By values', () => {
+        const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
+        document.body.appendChild(element);
+
+        getMyRequests.emit([{ ...mockRequests[0], Requested_By__c: 'Jane Doe', Cancelled_By__c: 'Pat Nguyen' }]);
+
+        return Promise.resolve().then(() => {
+            const cells = element.shadowRoot.querySelector('tbody tr').querySelectorAll('td');
+            // ..., Cancellation Requested, Requested By, Cancelled By, Last Update.
+            expect(cells[15].textContent).toBe('Jane Doe');
+            expect(cells[16].textContent).toBe('Pat Nguyen');
+        });
+    });
+
+    it('shows a placeholder for blank Requested By / Cancelled By', () => {
+        const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
+        document.body.appendChild(element);
+
+        getMyRequests.emit([{ ...mockRequests[0], Requested_By__c: null, Cancelled_By__c: null }]);
+
+        return Promise.resolve().then(() => {
+            const cells = element.shadowRoot.querySelector('tbody tr').querySelectorAll('td');
+            expect(cells[15].textContent).toBe('—');
+            expect(cells[16].textContent).toBe('—');
         });
     });
 
@@ -561,9 +589,9 @@ describe('c-my-staffing-requests', () => {
         });
     });
 
-    it('requests a cancellation after confirming, and refreshes the list', async () => {
+    it('requests a cancellation after entering who is requesting it, and refreshes the list', async () => {
         createCase.mockResolvedValue('500000000000001AAA');
-        jest.spyOn(window, 'confirm').mockReturnValue(true);
+        jest.spyOn(window, 'prompt').mockReturnValue('Jordan Michaels');
 
         const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
         document.body.appendChild(element);
@@ -576,19 +604,20 @@ describe('c-my-staffing-requests', () => {
         await Promise.resolve();
         await Promise.resolve();
 
-        expect(window.confirm).toHaveBeenCalledTimes(1);
+        expect(window.prompt).toHaveBeenCalledTimes(1);
         expect(createCase).toHaveBeenCalledTimes(1);
         const newCase = createCase.mock.calls[0][0].newCase;
         expect(newCase.Portal_Request_Type__c).toBe('Cancellation Request');
         expect(newCase.Related_Staffing_Request__c).toBe(mockRequests[0].Id);
+        expect(newCase.Cancelled_By__c).toBe('Jordan Michaels');
         expect(newCase.Subject).toContain('SR-0001');
 
         const banner = element.shadowRoot.querySelector('.my-requests__banner_success');
         expect(banner.textContent).toContain('SR-0001');
     });
 
-    it('does not submit a cancellation if the confirmation is declined', async () => {
-        jest.spyOn(window, 'confirm').mockReturnValue(false);
+    it('does not submit a cancellation if the prompt is dismissed', async () => {
+        jest.spyOn(window, 'prompt').mockReturnValue(null);
 
         const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
         document.body.appendChild(element);
@@ -601,6 +630,24 @@ describe('c-my-staffing-requests', () => {
         await Promise.resolve();
 
         expect(createCase).not.toHaveBeenCalled();
+    });
+
+    it('blocks the cancellation and shows an error banner if Cancelled By is left blank', async () => {
+        jest.spyOn(window, 'prompt').mockReturnValue('   ');
+
+        const element = createElement('c-my-staffing-requests', { is: MyStaffingRequests });
+        document.body.appendChild(element);
+
+        getMyRequests.emit(mockRequests);
+        await Promise.resolve();
+
+        const buttonMenu = element.shadowRoot.querySelector('lightning-button-menu');
+        selectCancel(buttonMenu);
+        await Promise.resolve();
+
+        expect(createCase).not.toHaveBeenCalled();
+        const banner = element.shadowRoot.querySelector('.my-requests__banner_error');
+        expect(banner.textContent).toBe('Cancelled By is required to request a cancellation.');
     });
 
     it('ignores a select event for anything other than the cancel menu item', async () => {
@@ -618,7 +665,7 @@ describe('c-my-staffing-requests', () => {
     });
 
     it('shows a saving state and an error banner if the cancellation request fails', async () => {
-        jest.spyOn(window, 'confirm').mockReturnValue(true);
+        jest.spyOn(window, 'prompt').mockReturnValue('Jordan Michaels');
         let rejectCreate;
         createCase.mockReturnValue(
             new Promise((_resolve, reject) => {

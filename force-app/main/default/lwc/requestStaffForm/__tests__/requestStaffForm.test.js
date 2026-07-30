@@ -21,6 +21,24 @@ function selectFacility(element, facilityId) {
     facilityPicker.dispatchEvent(new CustomEvent('facilitychange', { detail: { facilityId } }));
 }
 
+function getBlockDatePicker(element) {
+    return element.shadowRoot.querySelector('c-block-date-picker');
+}
+
+// c-block-date-picker is otherwise a black box here - its own test suite
+// covers the month-grid/click-to-toggle mechanics. Driving its real
+// defaultDate setter (rather than just dispatching a synthetic datechange
+// event on the element, which would update requestStaffForm's formData but
+// leave the picker's own internal selectedDates empty) exercises the same
+// "add this date to the selection" logic a real click does, so later
+// assertions against the picker's own rendered chips stay meaningful.
+function selectShiftDates(element, dates) {
+    const picker = getBlockDatePicker(element);
+    dates.forEach((date) => {
+        picker.defaultDate = date;
+    });
+}
+
 // Fills every required field with a valid value (a far-future Shift Date so
 // it's never accidentally in the past relative to whenever the suite runs).
 // Quantity and Priority are left alone - they already default to '1' and
@@ -28,9 +46,10 @@ function selectFacility(element, facilityId) {
 function fillRequiredFields(element, overrides = {}) {
     selectFacility(element, overrides.facilityId || 'a01000000000001AAA');
     setInputValue(element, '[data-field="role"]', overrides.role || 'Registered Nurse');
-    setInputValue(element, '[data-field="shiftDate"]', overrides.shiftDate || '2030-01-01');
+    selectShiftDates(element, overrides.shiftDates || [overrides.shiftDate || '2030-01-01']);
     setInputValue(element, '[data-field="startTime"]', overrides.startTime || '07:00:00.000');
     setInputValue(element, '[data-field="endTime"]', overrides.endTime || '15:00:00.000');
+    setInputValue(element, '[data-field="requestedBy"]', overrides.requestedBy || 'Jane Doe');
 }
 
 describe('c-request-staff-form', () => {
@@ -56,14 +75,16 @@ describe('c-request-staff-form', () => {
         wardPicker.dispatchEvent(new CustomEvent('wardchange', { detail: { wardId: 'a05000000000001AAA' } }));
 
         setInputValue(element, '[data-field="role"]', 'Registered Nurse');
-        setInputValue(element, '[data-field="shiftDate"]', '2026-08-01');
+        selectShiftDates(element, ['2026-08-01']);
         setInputValue(element, '[data-field="startTime"]', '07:00:00.000');
         setInputValue(element, '[data-field="endTime"]', '15:00:00.000');
         setInputValue(element, '[data-field="quantity"]', '3');
+        setInputValue(element, '[data-field="requestedBy"]', 'Jane Doe');
 
         const submitButton = element.shadowRoot.querySelector('lightning-button');
         submitButton.click();
 
+        await Promise.resolve();
         await Promise.resolve();
         await Promise.resolve();
 
@@ -74,6 +95,7 @@ describe('c-request-staff-form', () => {
         expect(callArg.Role__c).toBe('Registered Nurse');
         expect(callArg.Shift_Date__c).toBe('2026-08-01');
         expect(callArg.Quantity__c).toBe(3);
+        expect(callArg.Requested_By__c).toBe('Jane Doe');
     });
 
     it('shows a visible saving state while the request is being submitted', async () => {
@@ -98,6 +120,7 @@ describe('c-request-staff-form', () => {
         expect(element.shadowRoot.querySelector('lightning-spinner')).not.toBeNull();
 
         resolveCreate('a02000000000001AAA');
+        await Promise.resolve();
         await Promise.resolve();
         await Promise.resolve();
 
@@ -125,6 +148,7 @@ describe('c-request-staff-form', () => {
 
         await Promise.resolve();
         await Promise.resolve();
+        await Promise.resolve();
 
         expect(createRequest.mock.calls[0][0].newRequest.Quantity__c).toBe(1);
     });
@@ -149,13 +173,15 @@ describe('c-request-staff-form', () => {
         );
 
         setInputValue(element, '[data-field="role"]', 'Registered Nurse');
-        setInputValue(element, '[data-field="shiftDate"]', '2030-01-01');
+        selectShiftDates(element, ['2030-01-01']);
         setInputValue(element, '[data-field="startTime"]', '07:00:00.000');
         setInputValue(element, '[data-field="endTime"]', '15:00:00.000');
+        setInputValue(element, '[data-field="requestedBy"]', 'Jane Doe');
 
         const submitButton = element.shadowRoot.querySelector('lightning-button');
         submitButton.click();
 
+        await Promise.resolve();
         await Promise.resolve();
         await Promise.resolve();
 
@@ -195,48 +221,7 @@ describe('c-request-staff-form', () => {
         CurrentPageReference.emit({ state: { defaultDate: '2026-09-03' } });
         await Promise.resolve();
 
-        const shiftDateInput = element.shadowRoot.querySelector('[data-field="shiftDate"]');
-        expect(shiftDateInput.value).toBe('2026-09-03');
-    });
-
-    it('sets the Shift Date picker\'s min attribute to today, so past dates aren\'t selectable', () => {
-        const element = createElement('c-request-staff-form', { is: RequestStaffForm });
-        document.body.appendChild(element);
-
-        const shiftDateInput = element.shadowRoot.querySelector('[data-field="shiftDate"]');
-        const today = new Date();
-        const expected = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(
-            today.getDate()
-        ).padStart(2, '0')}`;
-        expect(shiftDateInput.min).toBe(expected);
-    });
-
-    it('blocks submission with a past Shift Date', async () => {
-        const element = createElement('c-request-staff-form', { is: RequestStaffForm });
-        const toastHandler = jest.fn();
-        element.addEventListener('lightning__showtoast', toastHandler);
-        document.body.appendChild(element);
-
-        selectFacility(element, 'a01000000000001AAA');
-        setInputValue(element, '[data-field="role"]', 'Registered Nurse');
-        setInputValue(element, '[data-field="shiftDate"]', '2020-01-01');
-        setInputValue(element, '[data-field="startTime"]', '07:00:00.000');
-        setInputValue(element, '[data-field="endTime"]', '15:00:00.000');
-        await Promise.resolve();
-
-        const submitButton = element.shadowRoot.querySelector('lightning-button');
-        submitButton.click();
-
-        await Promise.resolve();
-        await Promise.resolve();
-
-        expect(toastHandler).toHaveBeenCalledTimes(1);
-        expect(toastHandler.mock.calls[0][0].detail.variant).toBe('error');
-        expect(toastHandler.mock.calls[0][0].detail.message).toBe('Shift date cannot be in the past.');
-        expect(createRequest).not.toHaveBeenCalled();
-
-        const banner = element.shadowRoot.querySelector('.request-staff-form__banner_error');
-        expect(banner.textContent).toBe('Shift date cannot be in the past.');
+        expect(getBlockDatePicker(element).defaultDate).toBe('2026-09-03');
     });
 
     it('blocks submission when Start Time is picked and End Time is left at its auto-filled value', async () => {
@@ -247,7 +232,8 @@ describe('c-request-staff-form', () => {
 
         selectFacility(element, 'a01000000000001AAA');
         setInputValue(element, '[data-field="role"]', 'Registered Nurse');
-        setInputValue(element, '[data-field="shiftDate"]', '2030-01-01');
+        selectShiftDates(element, ['2030-01-01']);
+        setInputValue(element, '[data-field="requestedBy"]', 'Jane Doe');
 
         // Only Start Time is touched - End Time is never explicitly set by
         // the user, it's left at whatever the auto-fill applied.
@@ -274,7 +260,8 @@ describe('c-request-staff-form', () => {
 
         selectFacility(element, 'a01000000000001AAA');
         setInputValue(element, '[data-field="role"]', 'Registered Nurse');
-        setInputValue(element, '[data-field="shiftDate"]', '2030-01-01');
+        selectShiftDates(element, ['2030-01-01']);
+        setInputValue(element, '[data-field="requestedBy"]', 'Jane Doe');
         setInputValue(element, '[data-field="startTime"]', '08:30:00.000');
         await Promise.resolve();
         setInputValue(element, '[data-field="endTime"]', '08:30:00.000');
@@ -305,31 +292,110 @@ describe('c-request-staff-form', () => {
         const element = createElement('c-request-staff-form', { is: RequestStaffForm });
         element.defaultDate = '2026-08-14';
         document.body.appendChild(element);
+        await Promise.resolve();
 
-        const shiftDateInput = element.shadowRoot.querySelector('[data-field="shiftDate"]');
-        expect(shiftDateInput.value).toBe('2026-08-14');
+        const picker = getBlockDatePicker(element);
+        expect(picker.defaultDate).toBe('2026-08-14');
 
         selectFacility(element, 'a01000000000001AAA');
         setInputValue(element, '[data-field="role"]', 'Registered Nurse');
         setInputValue(element, '[data-field="startTime"]', '07:00:00.000');
         setInputValue(element, '[data-field="endTime"]', '15:00:00.000');
+        setInputValue(element, '[data-field="requestedBy"]', 'Jane Doe');
 
         const submitButton = element.shadowRoot.querySelector('lightning-button');
         submitButton.click();
 
         await Promise.resolve();
         await Promise.resolve();
+        await Promise.resolve();
 
         expect(createRequest.mock.calls[0][0].newRequest.Shift_Date__c).toBe('2026-08-14');
         // A caller like requestStaffCalendar may want to submit a second
-        // request for the same day - the date should still be there after reset.
-        expect(shiftDateInput.value).toBe('2026-08-14');
+        // request for the same day - the picker should still show it
+        // selected after the post-submit reset.
+        expect(picker.defaultDate).toBe('2026-08-14');
 
         // Changing the caller's selected day updates the field live, even
         // though this form instance was never re-created.
         element.defaultDate = '2026-08-21';
         await Promise.resolve();
-        expect(shiftDateInput.value).toBe('2026-08-21');
+        expect(picker.defaultDate).toBe('2026-08-21');
+    });
+
+    it('submits one request per selected date when a block of days is chosen', async () => {
+        createRequest.mockResolvedValue('a02000000000001AAA');
+
+        const element = createElement('c-request-staff-form', { is: RequestStaffForm });
+        document.body.appendChild(element);
+
+        selectFacility(element, 'a01000000000001AAA');
+        setInputValue(element, '[data-field="role"]', 'Registered Nurse');
+        selectShiftDates(element, ['2030-01-01', '2030-01-03', '2030-01-08']);
+        setInputValue(element, '[data-field="startTime"]', '07:00:00.000');
+        setInputValue(element, '[data-field="endTime"]', '15:00:00.000');
+        setInputValue(element, '[data-field="requestedBy"]', 'Jane Doe');
+
+        const submitButton = element.shadowRoot.querySelector('lightning-button');
+        submitButton.click();
+
+        await Promise.resolve();
+        await Promise.resolve();
+        await Promise.resolve();
+
+        expect(createRequest).toHaveBeenCalledTimes(3);
+        const submittedDates = createRequest.mock.calls.map((call) => call[0].newRequest.Shift_Date__c).sort();
+        expect(submittedDates).toEqual(['2030-01-01', '2030-01-03', '2030-01-08']);
+        // Every submitted request shares the same Facility/Role/Times/etc -
+        // only Shift_Date__c varies across the block.
+        createRequest.mock.calls.forEach((call) => {
+            expect(call[0].newRequest.Role__c).toBe('Registered Nurse');
+            expect(call[0].newRequest.Requested_By__c).toBe('Jane Doe');
+        });
+
+        const banner = element.shadowRoot.querySelector('.request-staff-form__banner_success');
+        expect(banner.textContent).toBe('3 staffing requests have been submitted.');
+    });
+
+    it('reports partial failures without losing the dates that already succeeded', async () => {
+        createRequest.mockImplementation(({ newRequest }) => {
+            if (newRequest.Shift_Date__c === '2030-01-03') {
+                return Promise.reject({ body: { message: 'Facility is no longer available' } });
+            }
+            return Promise.resolve('a02000000000001AAA');
+        });
+
+        const element = createElement('c-request-staff-form', { is: RequestStaffForm });
+        document.body.appendChild(element);
+
+        selectFacility(element, 'a01000000000001AAA');
+        setInputValue(element, '[data-field="role"]', 'Registered Nurse');
+        selectShiftDates(element, ['2030-01-01', '2030-01-03']);
+        setInputValue(element, '[data-field="startTime"]', '07:00:00.000');
+        setInputValue(element, '[data-field="endTime"]', '15:00:00.000');
+        setInputValue(element, '[data-field="requestedBy"]', 'Jane Doe');
+
+        const submitButton = element.shadowRoot.querySelector('lightning-button');
+        submitButton.click();
+
+        await Promise.resolve();
+        await Promise.resolve();
+        await Promise.resolve();
+        await Promise.resolve();
+
+        const banner = element.shadowRoot.querySelector('.request-staff-form__banner_error');
+        expect(banner.textContent).toBe(
+            '1 of 2 staffing requests submitted. Still failed: 2030-01-03 (Facility is no longer available).'
+        );
+
+        // The date that already succeeded shouldn't still be selected -
+        // retrying would resubmit (and duplicate) it. The failed date stays
+        // selected so a retry only re-attempts that one.
+        const picker = getBlockDatePicker(element);
+        const chipDates = Array.from(picker.shadowRoot.querySelectorAll('.block-date-picker__chip-remove')).map(
+            (button) => button.dataset.date
+        );
+        expect(chipDates).toEqual(['2030-01-03']);
     });
 
     it('dispatches a success toast on successful submission', async () => {
@@ -345,6 +411,7 @@ describe('c-request-staff-form', () => {
         const submitButton = element.shadowRoot.querySelector('lightning-button');
         submitButton.click();
 
+        await Promise.resolve();
         await Promise.resolve();
         await Promise.resolve();
 
@@ -363,7 +430,7 @@ describe('c-request-staff-form', () => {
         element.addEventListener('lightning__showtoast', toastHandler);
         document.body.appendChild(element);
 
-        fillRequiredFields(element);
+        fillRequiredFields(element, { shiftDate: '2030-01-01' });
 
         const submitButton = element.shadowRoot.querySelector('lightning-button');
         submitButton.click();
@@ -374,10 +441,12 @@ describe('c-request-staff-form', () => {
 
         expect(toastHandler).toHaveBeenCalledTimes(1);
         expect(toastHandler.mock.calls[0][0].detail.variant).toBe('error');
-        expect(toastHandler.mock.calls[0][0].detail.message).toBe('Validation failed');
+        expect(toastHandler.mock.calls[0][0].detail.message).toBe(
+            'Unable to submit: 2030-01-01 (Validation failed).'
+        );
 
         const banner = element.shadowRoot.querySelector('.request-staff-form__banner_error');
-        expect(banner.textContent).toBe('Validation failed');
+        expect(banner.textContent).toBe('Unable to submit: 2030-01-01 (Validation failed).');
     });
 
     it('shows an inline error and does not submit when required fields are missing', async () => {
@@ -397,7 +466,7 @@ describe('c-request-staff-form', () => {
 
         const banner = element.shadowRoot.querySelector('.request-staff-form__banner_error');
         expect(banner.textContent).toBe(
-            'Please fill in: Facility, Role, Shift Date, Start Time, End Time.'
+            'Please fill in: Facility, Role, Shift Date, Start Time, End Time, Requested By.'
         );
     });
 
@@ -415,7 +484,7 @@ describe('c-request-staff-form', () => {
 
         expect(createRequest).not.toHaveBeenCalled();
         const banner = element.shadowRoot.querySelector('.request-staff-form__banner_error');
-        expect(banner.textContent).toBe('Please fill in: Shift Date, Start Time, End Time.');
+        expect(banner.textContent).toBe('Please fill in: Shift Date, Start Time, End Time, Requested By.');
     });
 
     it('clears a previous banner when a new submit attempt starts', async () => {

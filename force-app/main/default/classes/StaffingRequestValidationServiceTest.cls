@@ -16,6 +16,7 @@ private class StaffingRequestValidationServiceTest {
             End_Time__c = Time.newInstance(7, 0, 0, 0),
             Quantity__c = 1,
             Priority__c = 'Standard',
+            Requested_By__c = 'Test Requester',
             Status__c = 'Submitted'
         );
 
@@ -113,6 +114,7 @@ private class StaffingRequestValidationServiceTest {
             End_Time__c = Time.newInstance(15, 0, 0, 0),
             Quantity__c = 1,
             Priority__c = 'Standard',
+            Requested_By__c = 'Test Requester',
             Status__c = 'Submitted'
         );
 
@@ -147,6 +149,7 @@ private class StaffingRequestValidationServiceTest {
             End_Time__c = Time.newInstance(15, 0, 0, 0),
             Quantity__c = 1,
             Priority__c = 'Standard',
+            Requested_By__c = 'Test Requester',
             Status__c = 'Submitted'
         );
 

@@ -121,6 +121,14 @@
 }
 .my-requests__table th:nth-child(16),
 .my-requests__table td:nth-child(16) {
+    width: 8.5rem;
+}
+.my-requests__table th:nth-child(17),
+.my-requests__table td:nth-child(17) {
+    width: 8.5rem;
+}
+.my-requests__table th:nth-child(18),
+.my-requests__table td:nth-child(18) {
     width: 9rem;
 }
 
@@ -190,9 +198,22 @@
     outline-offset: 2px;
 }
 
+.my-requests__filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
 .my-requests__search {
     max-width: 26rem;
-    margin-bottom: 1.25rem;
+    flex: 1 1 18rem;
+}
+
+.my-requests__date-filter {
+    max-width: 12rem;
+    flex: 0 0 auto;
 }
 
 .my-requests__banner {

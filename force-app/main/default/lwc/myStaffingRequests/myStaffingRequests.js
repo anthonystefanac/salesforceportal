@@ -32,10 +32,22 @@ const COLUMNS = [
     { key: 'status', label: 'Status' },
     { key: 'broadcasted', label: 'Broadcasted' },
     { key: 'cancellationRequested', label: 'Cancellation Requested' },
+    { key: 'requestedBy', label: 'Requested By' },
+    { key: 'cancelledBy', label: 'Cancelled By' },
     { key: 'lastUpdate', label: 'Last Update' }
 ];
 
-const SEARCH_FIELDS = ['name', 'facilityName', 'wardName', 'role', 'specialty', 'status', 'assignedContact'];
+const SEARCH_FIELDS = [
+    'name',
+    'facilityName',
+    'wardName',
+    'role',
+    'specialty',
+    'status',
+    'assignedContact',
+    'requestedBy',
+    'cancelledBy'
+];
 const PAGE_SIZE = 10;
 
 export default class MyStaffingRequests extends LightningElement {
@@ -98,6 +110,8 @@ export default class MyStaffingRequests extends LightningElement {
                     status: request.Status__c,
                     broadcasted: request.Broadcasted_Date__c ? 'Yes' : 'No',
                     cancellationRequested: cancellationRequested ? 'Yes' : 'No',
+                    requestedBy: request.Requested_By__c || '—',
+                    cancelledBy: request.Cancelled_By__c || '—',
                     lastUpdate: request.Last_Status_Update__c,
                     lastUpdateDisplay: formatDateTime(request.Last_Status_Update__c),
                     canCancel: !cancellationRequested && !CANCELLATION_BLOCKED_STATUSES.includes(request.Status__c)
@@ -252,6 +266,22 @@ export default class MyStaffingRequests extends LightningElement {
             : 'my-requests__banner my-requests__banner_error';
     }
 
+    // min on the date filter input itself - matches the same "not before
+    // today" rule enforced everywhere else a Shift Date is picked/entered
+    // (requestStaffForm's c-block-date-picker, StaffingRequestValidationService
+    // server-side). This screen already hard-floors to today-onwards via
+    // upcomingRequests, so this is belt-and-suspenders more than a new
+    // restriction - it just stops the picker from ever being set to a date
+    // that could never match anything anyway.
+    get minDateFilter() {
+        return todayIso();
+    }
+
+    handleDateFilterChange(event) {
+        this.dateFilter = event.target.value || undefined;
+        this.currentPage = 1;
+    }
+
     handleClearFilter() {
         this.activeFilter = undefined;
         this.dateFilter = undefined;
@@ -305,25 +335,40 @@ export default class MyStaffingRequests extends LightningElement {
             return;
         }
 
+        this.bannerMessage = undefined;
+
+        // A single native prompt replaces the old plain confirm() - typing a
+        // name and clicking OK already is the deliberate confirmation, so a
+        // separate yes/no dialog first would just be a second native popup
+        // for no added benefit. Cancelling the prompt (its own Cancel
+        // button, or the browser's Esc) returns null, exactly like declining
+        // the old confirm() - a deliberate "never mind", not a validation
+        // failure, so it exits quietly with no banner either way.
         // eslint-disable-next-line no-alert
-        const confirmed = window.confirm(
-            `Request cancellation for ${request.name} (${request.shiftDateDisplay})? ` +
-                `This will notify our team and email you a confirmation.`
+        const cancelledByRaw = window.prompt(
+            `Cancel ${request.name} (${request.role} at ${request.facilityName} on ${request.shiftDateDisplay})?\n\n` +
+                `Enter who is requesting this cancellation to confirm:`
         );
-        if (!confirmed) {
+        if (cancelledByRaw === null) {
+            return;
+        }
+        const cancelledBy = cancelledByRaw.trim();
+        if (!cancelledBy) {
+            this.bannerVariant = 'error';
+            this.bannerMessage = 'Cancelled By is required to request a cancellation.';
             return;
         }
 
-        this.bannerMessage = undefined;
         this.cancellingRequestId = requestId;
         try {
             const newCase = {
                 Portal_Request_Type__c: 'Cancellation Request',
                 Related_Staffing_Request__c: requestId,
+                Cancelled_By__c: cancelledBy,
                 Subject: `Cancellation Request - ${request.name}`,
                 Description:
                     `Cancellation requested via My Requests for the ${request.role} shift ` +
-                    `at ${request.facilityName} on ${request.shiftDateDisplay}.`
+                    `at ${request.facilityName} on ${request.shiftDateDisplay}, requested by ${cancelledBy}.`
             };
             await createCase({ newCase });
             this.bannerVariant = 'success';

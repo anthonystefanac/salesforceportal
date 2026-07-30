@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Requested_By__c</fullName>
+    <label>Requested By Name</label>
+    <type>Text</type>
+    <length>120</length>
+    <required>true</required>
+    <description>Free-text name of the person at the facility who is requesting this shift, entered by the portal user on Request Staff. Distinct from Requested_By_Contact__c (the portal Contact who submitted the record, set server-side only) - this exists because the person requesting a shift on behalf of a facility is not always the same person logged into the portal.</description>
+</CustomField>

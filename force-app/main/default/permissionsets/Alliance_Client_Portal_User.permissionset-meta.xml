@@ -138,17 +138,19 @@
          even though the picker filters on it. -->
 
     <!-- Staffing_Request__c: creatable fields are what the Request Staff form submits;
-         Status__c, Broadcasted_Date__c, Last_Status_Update__c, Cancellation_Requested__c
-         and Assigned_Contact__c are read-only to the portal - only the Workforce
-         Management integration (server-side Apex) or an allocator ever changes them.
+         Status__c, Broadcasted_Date__c, Last_Status_Update__c, Cancellation_Requested__c,
+         Assigned_Contact__c, and Cancelled_By__c are read-only to the portal - only the
+         Workforce Management integration (server-side Apex), an allocator, or (for
+         Cancelled_By__c) SupportRequestService.flagCancellationRequested ever changes them.
          Requested_By_Contact__c and External_Demand_Id__c are intentionally NOT
          granted: both are set only by trusted server-side Apex and must never be
          client-writable or client-readable. -->
     <!-- Staffing_Request__c.Facility__c is Master-Detail - not subject to FLS,
          the form's facility picker still populates it fine without an entry here.
-         Role__c, Shift_Date__c, Start_Time__c, End_Time__c, Quantity__c, Priority__c
-         and Status__c are all required fields - also not subject to FLS, so none
-         of them get an entry either, even though the form submits most of them. -->
+         Role__c, Shift_Date__c, Start_Time__c, End_Time__c, Quantity__c, Priority__c,
+         Requested_By__c, and Status__c are all required fields - also not subject
+         to FLS, so none of them get an entry either, even though the form submits
+         most of them. -->
     <fieldPermissions>
         <field>Staffing_Request__c.Ward__c</field>
         <readable>true</readable>
@@ -184,6 +186,11 @@
         <readable>true</readable>
         <editable>false</editable>
     </fieldPermissions>
+    <fieldPermissions>
+        <field>Staffing_Request__c.Cancelled_By__c</field>
+        <readable>true</readable>
+        <editable>false</editable>
+    </fieldPermissions>
 
     <!-- Invoice__c: read-only in Phase 1. External_Invoice_Id__c is NOT granted.
          Account__c (Master-Detail) and Invoice_Number__c/Invoice_Date__c/Amount__c/
@@ -196,7 +203,7 @@
     </fieldPermissions>
 
     <!-- Case: used by the Support/Query screen. Subject/Description are the
-         standard fields the record-edit form submits alongside our two custom ones.
+         standard fields the record-edit form submits alongside our three custom ones.
          Status is a required standard field - not subject to FLS, no entry needed. -->
     <fieldPermissions>
         <field>Case.Subject</field>
@@ -215,6 +222,11 @@
     </fieldPermissions>
     <fieldPermissions>
         <field>Case.Related_Staffing_Request__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Case.Cancelled_By__c</field>
         <readable>true</readable>
         <editable>true</editable>
     </fieldPermissions>

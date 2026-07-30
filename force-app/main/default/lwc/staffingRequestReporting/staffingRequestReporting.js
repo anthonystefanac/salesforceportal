@@ -29,6 +29,8 @@ const CSV_COLUMNS = [
     { key: 'status', label: 'Status' },
     { key: 'broadcasted', label: 'Broadcasted' },
     { key: 'cancellationRequested', label: 'Cancellation Requested' },
+    { key: 'requestedBy', label: 'Requested By' },
+    { key: 'cancelledBy', label: 'Cancelled By' },
     { key: 'lastUpdate', label: 'Last Update' }
 ];
 
@@ -91,6 +93,8 @@ export default class StaffingRequestReporting extends LightningElement {
                 status: request.Status__c,
                 broadcasted: request.Broadcasted_Date__c ? 'Yes' : 'No',
                 cancellationRequested: request.Cancellation_Requested__c ? 'Yes' : 'No',
+                requestedBy: request.Requested_By__c || '—',
+                cancelledBy: request.Cancelled_By__c || '—',
                 lastUpdate: request.Last_Status_Update__c,
                 lastUpdateDisplay: formatDateTime(request.Last_Status_Update__c)
             }));

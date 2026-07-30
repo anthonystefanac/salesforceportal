@@ -26,12 +26,14 @@ force-app/main/default/
                        ContentDocumentLinkTrigger — corrects file-sharing
                        visibility on invoice PDFs (see "Screens → components"
                        below, under invoiceList's View / Download button)
-  lwc/                 15 Lightning Web Components total: 12 covering the
+  lwc/                 17 Lightning Web Components total: 13 covering the
                        current screens (including an added Calendar screen for
                        reviewing bookings by day, a header user/account badge -
-                       portalUserBadge, and a Reporting screen -
-                       staffingRequestReporting) plus 4 shared, non-visual
-                       helper modules (dateFormatUtils, sortTableUtils,
+                       portalUserBadge, a Reporting screen -
+                       staffingRequestReporting, and a multi-date calendar
+                       picker for block-booking a shift across several days -
+                       blockDatePicker) plus 4 shared, non-visual helper
+                       modules (dateFormatUtils, sortTableUtils,
                        timeFormatUtils, fileDownloadUtils)
   permissionsets/      Alliance_Client_Portal_User — assign to every portal Contact's User
   sharingSets/         Grants same-Account contacts shared read access
@@ -44,7 +46,7 @@ force-app/main/default/
 | Screen | Components |
 |---|---|
 | Home dashboard | `portalHomeDashboard` (+ `portalDashboardTile`) |
-| Request staff | `requestStaffForm` (+ `facilityPicker`, `wardPicker`) |
+| Request staff | `requestStaffForm` (+ `facilityPicker`, `wardPicker`, `blockDatePicker`) |
 | My requests | `myStaffingRequests` (+ `requestStatusBadge`) |
 | Calendar | `requestStaffCalendar` (+ `requestStatusBadge`) |
 | Invoices | `invoiceList` |
@@ -434,6 +436,88 @@ form, so in practice they can't go blank through normal use, but they're
 included in the check anyway in case those defaults ever change. Ward,
 Specialty, and Notes are genuinely optional on the object and stay that
 way here.
+
+**Requested By is a new required text field**, `Staffing_Request__c.Requested_By__c`
+(label "Requested By Name" — `Requested_By_Contact__c`, the server-set
+Contact lookup, already uses the label "Requested By", so this one is
+labelled differently to stay unambiguous to internal staff looking at both
+on a page layout or list view). It captures the name of whoever at the
+facility is actually asking for this shift, which isn't always the same
+person as the logged-in portal user submitting the form. `requestStaffForm`
+adds it as a plain required `lightning-input`, included in the same
+up-front required-field check as everything else above. Because it's
+`required=true` on the object itself, it isn't subject to Field-Level
+Security at all (the same reasoning already documented for Role__c/Shift_Date__c/etc.
+in the permission set), so no separate field permission grant was needed.
+
+**Booking a block of shifts across multiple days.** Request Staff used to
+have a single `lightning-input[type=date]` for Shift Date. It's now
+`c/blockDatePicker` — a small month-calendar component (adapted from
+`requestStaffCalendar`'s own month-grid math, but for multi-select instead
+of read-only display) that lets a client pick any number of dates, not
+necessarily consecutive, for the exact same Facility/Ward/Role/Times/
+Quantity/Priority/Requested By/Notes. Past days render disabled (can't be
+clicked) — the same "not before today" rule enforced everywhere else a
+Shift Date is set, just moved from a `min` attribute to a per-cell disabled
+state. Selected dates show as a removable chip list below the calendar,
+plus a "Clear all" link.
+
+Submitting fires one `StaffingRequestController.createRequest()` call per
+selected date, **all in flight together via `Promise.allSettled`, not
+sequentially** — a 10-day block booking shouldn't take 10× as long as a
+single-date submission, and `allSettled` (rather than `Promise.all`) means
+one bad date (a stale Facility, an unexpected server error) doesn't wipe
+out the rest, which otherwise perfectly valid dates in the same block don't
+deserve to be punished for. On full success, the success banner reads
+"N staffing requests have been submitted." (or the original singular
+message when N is 1), and the picker resets — re-applying `defaultDate` if
+one was carried in, exactly as the old single-date field did, so a caller
+like `requestStaffCalendar` can still submit another request for the same
+day right after. On a **partial** failure, the banner lists exactly which
+dates failed and why (e.g. "1 of 2 staffing requests submitted. Still
+failed: 2030-01-03 (Facility is no longer available)."), and only the
+dates that actually succeeded are dropped from the picker's selection — the
+failed one stays selected so retrying doesn't resubmit (and duplicate) the
+one that already went through.
+
+**Filtering My Requests by Shift Date.** `myStaffingRequests` already
+supported a `dateFilter` set via a deep link (a Calendar booking click),
+but there was no way to set it directly on the screen itself. A
+`lightning-input[type=date]` next to the search box now does that, with
+`min` pinned to today — this screen already hard-floors to today-onwards
+via `upcomingRequests` regardless, so this is belt-and-suspenders more than
+a new restriction; it just stops the picker from ever being set to a date
+that could never match anything shown here anyway. It shares the exact same
+`dateFilter` state and "Show all requests" clear control the deep-link path
+already used, so no new filtering logic was needed — only the input itself.
+
+**Cancelled By is now a mandatory part of requesting a cancellation.** The
+per-row Request Cancellation action used to be a single `window.confirm`
+("Request cancellation for X? ..."). It's now a single `window.prompt`
+asking who is requesting the cancellation, which replaces the old confirm
+dialog entirely rather than stacking a second native popup on top of it —
+typing a name and clicking OK already **is** the deliberate confirmation.
+Dismissing the prompt (its own Cancel, or Esc) behaves exactly like
+declining the old confirm — a quiet "never mind", no banner. Submitting a
+blank or whitespace-only value, though, is treated as a validation failure,
+not a dismissal: it shows the same guaranteed inline error banner
+("Cancelled By is required to request a cancellation.") this app uses
+everywhere else, and does not create the Case. The entered name travels
+through the existing Case-creation path as a new `Case.Cancelled_By__c`
+text field (the third field added to the standard Case object, alongside
+`Portal_Request_Type__c` and `Related_Staffing_Request__c`), and
+`SupportRequestService.flagCancellationRequested` copies it onto the
+related `Staffing_Request__c.Cancelled_By__c` at the same moment it sets
+`Cancellation_Requested__c = true` — same portal-read-only, server-set-only
+treatment as that field already had.
+
+**Requested By and Cancelled By are now columns on both My Requests and
+Reporting**, inserted right after Cancellation Requested (before Last
+Update) on both tables, matching the column-order convention the two
+screens already share. Both are tagged as secondary fields in the mobile
+card layout (behind each card's "Show more" toggle), consistent with the
+other detail columns there — Request/Facility/Role/Shift Date/Start Time/
+Status/Action remain the only always-visible fields on a phone.
 
 ### Reporting
 
@@ -905,10 +989,10 @@ npm install
 npm run test:unit
 ```
 
-143 Jest tests across all 16 LWCs (including the `sortTableUtils`,
-`dateFormatUtils`, and `fileDownloadUtils` shared modules). This is the only
-thing in this project that's actually been run and confirmed passing in
-this environment.
+160 Jest tests across all 17 LWCs (including `blockDatePicker`'s own
+month-grid/multi-select suite, and the `sortTableUtils`, `dateFormatUtils`,
+and `fileDownloadUtils` shared modules). This is the only thing in this
+project that's actually been run and confirmed passing in this environment.
 
 ### Requires a connected org (not verified here)
 
@@ -937,9 +1021,14 @@ All child objects are Master-Detail to their parent, so read sharing is
   Submitted, Being Worked, Broadcasted, Filled, Unable to Fill, Cancelled.
   `Requested_By_Contact__c` and `External_Demand_Id__c` are intentionally
   not portal-readable — server-set only. `Assigned_Contact__c` (plain text,
-  not a lookup — see "Screens → components" above) and
-  `Cancellation_Requested__c` are portal-readable but not portal-editable —
-  both are set only by trusted server-side Apex. `Role__c` is a
+  not a lookup — see "Screens → components" above),
+  `Cancellation_Requested__c`, and `Cancelled_By__c` are portal-readable but
+  not portal-editable — all three are set only by trusted server-side Apex.
+  `Requested_By__c` (label "Requested By Name" — distinct from
+  `Requested_By_Contact__c`'s "Requested By" label, so the two aren't
+  confused on a page layout or list view) is a required plain-text field the
+  portal *does* set directly, for the name of whoever at the facility is
+  actually requesting the shift. `Role__c` is a
   **restricted** picklist (Clinical Nurse, Registered Nurse, Registered
   Midwife, Enrolled Nurse, Nursing Assistant (AIN), Personal Care Assistant,
   Kitchen Hand, Pantry, Food Services Assistant, Cleaner, Laundry, Assistant
@@ -954,14 +1043,16 @@ All child objects are Master-Detail to their parent, so read sharing is
 - **Invoice__c** (MD → Account) — read-only in Phase 1.
   `External_Invoice_Id__c` is not portal-readable. The PDF itself is a
   standard `ContentVersion`/`ContentDocumentLink`, not a custom field.
-- **Case** (standard object) — reused for the Support/Query screen via two
-  added fields, rather than a new custom object.
+- **Case** (standard object) — reused for the Support/Query screen via
+  three added fields (`Portal_Request_Type__c`, `Related_Staffing_Request__c`,
+  `Cancelled_By__c`), rather than a new custom object.
 
 ## Scope
 
-**In scope**: client login/access model, submit a single shift/staff
-request (including via the calendar entry point), view status + broadcast/fill
-visibility, read-only invoice download, support query/cancellation request.
+**In scope**: client login/access model, submit a shift/staff request for
+one or a block of dates (including via the calendar entry point), view
+status + broadcast/fill visibility, read-only invoice download, support
+query/cancellation request.
 
 **Out of scope for this phase**: full VMS replacement, full roster planning,
 client-side worker selection, payment gateway, advanced compliance

@@ -8,11 +8,12 @@ const DEFAULT_FORM = {
     wardId: undefined,
     role: undefined,
     specialty: undefined,
-    shiftDate: undefined,
+    shiftDates: [],
     startTime: undefined,
     endTime: undefined,
     quantity: '1',
     priority: 'Standard',
+    requestedBy: undefined,
     notes: undefined
 };
 
@@ -52,29 +53,29 @@ const QUANTITY_OPTIONS = Array.from({ length: MAX_QUANTITY }, (_, index) => {
     return { label: value, value };
 });
 
-function todayIso() {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+function extractErrorMessage(error) {
+    return (error && error.body && error.body.message) || 'an unexpected error occurred';
 }
 
 // Mirrors Staffing_Request__c's own required fields (Facility__c is a
 // required Master-Detail relationship; Role__c/Shift_Date__c/Start_Time__c/
-// End_Time__c/Priority__c/Quantity__c are all required=true on the object).
-// Ward__c, Specialty__c, and Notes__c are genuinely optional, so they're
-// left out. Quantity/Priority always carry a default value, so in practice
-// they can't go blank through normal use - included anyway so this stays
-// correct if those defaults ever change.
+// End_Time__c/Priority__c/Quantity__c/Requested_By__c are all required=true
+// on the object), in the same order they appear on the form. Ward__c,
+// Specialty__c, and Notes__c are genuinely optional, so they're left out.
+// Quantity/Priority always carry a default value, so in practice they can't
+// go blank through normal use - included anyway so this stays correct if
+// those defaults ever change. Shift Date is marked isArray: formData.shiftDates
+// is an array of selected dates from c-block-date-picker, not a single
+// truthy/falsy value, so "missing" means empty rather than falsy.
 const REQUIRED_FIELDS = [
     { key: 'facilityId', label: 'Facility' },
     { key: 'role', label: 'Role' },
-    { key: 'shiftDate', label: 'Shift Date' },
+    { key: 'shiftDates', label: 'Shift Date', isArray: true },
     { key: 'startTime', label: 'Start Time' },
     { key: 'endTime', label: 'End Time' },
     { key: 'quantity', label: 'Quantity' },
-    { key: 'priority', label: 'Priority' }
+    { key: 'priority', label: 'Priority' },
+    { key: 'requestedBy', label: 'Requested By' }
 ];
 
 export default class RequestStaffForm extends LightningElement {
@@ -88,10 +89,14 @@ export default class RequestStaffForm extends LightningElement {
     _defaultDate;
 
     /**
-     * Set by callers (e.g. requestStaffCalendar) to pre-fill Shift Date.
+     * Set by callers (e.g. requestStaffCalendar) to pre-fill a Shift Date.
      * A setter rather than a plain field so a later change - picking a
      * different calendar day while this form instance stays mounted -
-     * updates the field live, not just on first render.
+     * updates the field live, not just on first render. Passed straight
+     * through to c-block-date-picker's own default-date, which is what
+     * actually adds it to the selected-dates list and pre-selects it - this
+     * component only tracks the raw value so the template binding stays
+     * reactive.
      */
     @api
     get defaultDate() {
@@ -100,9 +105,6 @@ export default class RequestStaffForm extends LightningElement {
 
     set defaultDate(value) {
         this._defaultDate = value;
-        if (value) {
-            this.formData = { ...this.formData, shiftDate: value };
-        }
     }
 
     // The Calendar screen no longer embeds this form directly - it navigates
@@ -124,6 +126,10 @@ export default class RequestStaffForm extends LightningElement {
 
     handleWardChange(event) {
         this.formData = { ...this.formData, wardId: event.detail.wardId };
+    }
+
+    handleDatesChange(event) {
+        this.formData = { ...this.formData, shiftDates: event.detail.dates };
     }
 
     handleFieldChange(event) {
@@ -154,10 +160,6 @@ export default class RequestStaffForm extends LightningElement {
         return !!this.bannerMessage;
     }
 
-    get minShiftDate() {
-        return todayIso();
-    }
-
     get bannerClass() {
         return this.bannerVariant === 'success'
             ? 'request-staff-form__banner request-staff-form__banner_success'
@@ -165,7 +167,10 @@ export default class RequestStaffForm extends LightningElement {
     }
 
     get missingRequiredFieldLabels() {
-        return REQUIRED_FIELDS.filter((field) => !this.formData[field.key]).map((field) => field.label);
+        return REQUIRED_FIELDS.filter((field) => {
+            const value = this.formData[field.key];
+            return field.isArray ? !value || value.length === 0 : !value;
+        }).map((field) => field.label);
     }
 
     async handleSubmit() {
@@ -174,11 +179,11 @@ export default class RequestStaffForm extends LightningElement {
         // `required` on these inputs only drives native validation UI when
         // something calls reportValidity() - report it for the "Complete
         // this field" styling on the fields owned directly by this
-        // component (Facility/Ward live inside their own child components,
-        // whose internal validity can't be reached from here). The actual
-        // gate is the value check below, not this call's return value -
-        // same reasoning as the Subject fix on the Support form: native
-        // validity alone isn't trusted on this site type.
+        // component (Facility/Ward/Shift Date live inside their own child
+        // components, whose internal validity can't be reached from here).
+        // The actual gate is the value check below, not this call's return
+        // value - same reasoning as the Subject fix on the Support form:
+        // native validity alone isn't trusted on this site type.
         this.template.querySelectorAll('lightning-input, lightning-combobox').forEach((element) => {
             element.reportValidity();
         });
@@ -191,18 +196,6 @@ export default class RequestStaffForm extends LightningElement {
                 new ShowToastEvent({
                     title: 'Unable to submit request',
                     message,
-                    variant: 'error'
-                })
-            );
-            return;
-        }
-
-        if (this.formData.shiftDate && this.formData.shiftDate < todayIso()) {
-            this.showBanner('error', 'Shift date cannot be in the past.');
-            this.dispatchEvent(
-                new ShowToastEvent({
-                    title: 'Unable to submit request',
-                    message: 'Shift date cannot be in the past.',
                     variant: 'error'
                 })
             );
@@ -223,32 +216,78 @@ export default class RequestStaffForm extends LightningElement {
 
         this.isSubmitting = true;
         try {
-            const newRequest = {
+            const baseRequest = {
                 Facility__c: this.formData.facilityId,
                 Ward__c: this.formData.wardId,
                 Role__c: this.formData.role,
                 Specialty__c: this.formData.specialty,
-                Shift_Date__c: this.formData.shiftDate,
                 Start_Time__c: this.formData.startTime,
                 End_Time__c: this.formData.endTime,
                 Quantity__c: Number(this.formData.quantity),
                 Priority__c: this.formData.priority,
+                Requested_By__c: this.formData.requestedBy,
                 Notes__c: this.formData.notes
             };
-            await createRequest({ newRequest });
-            // Re-apply defaultDate so a caller (e.g. requestStaffCalendar) can
-            // submit multiple requests for the same selected day in a row.
-            this.formData = { ...DEFAULT_FORM, shiftDate: this._defaultDate };
-            this.showBanner('success', 'Your staffing request has been submitted.');
-            this.dispatchEvent(
-                new ShowToastEvent({
-                    title: 'Request submitted',
-                    message: 'Your staffing request has been submitted.',
-                    variant: 'success'
-                })
+            const shiftDates = this.formData.shiftDates;
+
+            // One Apex call per selected date, all in flight together rather
+            // than sequentially - a "block booking" of many days shouldn't
+            // take N times as long as a single-date submit. Promise.allSettled
+            // (not Promise.all) so one bad date - a stale Facility, an
+            // unexpected server error - doesn't wipe out the rest, which
+            // otherwise perfectly valid dates in the same block don't
+            // deserve to be punished for.
+            const results = await Promise.allSettled(
+                shiftDates.map((shiftDate) =>
+                    createRequest({ newRequest: { ...baseRequest, Shift_Date__c: shiftDate } })
+                )
             );
+
+            const succeededDates = shiftDates.filter((date, index) => results[index].status === 'fulfilled');
+            const failedEntries = shiftDates
+                .map((shiftDate, index) => ({ shiftDate, result: results[index] }))
+                .filter((entry) => entry.result.status === 'rejected');
+
+            if (failedEntries.length === 0) {
+                const message =
+                    shiftDates.length === 1
+                        ? 'Your staffing request has been submitted.'
+                        : `${shiftDates.length} staffing requests have been submitted.`;
+                this.resetAfterSuccess();
+                this.showBanner('success', message);
+                this.dispatchEvent(
+                    new ShowToastEvent({ title: 'Request submitted', message, variant: 'success' })
+                );
+            } else {
+                const failureList = failedEntries
+                    .map((entry) => `${entry.shiftDate} (${extractErrorMessage(entry.result.reason)})`)
+                    .join('; ');
+                const message =
+                    succeededDates.length > 0
+                        ? `${succeededDates.length} of ${shiftDates.length} staffing requests submitted. ` +
+                          `Still failed: ${failureList}.`
+                        : `Unable to submit: ${failureList}.`;
+                this.showBanner('error', message);
+                this.dispatchEvent(
+                    new ShowToastEvent({ title: 'Some requests could not be submitted', message, variant: 'error' })
+                );
+
+                // Only drop the dates that actually succeeded, so a retry
+                // doesn't re-submit (and duplicate) ones that already went
+                // through - the failed dates stay selected for another try.
+                if (succeededDates.length > 0) {
+                    this.formData = {
+                        ...this.formData,
+                        shiftDates: shiftDates.filter((date) => !succeededDates.includes(date))
+                    };
+                    const picker = this.template.querySelector('c-block-date-picker');
+                    if (picker) {
+                        picker.removeDates(succeededDates);
+                    }
+                }
+            }
         } catch (error) {
-            const message = (error && error.body && error.body.message) || 'An unexpected error occurred.';
+            const message = extractErrorMessage(error);
             this.showBanner('error', message);
             this.dispatchEvent(
                 new ShowToastEvent({
@@ -259,6 +298,19 @@ export default class RequestStaffForm extends LightningElement {
             );
         } finally {
             this.isSubmitting = false;
+        }
+    }
+
+    // Re-apply defaultDate so a caller (e.g. requestStaffCalendar) can submit
+    // more requests for the same selected day in a row.
+    resetAfterSuccess() {
+        this.formData = { ...DEFAULT_FORM, shiftDates: this._defaultDate ? [this._defaultDate] : [] };
+        const picker = this.template.querySelector('c-block-date-picker');
+        if (picker) {
+            picker.clearSelection();
+            if (this._defaultDate) {
+                picker.defaultDate = this._defaultDate;
+            }
         }
     }
 

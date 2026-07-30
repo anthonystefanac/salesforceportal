@@ -10,7 +10,8 @@ public with sharing class StaffingRequestController {
             SELECT Id, Name, Facility__r.Name, Ward__r.Name, Role__c, Specialty__c,
                    Shift_Date__c, Start_Time__c, End_Time__c, Quantity__c, Priority__c,
                    Status__c, Broadcasted_Date__c, Last_Status_Update__c,
-                   Cancellation_Requested__c, Assigned_Contact__c
+                   Cancellation_Requested__c, Assigned_Contact__c, Requested_By__c,
+                   Cancelled_By__c
             FROM Staffing_Request__c
             WHERE Facility__r.Account__c = :accountId
             WITH SECURITY_ENFORCED

@@ -20,15 +20,28 @@
             <template if:true={hasBanner}>
                 <div class={bannerClass}>{bannerMessage}</div>
             </template>
-            <div class="my-requests__search">
-                <lightning-input
-                    type="search"
-                    label="Search requests"
-                    variant="label-hidden"
-                    placeholder="Search by request, facility, ward, role, specialty, or status"
-                    value={searchTerm}
-                    onchange={handleSearchChange}
-                ></lightning-input>
+            <div class="my-requests__filters">
+                <div class="my-requests__search">
+                    <lightning-input
+                        type="search"
+                        label="Search requests"
+                        variant="label-hidden"
+                        placeholder="Search by request, facility, ward, role, specialty, or status"
+                        value={searchTerm}
+                        onchange={handleSearchChange}
+                    ></lightning-input>
+                </div>
+                <div class="my-requests__date-filter">
+                    <lightning-input
+                        type="date"
+                        label="Filter by Shift Date"
+                        variant="label-hidden"
+                        placeholder="Filter by Shift Date"
+                        value={dateFilter}
+                        min={minDateFilter}
+                        onchange={handleDateFilterChange}
+                    ></lightning-input>
+                </div>
             </div>
             <template if:false={hasRequests}>
                 <div class="my-requests__panel">
@@ -94,6 +107,8 @@
                                 </td>
                                 <td data-label="Broadcasted" class="my-requests__cell_secondary">{request.broadcasted}</td>
                                 <td data-label="Cancellation Requested" class="my-requests__cell_secondary">{request.cancellationRequested}</td>
+                                <td data-label="Requested By" class="my-requests__cell_secondary">{request.requestedBy}</td>
+                                <td data-label="Cancelled By" class="my-requests__cell_secondary">{request.cancelledBy}</td>
                                 <td data-label="Last Update" class="my-requests__cell_secondary">{request.lastUpdateDisplay}</td>
                                 <td class="my-requests__toggle-cell">
                                     <button

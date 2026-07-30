@@ -30,16 +30,8 @@
                     onchange={handleFieldChange}
                 ></lightning-input>
             </div>
-            <div class="request-staff-form__field">
-                <lightning-input
-                    type="date"
-                    label="Shift Date"
-                    data-field="shiftDate"
-                    value={formData.shiftDate}
-                    min={minShiftDate}
-                    onchange={handleFieldChange}
-                    required
-                ></lightning-input>
+            <div class="request-staff-form__field request-staff-form__field_full">
+                <c-block-date-picker default-date={defaultDate} ondatechange={handleDatesChange}></c-block-date-picker>
             </div>
             <div class="request-staff-form__field">
                 <lightning-input
@@ -80,6 +72,15 @@
                     onchange={handleFieldChange}
                     required
                 ></lightning-combobox>
+            </div>
+            <div class="request-staff-form__field">
+                <lightning-input
+                    label="Requested By"
+                    data-field="requestedBy"
+                    value={formData.requestedBy}
+                    onchange={handleFieldChange}
+                    required
+                ></lightning-input>
             </div>
             <div class="request-staff-form__field request-staff-form__field_full">
                 <lightning-textarea

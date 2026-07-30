@@ -18,7 +18,8 @@ private class SupportRequestServiceTest {
             Subject = 'Need to cancel a shift',
             Description = 'Overstaffed for this shift.',
             Portal_Request_Type__c = 'Cancellation Request',
-            Related_Staffing_Request__c = request.Id
+            Related_Staffing_Request__c = request.Id,
+            Cancelled_By__c = 'Jane Doe'
         );
 
         Test.startTest();
@@ -34,7 +35,7 @@ private class SupportRequestServiceTest {
         System.assertEquals(request.Id, inserted.Related_Staffing_Request__c);
 
         Staffing_Request__c updatedRequest = [
-            SELECT Cancellation_Requested__c
+            SELECT Cancellation_Requested__c, Cancelled_By__c
             FROM Staffing_Request__c
             WHERE Id = :request.Id
         ];
@@ -42,6 +43,11 @@ private class SupportRequestServiceTest {
             true,
             updatedRequest.Cancellation_Requested__c,
             'A Cancellation Request Case must flag the related Staffing_Request__c'
+        );
+        System.assertEquals(
+            'Jane Doe',
+            updatedRequest.Cancelled_By__c,
+            'Cancelled_By__c from the Case must be copied onto the related Staffing_Request__c'
         );
     }
 

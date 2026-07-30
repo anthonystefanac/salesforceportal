@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Cancelled_By__c</fullName>
+    <label>Cancelled By</label>
+    <type>Text</type>
+    <length>120</length>
+    <required>false</required>
+    <description>Name of the person requesting the cancellation, captured on the My Requests row action before a Cancellation Request Case is created. Copied onto the related Staffing_Request__c's own Cancelled_By__c field by SupportRequestService.flagCancellationRequested.</description>
+</CustomField>

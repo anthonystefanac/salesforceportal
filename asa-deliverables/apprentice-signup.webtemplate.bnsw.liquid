@@ -415,6 +415,8 @@ var asaApi = {
     if (f.type === "date"){
       if (!parseISODate(v)) return "Choose a date from the calendar, or enter a complete date.";
       if (f.pastOnly && v >= todayISO()) return "Your date of birth must be in the past.";
+      if (f.notFuture && v > todayISO()) return "This date can't be in the future.";
+      if (f.notBefore && parseISODate(answers[f.notBefore]) && v < answers[f.notBefore]) return "This date can't be before the start date.";
     }
     if (f.digits && !new RegExp("^\\d{" + f.digits + "}$").test(v.replace(/\s/g, ""))) return RULES[f.id] ? RULES[f.id](v) : "Enter " + f.digits + " digits (numbers only).";
     if (RULES[f.id]) return RULES[f.id](v);
@@ -498,8 +500,8 @@ var asaApi = {
     ]},
     { title:"Prior Employment", sub:"Any history with the same employer.", fields:[
       { id:"priorEmployer", column:"bnsw_previouslyworkedwithbusiness", type:"scale", bool:true, required:true, label:"Previously Worked With This Business?", options:["Yes","No"] },
-      { id:"priorStart", column:"bnsw_priorworkstarted", type:"text", mono:true, required:true, date:true, label:"Previously Worked — Started", hint:"Format: dd/mm/yyyy", showIf:function(a){return a.priorEmployer==="Yes";} },
-      { id:"priorEnd", column:"bnsw_priorworkended", type:"text", mono:true, required:true, date:true, label:"Previously Worked — Ended", hint:"Format: dd/mm/yyyy", showIf:function(a){return a.priorEmployer==="Yes";} },
+      { id:"priorStart", column:"bnsw_priorworkstarted", type:"date", required:true, notFuture:true, label:"Previously Worked — Started", hint:"Pick a date, or type it as day / month / year", showIf:function(a){return a.priorEmployer==="Yes";} },
+      { id:"priorEnd", column:"bnsw_priorworkended", type:"date", required:true, notFuture:true, notBefore:"priorStart", label:"Previously Worked — Ended", hint:"Pick a date, or type it as day / month / year", showIf:function(a){return a.priorEmployer==="Yes";} },
       { id:"priorEmploymentType", column:"bnsw_priorworkemploymenttype", type:"select", required:true, label:"Previously Worked — Employment Type",
         values:{"Full Time":1,"Part Time":2,"Casual":3}, options:["Full Time","Part Time","Casual"], showIf:function(a){return a.priorEmployer==="Yes";} },
       { id:"priorHours", column:"bnsw_priorworkhoursperweek", type:"text", number:true, label:"Average Hours per Week (if Part Time or Casual)",
@@ -512,11 +514,11 @@ var asaApi = {
     { title:"Prior Study", sub:"Other qualifications or current study.", fields:[
       { id:"completedQual", column:"bnsw_completedqualification", type:"scale", bool:true, required:true, label:"Have You Completed a Qualification?", options:["Yes","No"] },
       { id:"qualDetails", column:"bnsw_qualificationdetails", type:"textarea", required:true, label:"Qualification Details", showIf:function(a){return a.completedQual==="Yes";} },
-      { id:"qualStarted", column:"bnsw_qualificationstudystarted", type:"text", mono:true, required:true, date:true, label:"Completed Study — Started", hint:"Format: dd/mm/yyyy", showIf:function(a){return a.completedQual==="Yes";} },
-      { id:"qualFinished", column:"bnsw_qualificationstudyfinished", type:"text", mono:true, required:true, date:true, label:"Completed Study — Finished", hint:"Format: dd/mm/yyyy", showIf:function(a){return a.completedQual==="Yes";} },
+      { id:"qualStarted", column:"bnsw_qualificationstudystarted", type:"date", required:true, notFuture:true, label:"Completed Study — Started", hint:"Pick a date, or type it as day / month / year", showIf:function(a){return a.completedQual==="Yes";} },
+      { id:"qualFinished", column:"bnsw_qualificationstudyfinished", type:"date", required:true, notFuture:true, notBefore:"qualStarted", label:"Completed Study — Finished", hint:"Pick a date, or type it as day / month / year", showIf:function(a){return a.completedQual==="Yes";} },
       { id:"currentlyStudying", column:"bnsw_currentlystudying", type:"scale", bool:true, required:true, label:"Currently Studying Now?", options:["Yes","No"] },
       { id:"studyName", column:"bnsw_currentstudyname", type:"text", required:true, label:"Currently Studying — Name and Title", showIf:function(a){return a.currentlyStudying==="Yes";} },
-      { id:"studyStart", column:"bnsw_currentstudystartdate", type:"text", mono:true, required:true, date:true, label:"Currently Studying — Start Date", hint:"Format: dd/mm/yyyy", showIf:function(a){return a.currentlyStudying==="Yes";} }
+      { id:"studyStart", column:"bnsw_currentstudystartdate", type:"date", required:true, notFuture:true, label:"Currently Studying — Start Date", hint:"Pick a date, or type it as day / month / year", showIf:function(a){return a.currentlyStudying==="Yes";} }
     ]},
     { title:"Parent / Guardian", sub:"Required only if you're under 18.", fields:[
       { id:"under18", column:"bnsw_under18", type:"scale", bool:true, required:true, label:"Are You Under 18 Years of Age?", options:["Yes","No"] },
@@ -569,7 +571,7 @@ var asaApi = {
       if (f.digits) extra += ' inputmode="numeric" pattern="[0-9]*"'; // no maxlength: a pasted "0412 345 678" is trimmed to digits first
       if (f.autocomplete) extra += ' autocomplete="' + f.autocomplete + '"';
       if (f.type === "email") extra += ' autocapitalize="off" spellcheck="false"';
-      if (f.type === "date") extra += ' min="1900-01-01" max="' + (f.pastOnly ? todayISO() : "2100-12-31") + '"';
+      if (f.type === "date") extra += ' min="1900-01-01" max="' + ((f.pastOnly || f.notFuture) ? todayISO() : "2100-12-31") + '"';
       return '<div class="field" data-field="' + f.id + '">' +
         '<label class="' + reqClass + '" for="' + f.id + '">' + f.label + tagHTML(f) + hint + '</label>' +
         '<input type="' + f.type + '" id="' + f.id + '"' + monoAttr + extra + ((f.id === "trackingCode" && LOCKED_CODE) ? ' readonly' : '') + ' value="' + esc(answers[f.id] || "") + '">' +

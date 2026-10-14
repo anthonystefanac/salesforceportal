@@ -1,0 +1,779 @@
+{%- comment -%}
+  Web Template: Apprentice Sign-Up (multi-step form)
+  ---------------------------------------------------
+  Paste this whole file into Power Pages Studio as a Web Template
+  (or a page's "Edit code" panel if attaching directly to one page),
+  then assign it as the Page Template for your Sign-Up page.
+
+  BEFORE GOING LIVE:
+  1. Create the bnsw_apprenticesignup table using dataverse-table-schema.csv
+     (rename the bnsw_ prefix below to match your solution's actual publisher prefix).
+  2. Add a Table Permission for bnsw_apprenticesignup scoped to this website
+     (Contact/Global as appropriate — see security-and-permissions.md).
+  3. Add a site setting named  Webapi/bnsw_apprenticesignup/enabled  with value  true
+     (Power Pages Web API only exposes tables you explicitly enable).
+  4. Add a site setting named  Webapi/bnsw_apprenticesignup/fields  listing the columns
+     this page writes (see security-and-permissions.md) — this is REQUIRED, not optional.
+  5. Confirm the table's entity set name (Table properties > plural logical name) —
+     update ENTITY_SET below if it differs from "bnsw_apprenticesignups".
+  6. Confirm CONTACT_NAV below matches the Contact lookup's navigation property name
+     (the lookup column's *schema* name, case-sensitive, e.g. bnsw_Contact).
+  7. Tracking-code check (no sign-in): the page only shows the form for a tracking code
+     that exists in the bnsw_signupinvite table with status Issued and not expired.
+     Run Enable-TrackingCodeCheck.ps1 and follow TRACKING-CODE-CHECK.md. The page must
+     be open to everyone (no page permission); anonymous visitors need Read on
+     bnsw_signupinvite (for the check below) and Create on bnsw_apprenticesignup.
+     Do NOT enable the Web API for bnsw_signupinvite.
+
+  Applicants get a personal link from their sign-up email:
+     https://<your-site>/<page-path>?trackingcode=ABC123
+{%- endcomment -%}
+{%- comment -%} ---- Settings ----
+  asa_logo_url     : address of the ASA logo image (upload it as a Web File, or copy the image
+                     address from the ASA website). Leave '' to use the ASA logo built into this template.
+  asa_privacy_url  : privacy policy link shown in the footer. Leave '' to hide.
+  asa_use_webfont  : true loads the Figtree font from Google Fonts (closest match to the ASA
+                     website). false uses the device's own font, with no external calls.
+{%- endcomment -%}
+{%- assign asa_logo_url = '' -%}
+{%- assign asa_privacy_url = '' -%}
+{%- assign asa_use_webfont = true -%}
+{%- comment -%} The ASA logo (from the brand SVG), used in the header when asa_logo_url is ''. {%- endcomment -%}
+{%- capture asa_logo_svg -%}<svg class="brand-svg" viewBox="0 0 437 94" role="img" aria-label="Apprenticeship Support Australia" xmlns="http://www.w3.org/2000/svg"><path d="M17.5526 32.9927H16.0857C15.823 32.9927 15.6479 32.8832 15.5603 32.6424L13.6556 27.5851H4.373L2.46831 32.6424C2.38074 32.8832 2.20559 32.9927 1.94288 32.9927H0.432262C0.279012 32.9927 0.147654 32.927 0.0819752 32.8395C-0.00559665 32.73 -0.0274906 32.5767 0.0381883 32.4235L5.99308 17.0327C6.62798 15.347 7.24098 13.4204 7.65695 11.7346C7.70073 11.4938 7.87587 11.3187 8.16048 11.3187H9.86813C10.1308 11.3187 10.3279 11.4719 10.3717 11.7346C10.7439 13.1796 11.3131 14.9529 12.0574 17.0108L17.9685 32.3797C18.0123 32.5548 18.0123 32.7081 17.9247 32.8176C17.8372 32.927 17.7277 32.9708 17.5745 32.9708L17.5526 32.9927ZM5.24872 25.2645H12.758L10.2184 18.7185C9.71488 17.4049 9.23324 15.7848 8.99241 14.6683C8.77349 15.741 8.31373 17.2736 7.76641 18.7185L5.24872 25.2645ZM27.076 32.9927H25.6967C25.4121 32.9927 25.2151 32.7957 25.2151 32.5111V11.8222C25.2151 11.5157 25.3902 11.3406 25.6967 11.3406H32.6806C36.9278 11.3406 39.4674 13.8145 39.4674 17.9522C39.4674 22.4622 36.5557 24.8266 31.0605 24.8266H27.5577V32.5111C27.5577 32.8176 27.3825 32.9927 27.076 32.9927ZM27.5358 22.5279H31.0386C35.0232 22.5279 37.0592 20.9735 37.0592 17.9303C37.0592 15.1718 35.461 13.5955 32.6587 13.5955H27.5358V22.5279ZM48.0714 32.9927H46.6921C46.4075 32.9927 46.2105 32.7957 46.2105 32.5111V11.8222C46.2105 11.5157 46.3856 11.3406 46.6921 11.3406H53.676C57.9232 11.3406 60.4628 13.8145 60.4628 17.9522C60.4628 22.4622 57.551 24.8266 52.0559 24.8266H48.553V32.5111C48.553 32.8176 48.3779 32.9927 48.0714 32.9927ZM48.553 22.5279H52.0559C56.0404 22.5279 58.0765 20.9735 58.0765 17.9303C58.0765 15.1718 56.4783 13.5955 53.676 13.5955H48.553V22.5279ZM82.0055 32.9927H80.4949C80.254 32.9927 80.1008 32.8832 80.0132 32.6424L78.1304 28.023C77.0139 25.155 75.3719 23.929 72.6353 23.929H69.5265V32.5111C69.5265 32.8176 69.3513 32.9927 69.0448 32.9927H67.6656C67.381 32.9927 67.1839 32.7957 67.1839 32.5111V11.8222C67.1839 11.5157 67.3591 11.3406 67.6656 11.3406H75.2187C79.1813 11.3406 81.5457 13.5736 81.5457 17.2954C81.5457 20.0759 80.0351 22.0681 77.1671 23.0971C77.1233 23.0971 77.0796 23.119 77.0577 23.1409C77.0577 23.1409 77.1014 23.1847 77.1671 23.2065C78.4588 23.8852 79.4659 25.155 80.2321 27.1035L82.3339 32.3797C82.4214 32.5986 82.3777 32.7519 82.3339 32.8395C82.2682 32.9489 82.1368 33.0146 81.9836 33.0146L82.0055 32.9927ZM69.5484 21.6303H73.4891C77.1233 21.6303 79.2251 20.0759 79.2251 17.3611C79.2251 14.9967 77.7363 13.5955 75.2624 13.5955H69.5703V21.6303H69.5484ZM104.774 32.9927H92.0543C91.7697 32.9927 91.5727 32.7957 91.5727 32.5111V11.8222C91.5727 11.5157 91.7478 11.3406 92.0543 11.3406H104.665C104.84 11.3406 104.971 11.4062 105.059 11.5157C105.146 11.6252 105.146 11.7784 105.103 11.9317L104.73 13.2234C104.687 13.4642 104.511 13.6174 104.227 13.6174H93.9153V20.7545H102.672C102.957 20.7545 103.154 20.9516 103.154 21.2362V22.5279C103.154 22.8344 102.979 23.0095 102.672 23.0095H93.9153V30.7158H104.774C105.059 30.7158 105.256 30.9129 105.256 31.1975V32.4892C105.256 32.7957 105.081 32.9708 104.774 32.9708V32.9927ZM129.469 32.9927H127.674C127.433 32.9927 127.28 32.8832 127.193 32.6424C126.864 31.92 126.339 30.9129 125.594 29.6431L117.385 16.7481C117.034 16.1351 116.706 15.5221 116.509 15.0843C116.618 15.9162 116.684 16.9233 116.684 17.8647V32.5111C116.684 32.8176 116.509 32.9927 116.202 32.9927H114.779C114.495 32.9927 114.298 32.7957 114.298 32.5111V11.8222C114.298 11.5157 114.473 11.3406 114.779 11.3406H116.596C116.837 11.3406 116.99 11.45 117.078 11.6908C117.45 12.4571 118.085 13.705 118.676 14.6464L126.886 27.5414C127.193 28.0449 127.521 28.636 127.762 29.1833C127.63 28.2857 127.609 27.213 127.609 26.4467V11.8003C127.609 11.4938 127.784 11.3187 128.09 11.3187H129.469C129.754 11.3187 129.951 11.5157 129.951 11.8003V32.4892C129.951 32.7957 129.776 32.9708 129.469 32.9708V32.9927ZM145.867 32.9927H144.444C144.16 32.9927 143.963 32.7957 143.963 32.5111V13.5955H137.636C137.351 13.5955 137.154 13.3985 137.154 13.1139V11.8222C137.154 11.5157 137.329 11.3406 137.636 11.3406H152.654C152.939 11.3406 153.136 11.5376 153.136 11.8222V13.1139C153.136 13.4204 152.961 13.5955 152.654 13.5955H146.327V32.5111C146.327 32.8176 146.152 32.9927 145.845 32.9927H145.867ZM163.36 32.9927H161.98C161.696 32.9927 161.521 32.7957 161.521 32.5111V11.8222C161.521 11.5157 161.696 11.3406 161.98 11.3406H163.36C163.644 11.3406 163.82 11.5376 163.82 11.8222V32.5111C163.82 32.8176 163.644 32.9927 163.36 32.9927ZM181.4 33.2992C176.08 33.2992 172.774 29.0301 172.774 22.1557C172.774 15.2813 176.08 10.9903 181.4 10.9903C183.063 10.9903 184.027 11.1654 185.581 11.7784L186.785 12.2382C187.048 12.3476 187.157 12.5885 187.048 12.8512L186.654 14.0991C186.544 14.4275 186.325 14.4494 186.216 14.4494C186.15 14.4494 186.085 14.4494 186.019 14.4056L184.793 13.902C183.698 13.4642 182.866 13.3328 181.378 13.3328C177.415 13.3328 175.116 16.5511 175.116 22.1338C175.116 27.7165 177.393 30.9348 181.378 30.9348C182.691 30.9348 183.567 30.7596 184.859 30.278L186.041 29.8401C186.26 29.7525 186.523 29.8401 186.632 30.1247L187.07 31.3945C187.157 31.6353 187.07 31.8981 186.807 32.0075L185.625 32.4673C184.005 33.0803 182.976 33.2773 181.4 33.2773V33.2992ZM208.985 32.9927H196.265C195.98 32.9927 195.805 32.7957 195.805 32.5111V11.8222C195.805 11.5157 195.98 11.3406 196.265 11.3406H208.875C209.05 11.3406 209.182 11.4062 209.269 11.5157C209.357 11.6252 209.379 11.7784 209.313 11.9317L208.941 13.2234C208.897 13.4642 208.722 13.6174 208.437 13.6174H198.126V20.7545H206.883C207.168 20.7545 207.343 20.9516 207.343 21.2362V22.5279C207.343 22.8344 207.168 23.0095 206.883 23.0095H198.126V30.7158H208.985C209.269 30.7158 209.444 30.9129 209.444 31.1975V32.4892C209.444 32.7957 209.269 32.9708 208.985 32.9708V32.9927ZM222.777 33.2992C220.807 33.2992 219.165 32.9927 217.282 32.2265L216.122 31.7667C215.859 31.6572 215.75 31.4164 215.859 31.1537L216.297 29.8839C216.406 29.5774 216.625 29.5336 216.713 29.5336C216.779 29.5336 216.844 29.5336 216.888 29.5774L218.048 30.0372C219.493 30.5845 220.851 30.9567 222.777 30.9567C225.164 30.9567 227.55 29.8182 227.55 27.2786C227.55 25.8556 226.565 24.761 224.573 23.929L220.566 22.3308C217.414 21.0829 216.144 19.4191 216.144 16.5949C216.144 13.1358 218.618 10.9903 222.624 10.9903C224.047 10.9903 225.448 11.2311 227.046 11.7784L228.491 12.282C228.776 12.3914 228.885 12.6322 228.798 12.9169L228.404 14.1866C228.294 14.4713 228.053 14.5807 227.791 14.4713L226.433 14.0115C225.142 13.5736 223.96 13.3766 222.624 13.3766C220.128 13.3766 218.508 14.6464 218.508 16.6168C218.508 17.7114 218.858 19.1126 221.486 20.1634L225.47 21.7616C228.623 23.0095 229.958 24.6734 229.958 27.3005C229.958 30.9567 227.156 33.3211 222.799 33.3211L222.777 33.2992ZM253.296 32.9927H251.873C251.588 32.9927 251.391 32.7957 251.391 32.5111V23.0314H240.817V32.5111C240.817 32.8176 240.642 32.9927 240.357 32.9927H238.978C238.693 32.9927 238.518 32.7957 238.518 32.5111V11.8222C238.518 11.5157 238.693 11.3406 238.978 11.3406H240.357C240.642 11.3406 240.817 11.5376 240.817 11.8222V20.7545H251.391V11.8222C251.391 11.5157 251.567 11.3406 251.873 11.3406H253.296C253.581 11.3406 253.756 11.5376 253.756 11.8222V32.5111C253.756 32.8176 253.581 32.9927 253.296 32.9927ZM265.49 32.9927H264.111C263.827 32.9927 263.651 32.7957 263.651 32.5111V11.8222C263.651 11.5157 263.827 11.3406 264.111 11.3406H265.49C265.775 11.3406 265.95 11.5376 265.95 11.8222V32.5111C265.95 32.8176 265.775 32.9927 265.49 32.9927ZM276.24 32.9927C275.955 32.9927 275.78 32.7957 275.78 32.5111V11.8222C275.78 11.5157 275.955 11.3406 276.24 11.3406H283.224C287.471 11.3406 290.011 13.8145 290.011 17.9522C290.011 22.4622 287.099 24.8266 281.604 24.8266H278.101V32.5111C278.101 32.8176 277.926 32.9927 277.641 32.9927H276.24ZM278.101 22.5279H281.604C285.588 22.5279 287.624 20.9735 287.624 17.9303C287.624 15.1718 286.026 13.5955 283.224 13.5955H278.101V22.5279ZM228.141 86.4991L227.528 88.0973C227.528 88.0973 227.44 88.2068 227.375 88.2068H226.149C226.039 88.2068 225.996 88.1411 226.039 88.0316L228.229 82.4489C228.601 81.4418 228.951 80.4348 229.214 79.4277C229.214 79.3401 229.279 79.2963 229.367 79.2963H230.921C230.921 79.2963 231.053 79.3401 231.075 79.4058C231.337 80.4129 231.688 81.42 232.06 82.427L234.249 88.0097C234.249 88.0097 234.249 88.1849 234.14 88.1849H232.914C232.914 88.1849 232.782 88.1411 232.76 88.0754L232.147 86.4772H228.163L228.141 86.4991ZM231.644 85.2074L230.965 83.5436C230.681 82.7554 230.374 81.8359 230.243 81.1791C230.199 81.0478 230.068 81.0478 230.046 81.1791C229.914 81.814 229.608 82.7335 229.301 83.5436L228.645 85.2074H231.644ZM243.904 84.6163C243.904 86.9808 242.634 88.3381 240.489 88.3381C238.343 88.3381 237.073 86.9808 237.073 84.6163V79.4496C237.073 79.4496 237.117 79.3182 237.205 79.3182H238.365C238.365 79.3182 238.496 79.362 238.496 79.4496V84.6163C238.496 86.1488 239.219 87.0027 240.489 87.0027C241.758 87.0027 242.459 86.127 242.459 84.6163V79.4496C242.459 79.4496 242.503 79.3182 242.59 79.3182H243.751C243.751 79.3182 243.882 79.362 243.882 79.4496V84.6163H243.904ZM249.487 84.069C247.932 83.4779 247.363 82.8211 247.363 81.5951C247.363 80.0626 248.523 79.1869 250.362 79.1869C251.063 79.1869 251.72 79.2963 252.355 79.4934L253.099 79.7342C253.099 79.7342 253.23 79.8437 253.187 79.9093L252.836 80.8726C252.836 80.8726 252.727 80.9821 252.661 80.9602L251.983 80.7413C251.457 80.5661 250.932 80.4786 250.362 80.4786C249.443 80.4786 248.83 80.9164 248.83 81.5732C248.83 82.0986 249.158 82.4708 250.056 82.7992L251.457 83.3246C252.946 83.8939 253.624 84.5069 253.624 85.7767C253.624 87.4186 252.398 88.3162 250.428 88.3162C249.552 88.3162 248.874 88.1849 247.976 87.8784L247.319 87.6595C247.319 87.6595 247.188 87.55 247.232 87.4843L247.56 86.4991C247.56 86.4991 247.67 86.3897 247.735 86.4116L248.436 86.6524C249.115 86.8713 249.706 86.9808 250.428 86.9808C251.369 86.9808 252.158 86.6305 252.158 85.7548C252.158 85.1855 251.61 84.8353 250.888 84.5507L249.465 84.0252L249.487 84.069ZM263.454 80.4567C263.454 80.4567 263.411 80.588 263.323 80.588H260.608V88.0535C260.608 88.0535 260.565 88.1849 260.477 88.1849H259.317C259.317 88.1849 259.185 88.1411 259.185 88.0535V80.588H256.492C256.492 80.588 256.361 80.5442 256.361 80.4567V79.4496C256.361 79.4496 256.405 79.3182 256.492 79.3182H263.345C263.345 79.3182 263.476 79.362 263.476 79.4496V80.4567H263.454ZM270.285 79.2963C272.146 79.2963 273.241 80.2596 273.241 81.8578C273.241 83.0181 272.518 83.7844 271.555 84.1566C271.38 84.2441 271.38 84.2879 271.555 84.3755C272.146 84.7039 272.518 85.2731 272.781 85.8423L273.678 88.0097C273.678 88.0097 273.678 88.1849 273.569 88.1849H272.343C272.343 88.1849 272.212 88.1411 272.168 88.0754L271.489 86.4334C271.029 85.295 270.438 84.7039 269.103 84.7039H268.183V88.0316C268.183 88.0316 268.14 88.163 268.052 88.163H266.892C266.892 88.163 266.76 88.1192 266.76 88.0316V79.4277C266.76 79.4277 266.804 79.2963 266.892 79.2963H270.329H270.285ZM269.76 83.456C271.073 83.456 271.774 82.9306 271.774 81.9673C271.774 81.1353 271.205 80.588 270.285 80.588H268.14V83.456H269.76ZM278.626 86.4991L278.013 88.0973C278.013 88.0973 277.926 88.2068 277.86 88.2068H276.634C276.525 88.2068 276.481 88.1411 276.525 88.0316L278.714 82.4489C279.086 81.4418 279.436 80.4348 279.699 79.4277C279.699 79.3401 279.765 79.2963 279.852 79.2963H281.407C281.407 79.2963 281.538 79.3401 281.56 79.4058C281.823 80.4129 282.173 81.42 282.545 82.427L284.734 88.0097C284.734 88.0097 284.734 88.1849 284.625 88.1849H283.399C283.399 88.1849 283.268 88.1411 283.246 88.0754L282.633 86.4772H278.648L278.626 86.4991ZM282.129 85.2074L281.45 83.5436C281.166 82.7554 280.859 81.8359 280.728 81.1791C280.684 81.0478 280.553 81.0478 280.531 81.1791C280.4 81.814 280.093 82.7335 279.787 83.5436L279.13 85.2074H282.129ZM293.47 86.9151C293.47 86.9151 293.601 86.9589 293.601 87.0464V88.0535C293.601 88.0535 293.557 88.1849 293.47 88.1849H288.15C288.15 88.1849 288.018 88.1411 288.018 88.0535V79.4496C288.018 79.4496 288.062 79.3182 288.15 79.3182H289.31C289.31 79.3182 289.441 79.362 289.441 79.4496V86.9151H293.47ZM298.461 88.0535C298.461 88.0535 298.418 88.1849 298.33 88.1849H297.17C297.17 88.1849 297.038 88.1411 297.038 88.0535V79.4496C297.038 79.4496 297.082 79.3182 297.17 79.3182H298.33C298.33 79.3182 298.461 79.362 298.461 79.4496V88.0535ZM303.825 86.4991L303.212 88.0973C303.212 88.0973 303.124 88.2068 303.059 88.2068H301.833C301.723 88.2068 301.68 88.1411 301.723 88.0316L303.913 82.4489C304.285 81.4418 304.635 80.4348 304.898 79.4277C304.898 79.3401 304.964 79.2963 305.051 79.2963H306.605C306.605 79.2963 306.737 79.3401 306.759 79.4058C307.021 80.4129 307.372 81.42 307.744 82.427L309.933 88.0097C309.933 88.0097 309.933 88.1849 309.824 88.1849H308.598C308.598 88.1849 308.466 88.1411 308.444 88.0754L307.831 86.4772H303.847L303.825 86.4991ZM307.306 85.2074L306.627 83.5436C306.343 82.7554 306.036 81.8359 305.905 81.1791C305.861 81.0478 305.73 81.0478 305.708 81.1791C305.577 81.814 305.27 82.7335 304.964 83.5436L304.307 85.2074H307.306Z" fill="#231F20"/><path d="M127.061 51.5798L127.28 51.7769C128.112 52.0177 132.359 53.5283 139.978 56.3087C142.78 57.3377 144.685 58.498 145.736 59.8116C146.436 60.6654 146.787 61.6068 146.787 62.6577C146.787 63.5772 146.524 64.5843 145.977 65.657C145.386 66.7954 143.919 67.8463 141.554 68.8096C139.343 69.7072 136.825 70.3421 133.979 70.7581C132.294 70.9989 130.739 71.1303 129.338 71.1303C128.331 71.1303 127.411 71.0646 126.536 70.9332C124.215 70.6048 122.814 69.8824 122.376 68.7439C121.938 67.6493 121.719 66.6641 121.719 65.7884C121.719 65.1097 121.851 64.4967 122.091 63.9275C122.507 62.9642 123.142 62.4825 124.018 62.4825C124.478 62.4825 125.003 62.6139 125.572 62.8547C128.2 63.9713 130.498 64.5405 132.425 64.5405C134.483 64.5405 136.147 63.9056 137.417 62.6139C137.088 62.6139 133.498 61.5411 126.601 59.4175C121.457 57.8412 118.895 55.7395 118.895 53.1123C118.851 52.7402 118.808 52.368 118.808 52.0177C118.808 49.4124 120.318 47.1794 123.339 45.3185C126.164 43.567 128.988 42.7132 131.834 42.7132H132.316C133.323 42.7132 134.264 42.9759 135.118 43.4794C135.928 43.9611 136.475 44.5522 136.782 45.2747C136.913 45.6031 136.979 45.8877 136.979 46.1723C136.979 46.5882 136.869 46.9604 136.628 47.3107C136.169 48.0113 135.315 48.4929 134.045 48.7994C130.958 49.303 129.426 49.5438 129.404 49.5438C127.74 49.9598 126.886 50.4414 126.886 51.0106C126.886 51.2514 126.952 51.4485 127.105 51.5798H127.061Z" fill="#414042"/><path d="M175.948 63.2707C177.13 66.5546 177.7 68.9629 177.7 70.4735C177.7 72.3125 176.911 73.2539 175.335 73.2539C174.241 73.2539 173.212 72.8379 172.205 72.006C170.825 70.8456 169.731 68.3061 168.942 64.3434C168.702 63.1612 168.527 62.3293 168.417 61.8257C167.125 64.1683 165.33 66.27 163.053 68.0871C160.623 70.0356 158.412 71.0208 156.442 71.0208C154.843 71.0208 153.596 70.3421 152.698 68.9629C151.757 67.496 151.275 65.2848 151.275 62.3512C151.275 59.4175 151.844 55.6957 153.004 51.5361C154.471 46.2161 156.266 43.5232 158.39 43.4575H158.412C159.2 43.4575 159.791 43.7203 160.229 44.2238C160.645 44.7492 160.864 45.7344 160.864 47.1356C160.864 49.2154 160.404 52.2366 159.507 56.1993C158.806 59.2643 158.456 61.2565 158.456 62.1979C158.456 62.5263 158.5 62.7453 158.587 62.8109C158.675 62.8109 158.806 62.7671 158.959 62.6796C161.389 61.1909 163.207 59.0016 164.367 56.1336C165.046 54.4697 165.637 52.0615 166.162 48.8432C166.49 46.8291 166.775 45.4717 167.06 44.793C167.519 43.6984 168.22 43.1292 169.161 43.1292C171.022 43.1292 172.314 44.4208 173.058 46.9823C173.496 48.471 173.825 50.9668 174.022 54.4259C174.131 56.2649 174.241 57.4909 174.35 58.1039C174.547 59.1986 175.051 60.9062 175.904 63.2269L175.948 63.2707Z" fill="#414042"/><path d="M205.394 51.1201C205.788 52.0177 205.985 52.9591 205.985 53.9224C205.985 56.4839 204.606 59.1986 201.826 62.0885C199.111 64.9127 196.134 66.6203 192.937 67.2771C191.689 67.5179 190.967 67.8025 190.748 68.109C190.617 68.2623 190.551 68.6126 190.551 69.1599C190.551 69.4445 190.551 69.7729 190.595 70.167C190.682 71.174 190.726 72.0279 190.726 72.7284V73.6917C190.814 79.7561 191.054 84.5725 191.47 88.0973C191.47 88.3162 191.492 88.5133 191.492 88.7103C191.492 89.4328 191.295 90.0239 190.923 90.4399C190.507 90.8996 189.916 91.1404 189.15 91.1404C188.099 91.1404 186.917 90.7464 185.581 89.9363C184.289 89.1482 183.414 87.3311 182.998 84.485C182.779 82.9744 182.669 80.7413 182.669 77.7638V75.0491C182.429 67.6493 182.319 61.6725 182.319 57.1406C182.319 52.6088 182.45 49.2811 182.691 47.6391C182.844 45.406 183.217 43.9173 183.764 43.1729C184.158 42.6694 184.793 42.4286 185.691 42.4286H186.457C190.047 42.4286 193.66 43.151 197.272 44.5741C201.519 46.238 204.212 48.4272 205.35 51.142L205.394 51.1201ZM190.463 60.4684V60.8406C192.324 60.7092 193.966 59.9867 195.433 58.6513C196.878 57.2939 197.754 55.6738 198.038 53.791C198.082 53.6159 198.082 53.4407 198.082 53.2875C198.082 52.565 197.841 51.952 197.36 51.3828C196.593 50.4852 195.411 49.8722 193.791 49.5438C193.09 49.4124 192.477 49.3249 191.93 49.3249C191.317 49.3249 190.814 49.4124 190.419 49.5876C190.157 49.9817 190.025 50.923 190.025 52.4118C190.025 53.5502 190.113 55.017 190.266 56.8341C190.398 58.498 190.485 59.6802 190.485 60.4465L190.463 60.4684Z" fill="#414042"/><path d="M232.76 51.1201C233.155 52.0177 233.352 52.9591 233.352 53.9224C233.352 56.4839 231.972 59.1986 229.192 62.0885C226.477 64.9127 223.5 66.6203 220.303 67.2771C219.055 67.5179 218.333 67.8025 218.114 68.109C217.983 68.2623 217.917 68.6126 217.917 69.1599C217.917 69.4445 217.917 69.7729 217.961 70.167C218.048 71.174 218.092 72.0279 218.092 72.7284V73.6917C218.18 79.7561 218.421 84.5725 218.837 88.0973C218.837 88.3162 218.858 88.5133 218.858 88.7103C218.858 89.4328 218.661 90.0239 218.289 90.4399C217.873 90.8996 217.282 91.1404 216.516 91.1404C215.465 91.1404 214.283 90.7464 212.947 89.9363C211.656 89.1482 210.78 87.3311 210.364 84.485C210.145 82.9744 210.036 80.7413 210.036 77.7638V75.0491C209.795 67.6493 209.685 61.6725 209.685 57.1406C209.685 52.6088 209.817 49.2811 210.057 47.6391C210.211 45.406 210.583 43.9173 211.13 43.1729C211.524 42.6694 212.159 42.4286 213.057 42.4286H213.823C217.414 42.4286 221.026 43.151 224.638 44.5741C228.885 46.238 231.578 48.4272 232.717 51.142L232.76 51.1201ZM217.851 60.4684V60.8406C219.712 60.7092 221.354 59.9867 222.821 58.6513C224.266 57.2939 225.142 55.6738 225.426 53.791C225.47 53.6159 225.47 53.4407 225.47 53.2875C225.47 52.565 225.229 51.952 224.748 51.3828C223.981 50.4852 222.799 49.8722 221.179 49.5438C220.479 49.4124 219.866 49.3249 219.318 49.3249C218.705 49.3249 218.202 49.4124 217.808 49.5876C217.545 49.9817 217.413 50.923 217.413 52.4118C217.413 53.5502 217.501 55.017 217.654 56.8341C217.786 58.498 217.873 59.6802 217.873 60.4465L217.851 60.4684Z" fill="#414042"/><path d="M249.531 42.6913C252.355 42.6913 254.61 43.764 256.317 45.8877C258.025 48.0113 258.857 50.8793 258.857 54.4478C258.857 58.6732 257.762 62.395 255.595 65.657C253.143 69.2913 250.012 71.1084 246.203 71.1084C245.458 71.1084 244.692 71.0208 243.904 70.8675C240.905 70.2764 238.715 68.3936 237.358 65.1754C236.46 63.008 236.001 60.5122 236.001 57.688C236.001 56.9655 236.023 56.243 236.088 55.4987C236.373 51.6017 237.708 48.4929 240.073 46.1942C242.415 43.8735 245.415 42.6913 249.071 42.6913H249.552H249.531ZM244.429 53.4407C243.838 54.5573 243.554 55.849 243.554 57.2939V57.6661C243.597 59.2862 243.948 60.6654 244.626 61.782C245.239 62.8328 246.006 63.3583 246.86 63.3583C247.845 63.3583 248.874 62.7015 249.99 61.3879C251.129 60.0305 251.764 58.301 251.917 56.1774C251.917 55.8928 251.939 55.6081 251.939 55.3454C251.939 53.5721 251.523 52.0177 250.713 50.726C250.231 49.9816 249.596 49.6095 248.83 49.6095C247.91 49.6095 246.969 50.0473 246.006 50.9449C245.086 51.7769 244.561 52.6088 244.451 53.4626L244.429 53.4407Z" fill="#414042"/><path d="M287.208 42.9759C288.128 43.6765 288.588 44.3989 288.588 45.1871C288.588 45.3841 288.544 45.5812 288.478 45.8001C284.822 47.661 281.757 50.2225 279.305 53.4626C276.612 57.0093 274.729 61.1471 273.7 65.8759C272.956 69.335 271.883 71.0865 270.482 71.0865C269.869 71.0865 269.212 70.7581 268.49 70.1013C266.695 68.4593 265.293 65.3067 264.264 60.6216C263.454 56.8779 263.038 53.2437 263.038 49.697C263.367 48.2521 263.914 47.2669 264.659 46.7415C265.009 46.5007 265.381 46.3912 265.753 46.3912C266.169 46.3912 266.563 46.5226 266.979 46.7634C268.928 47.9675 270.066 50.7917 270.351 55.2141C271.073 52.5212 272.759 49.7189 275.386 46.8072C278.385 43.4794 281.297 41.8156 284.121 41.8156H284.165C285.15 41.8156 286.179 42.2096 287.208 42.954V42.9759Z" fill="#414042"/><path d="M323.354 43.7859C323.66 44.3552 323.813 44.9025 323.813 45.406C323.813 45.822 323.726 46.1942 323.551 46.5445C322.828 48.0113 321.011 48.9965 318.077 49.5438C316.26 49.8722 313.502 50.1568 309.78 50.4414L308.707 50.529C308.707 50.6603 308.663 51.0106 308.62 51.6017C308.488 53.0905 308.423 54.2727 308.423 55.1046C308.423 55.4549 308.423 55.7614 308.444 55.9803C308.642 57.9288 308.773 60.3589 308.817 63.2926V64.4967C308.817 68.5688 308.466 70.7143 307.766 70.9551C307.722 71.0646 307.262 71.1084 306.387 71.1084C304.241 71.1084 303.059 71.0208 302.884 70.8456C301.395 69.3788 300.651 66.1824 300.651 61.2127C300.651 59.7021 300.716 58.0383 300.87 56.2211C300.87 55.8928 300.891 55.5644 300.891 55.236C300.891 53.6816 300.607 52.5869 300.016 51.952C299.49 51.3828 298.352 51.0982 296.6 51.0982H296.119C295.834 51.0982 295.571 51.1201 295.309 51.1201C294.105 51.1201 293.207 51.0106 292.594 50.7917C291.368 50.3757 290.492 49.4562 289.945 48.0989V47.9456C289.945 47.2888 290.164 46.7415 290.602 46.2817C291.609 45.2528 293.448 44.7273 296.163 44.7273C296.776 44.7273 297.279 44.7492 297.717 44.8149C298.045 44.8587 298.374 44.8587 298.658 44.8587C299.337 44.8587 299.994 44.7273 300.607 44.4865C300.388 42.144 300.278 39.8233 300.278 37.5464C300.278 35.795 300.344 34.0436 300.475 32.3359C300.891 27.1473 301.877 23.6882 303.431 21.9586C304.197 21.1048 305.095 20.6889 306.146 20.6889H306.408C306.824 20.6889 307.218 20.864 307.525 21.1924C308.247 21.9587 308.598 23.9947 308.598 27.3224C308.598 29.2709 308.466 31.6791 308.226 34.5033C308.072 36.3642 307.985 37.5683 307.963 38.1376C307.963 38.7724 307.941 39.6044 307.941 40.6552V43.8297C307.941 44.1143 308.488 44.2676 309.561 44.2676C309.802 44.2676 310.043 44.2676 310.327 44.2457C311.991 44.1581 314.027 43.8735 316.501 43.3919C316.632 43.3481 316.895 43.2824 317.333 43.1729C318.844 42.7789 320.004 42.5818 320.792 42.5818C322.062 42.5818 322.916 42.9759 323.332 43.7859H323.354Z" fill="#414042"/><path d="M341.087 49.8941L360.178 88.0973L393.302 49.5657L341.087 49.8941Z" fill="#F68D2E"/><path d="M436.781 50.4195L413.64 0L377.079 48.6681L377.517 49.5657L426.272 62.3731L436.781 50.4195Z" fill="#005E5D"/><path d="M341.24 49.8941L410.444 87.0246L436.781 50.4195L341.24 49.8941Z" fill="#FFB81C"/><path d="M419.551 93.0889L419.245 80.1502L412.743 88.8636L419.551 93.0889Z" fill="#279989"/><path d="M363.834 12.9169L341.087 49.8941L437 50.8136L363.834 12.9169Z" fill="#2DCCD3"/></svg>{%- endcapture -%}
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign Up — Apprentice or Trainee | Apprenticeship Support Australia</title>
+{% if asa_use_webfont %}<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">{% endif %}
+<style>
+  /* Colours and type matched to apprenticeshipsupport.com.au */
+  :root{
+    --asa-teal:#279989; --asa-teal-dark:#005E5D; --asa-cyan:#2DCCD3; --asa-orange:#F68D2E; --asa-amber:#FFB81C; --asa-amber-dark:#F2A500;
+    --charcoal:#414042; --charcoal-band:#4A4A4A;
+    --teal-dark:#414042; --teal:#279989; --gold:#FFB81C; --orange:#F68D2E;
+    --paper:#F5F5F5; --surface:#FFFFFF; --line:#E0E0E0; --muted:#5E6366;
+    --accent:#279989; --accent-strong:#005E5D; --accent-tint:#E4F3F1;
+    --success:#2E7D5B; --success-tint:#DCEEE5; --danger:#B3261E; --danger-tint:#FBE7E5;
+    --focus:#1F6FB2; --sensitive:#8A4B12; --sensitive-tint:#FDF0D9;
+  }
+  html, body{ margin:0; padding:0; background:var(--paper); }
+  #asa-signup-root *{ box-sizing:border-box; }
+  #asa-signup-root{ background:var(--paper); color:var(--charcoal); min-height:100vh; display:flex; flex-direction:column; font-family:"Figtree", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+  #asa-signup-root .wrap{ width:100%; max-width:760px; margin:0 auto; padding:28px 18px 56px; flex:1; }
+
+  /* Header: logo left, teal phone button right (as on the ASA website) */
+  #asa-signup-root .asa-header{ background:#fff; border-bottom:1px solid var(--line); }
+  #asa-signup-root .hdr-inner{ max-width:1100px; margin:0 auto; padding:14px 18px; display:flex; align-items:center; justify-content:space-between; gap:16px; }
+  #asa-signup-root .brand{ display:flex; align-items:center; gap:10px; text-decoration:none; color:var(--charcoal); min-width:0; }
+  #asa-signup-root .brand-logo, #asa-signup-root .brand-svg{ display:block; height:52px; width:auto; max-width:100%; }
+  #asa-signup-root .phone-btn{ flex:none; display:inline-flex; align-items:center; gap:8px; background:var(--asa-teal); color:#fff; text-decoration:none; font-weight:700; font-size:0.95rem; padding:10px 16px; border-radius:4px; }
+  #asa-signup-root .phone-btn:hover{ background:var(--asa-teal-dark); }
+  #asa-signup-root .phone-btn svg{ width:16px; height:16px; fill:currentColor; }
+
+  /* Hero: big charcoal heading, yellow underline bar, triangle cluster */
+  #asa-signup-root .hero{ position:relative; background:#fff; overflow:hidden; border-bottom:1px solid var(--line); }
+  #asa-signup-root .hero-inner{ position:relative; z-index:1; max-width:760px; margin:0 auto; padding:34px 18px 38px; }
+  #asa-signup-root .eyebrow{ margin:0 0 8px; font-size:0.8rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--asa-teal); }
+  #asa-signup-root .hero h1{ margin:0; font-size:clamp(1.7rem,5vw,2.5rem); font-weight:800; line-height:1.1; text-transform:uppercase; letter-spacing:0.01em; color:var(--charcoal); max-width:16ch; }
+  #asa-signup-root .bar{ display:block; width:56px; height:5px; background:var(--asa-amber); border-radius:3px; margin:16px 0 16px; }
+  #asa-signup-root .hero .lede{ margin:0; font-size:1.02rem; line-height:1.55; color:var(--muted); max-width:48ch; }
+  #asa-signup-root .hero .date{ margin:10px 0 0; font-size:0.85rem; color:var(--muted); }
+  #asa-signup-root .corner{ position:absolute; right:-6px; bottom:-4px; width:230px; height:auto; z-index:0; pointer-events:none; }
+  #asa-signup-root .badge{ display:inline-flex; align-items:center; gap:5px; font-family:ui-monospace, "Cascadia Mono", Consolas, monospace; font-size:0.66rem; letter-spacing:0.07em; text-transform:uppercase; color:var(--accent-strong); background:var(--accent-tint); border:1px solid var(--accent); border-radius:999px; padding:4px 10px; margin-bottom:16px; }
+  #asa-signup-root .progress-block{ margin-bottom:22px; }
+  #asa-signup-root .segments{ display:grid; grid-auto-flow:column; gap:3px; }
+  #asa-signup-root .segment{ height:6px; border-radius:3px; background:var(--line); }
+  #asa-signup-root .segment.done{ background:var(--teal); }
+  #asa-signup-root .segment.current{ background:var(--teal); opacity:0.5; }
+  #asa-signup-root .progress-caption{ display:flex; justify-content:space-between; margin-top:8px; font-family:ui-monospace, "Cascadia Mono", Consolas, monospace; font-size:0.7rem; color:var(--muted); }
+  #asa-signup-root .card{ background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:24px 22px 22px; }
+  #asa-signup-root .card h2{ font-size:1.15rem; font-weight:700; color:var(--teal-dark); margin:0 0 4px; }
+  #asa-signup-root .card .step-sub{ margin:0 0 20px; color:var(--muted); font-size:0.85rem; }
+  #asa-signup-root .field{ margin-bottom:20px; }
+  #asa-signup-root .field:last-child{ margin-bottom:0; }
+  #asa-signup-root .field > label, #asa-signup-root .field legend{ display:flex; align-items:center; flex-wrap:wrap; gap:7px; font-weight:600; font-size:0.88rem; margin-bottom:7px; padding:0; }
+  #asa-signup-root .field .hint{ display:block; width:100%; font-weight:400; color:var(--muted); font-size:0.78rem; margin-top:3px; }
+  #asa-signup-root .req::after{ content:" *"; color:var(--danger); }
+  #asa-signup-root .tag-sensitive{ font-family:ui-monospace, "Cascadia Mono", Consolas, monospace; font-size:0.6rem; letter-spacing:0.05em; text-transform:uppercase; color:var(--sensitive); background:var(--sensitive-tint); border-radius:5px; padding:2px 6px; font-weight:600; }
+  #asa-signup-root .field fieldset{ border:none; margin:0; padding:0; }
+  #asa-signup-root .warning{ background:var(--danger-tint); color:var(--danger); border-radius:8px; padding:9px 12px; font-size:0.8rem; font-weight:600; margin-top:8px; }
+  #asa-signup-root input[type="text"], #asa-signup-root input[type="email"], #asa-signup-root input[type="tel"], #asa-signup-root input[type="date"], #asa-signup-root select, #asa-signup-root textarea{ width:100%; font:inherit; font-size:0.92rem; color:inherit; background:var(--paper); border:1px solid var(--line); border-radius:8px; padding:9px 11px; }
+  #asa-signup-root input[data-mono]{ font-family:ui-monospace, "Cascadia Mono", Consolas, monospace; }
+  #asa-signup-root textarea{ min-height:80px; resize:vertical; }
+  #asa-signup-root input:focus-visible, #asa-signup-root select:focus-visible, #asa-signup-root textarea:focus-visible, #asa-signup-root button:focus-visible, #asa-signup-root .choice input:focus-visible + span{ outline:2px solid var(--focus); outline-offset:2px; }
+  #asa-signup-root .choice-row{ display:flex; flex-wrap:wrap; gap:8px; }
+  #asa-signup-root .choice-row.stack{ flex-direction:column; }
+  #asa-signup-root .choice{ position:relative; }
+  #asa-signup-root .choice input{ position:absolute; opacity:0; width:100%; height:100%; margin:0; cursor:pointer; }
+  #asa-signup-root .choice > span{ display:flex; align-items:center; gap:8px; border:1px solid var(--line); background:var(--paper); border-radius:8px; padding:8px 12px; font-size:0.85rem; line-height:1.3; cursor:pointer; }
+  #asa-signup-root .choice.stack > span{ width:100%; }
+  #asa-signup-root .choice input:checked + span{ border-color:var(--accent); background:var(--accent-tint); color:var(--accent-strong); font-weight:600; }
+  #asa-signup-root .choice .box, #asa-signup-root .choice .dot{ flex:none; width:14px; height:14px; border:1.5px solid var(--muted); display:inline-block; }
+  #asa-signup-root .choice .box{ border-radius:4px; }
+  #asa-signup-root .choice .dot{ border-radius:50%; }
+  #asa-signup-root .choice input:checked + span .box{ background:var(--accent); border-color:var(--accent); }
+  #asa-signup-root .choice input:checked + span .dot{ border-color:var(--accent); box-shadow:inset 0 0 0 3px var(--accent-tint), inset 0 0 0 8px var(--accent); }
+  #asa-signup-root .scale-row{ display:flex; gap:6px; flex-wrap:wrap; }
+  #asa-signup-root .scale-row .choice{ flex:1; min-width:70px; }
+  #asa-signup-root .scale-row .choice > span{ justify-content:center; text-align:center; }
+  #asa-signup-root .error{ display:none; color:var(--danger); font-size:0.78rem; margin-top:6px; }
+  #asa-signup-root .field.invalid .error{ display:block; }
+  #asa-signup-root .field.invalid input:not([type=hidden]), #asa-signup-root .field.invalid select, #asa-signup-root .field.invalid textarea, #asa-signup-root .field.invalid .choice > span{ border-color:var(--danger); }
+  #asa-signup-root .actions{ display:flex; justify-content:space-between; align-items:center; margin-top:22px; }
+  #asa-signup-root button{ font:inherit; font-weight:600; font-size:0.88rem; border-radius:8px; padding:10px 18px; cursor:pointer; border:1px solid transparent; }
+  #asa-signup-root .btn-primary{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  #asa-signup-root .btn-primary:hover{ background:var(--accent-strong); border-color:var(--accent-strong); }
+  #asa-signup-root .btn-primary:disabled{ opacity:0.6; cursor:wait; }
+  #asa-signup-root .btn-ghost{ background:transparent; color:var(--muted); border-color:var(--line); }
+  #asa-signup-root .btn-ghost:hover{ color:inherit; border-color:var(--muted); }
+  #asa-signup-root .btn-ghost:disabled{ opacity:0.35; cursor:not-allowed; }
+  #asa-signup-root .confirm{ text-align:center; padding:16px 4px 4px; }
+  #asa-signup-root .confirm .mark2{ width:50px; height:50px; border-radius:50%; background:var(--success-tint); color:var(--success); display:flex; align-items:center; justify-content:center; margin:0 auto 14px; font-size:1.4rem; }
+  #asa-signup-root .confirm.is-error .mark2{ background:var(--danger-tint); color:var(--danger); }
+  #asa-signup-root .confirm h2{ font-size:1.25rem; margin:0 0 8px; }
+  #asa-signup-root .confirm p{ color:var(--muted); margin:0 auto 4px; max-width:42ch; }
+  #asa-signup-root .confirm .tech{ margin:18px auto 0; max-width:560px; text-align:left; font-size:0.78rem; color:var(--muted); }
+  #asa-signup-root .confirm .tech summary{ cursor:pointer; }
+  #asa-signup-root .confirm .tech pre{ white-space:pre-wrap; word-break:break-word; background:var(--paper); border:1px solid var(--line); border-radius:8px; padding:10px; margin:8px 0 0; font-size:0.75rem; }
+  #asa-signup-root .confirm .restart{ display:inline-block; margin-top:16px; font-size:0.83rem; color:var(--accent-strong); cursor:pointer; text-decoration:underline; background:none; border:none; font-family:inherit; font-weight:600; padding:0; }
+  #asa-signup-root{ min-height:100vh; }
+  #asa-signup-root .code-chip{ display:inline-flex; align-items:center; gap:8px; margin:12px 0 0; padding:6px 10px; border-radius:8px; background:var(--accent-tint); color:var(--accent-strong); font-size:0.8rem; }
+  #asa-signup-root .code-chip strong{ font-family:ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing:0.02em; }
+  #asa-signup-root input[readonly]{ background:var(--paper); color:var(--muted); cursor:not-allowed; }
+  #asa-signup-root .site-footer{ margin-top:22px; padding-top:14px; border-top:1px solid var(--line); font-size:0.78rem; color:var(--muted); display:flex; flex-wrap:wrap; gap:6px 16px; justify-content:space-between; }
+  #asa-signup-root .site-footer a{ color:var(--accent-strong); }
+  #asa-signup-root .msg-card{ background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:26px 24px; text-align:center; }
+  #asa-signup-root .msg-card h2{ font-size:1.2rem; color:var(--teal-dark); margin:0 0 10px; }
+  #asa-signup-root .msg-card p{ color:var(--muted); margin:0 auto 8px; max-width:46ch; line-height:1.5; }
+  #asa-signup-root .msg-card .help{ margin-top:16px; color:#1A2422; font-weight:600; }
+  #asa-signup-root .code-chip strong{ white-space:nowrap; }
+  /* ASA website styling for cards, headings and buttons */
+  #asa-signup-root .card, #asa-signup-root .msg-card{ border-radius:6px; border:1px solid var(--line); box-shadow:0 1px 2px rgba(0,0,0,0.04); }
+  #asa-signup-root .card h2, #asa-signup-root .msg-card h2{ color:var(--charcoal); font-weight:800; font-size:1.3rem; }
+  #asa-signup-root .card h2::after{ content:""; display:block; width:40px; height:4px; background:var(--asa-amber); border-radius:2px; margin:10px 0 2px; }
+  #asa-signup-root .msg-card h2::after{ content:""; display:block; width:40px; height:4px; background:var(--asa-amber); border-radius:2px; margin:12px auto 4px; }
+  #asa-signup-root .confirm h2::after{ margin-left:auto; margin-right:auto; }
+  #asa-signup-root .card .step-sub{ font-size:0.92rem; }
+  #asa-signup-root .field > label, #asa-signup-root .field legend{ font-size:0.95rem; }
+  #asa-signup-root .field .hint{ font-size:0.84rem; }
+  #asa-signup-root input[type="text"], #asa-signup-root input[type="email"], #asa-signup-root input[type="tel"], #asa-signup-root input[type="date"], #asa-signup-root select, #asa-signup-root textarea{ background:#fff; border-color:#C9CCCE; border-radius:4px; padding:11px 12px; font-size:1rem; }
+  #asa-signup-root input:focus, #asa-signup-root select:focus, #asa-signup-root textarea:focus{ border-color:var(--asa-teal); outline:none; box-shadow:0 0 0 3px rgba(39,153,137,0.2); }
+  #asa-signup-root input[readonly]{ background:var(--paper); }
+  #asa-signup-root .choice > span{ background:#fff; border-color:#C9CCCE; border-radius:4px; padding:10px 14px; font-size:0.93rem; }
+  #asa-signup-root button{ border-radius:4px; font-size:0.98rem; padding:12px 26px; font-weight:700; }
+  #asa-signup-root .btn-primary{ background:var(--asa-amber); border-color:var(--asa-amber); color:#2B2B2B; }
+  #asa-signup-root .btn-primary:hover{ background:var(--asa-amber-dark); border-color:var(--asa-amber-dark); }
+  #asa-signup-root .btn-ghost{ background:#fff; color:var(--charcoal); border-color:#C9CCCE; }
+  #asa-signup-root .btn-teal{ display:inline-block; background:var(--asa-teal); color:#fff; text-decoration:none; font-weight:700; padding:12px 22px; border-radius:4px; }
+  #asa-signup-root .btn-teal:hover{ background:var(--asa-teal-dark); }
+  #asa-signup-root .segment{ height:6px; background:#DADADA; }
+  #asa-signup-root .segment.done{ background:var(--asa-teal); }
+  #asa-signup-root .segment.current{ background:var(--asa-amber); opacity:1; }
+  #asa-signup-root .progress-caption{ font-family:inherit; font-size:0.82rem; font-weight:600; }
+  #asa-signup-root .code-chip{ margin:16px 0 0; padding:8px 12px; border-radius:4px; background:var(--accent-tint); border-left:4px solid var(--asa-teal); }
+  #asa-signup-root .msg-card{ padding:32px 26px; }
+  #asa-signup-root .msg-card p{ font-size:1rem; }
+  #asa-signup-root .msg-card .help{ margin-top:20px; }
+
+  /* Footer: charcoal band */
+  #asa-signup-root .asa-footer{ background:var(--charcoal-band); color:#fff; }
+  #asa-signup-root .ftr-inner{ max-width:1100px; margin:0 auto; padding:22px 18px; display:flex; flex-wrap:wrap; gap:8px 24px; justify-content:space-between; align-items:center; font-size:0.9rem; }
+  #asa-signup-root .asa-footer a{ color:#fff; font-weight:700; }
+  #asa-signup-root .asa-footer .ftr-name{ font-weight:700; }
+
+  @media (max-width:640px){
+    #asa-signup-root .hdr-inner{ padding:10px 16px; }
+    #asa-signup-root .brand-logo, #asa-signup-root .brand-svg{ height:auto; width:190px; }
+          #asa-signup-root .phone-btn{ padding:9px 11px; font-size:0.85rem; }
+    #asa-signup-root .hero-inner{ padding:24px 16px 76px; }
+    #asa-signup-root .brand-logo, #asa-signup-root .brand-svg{ width:160px; }
+    #asa-signup-root .corner{ width:86px; }
+    #asa-signup-root .wrap{ padding:20px 16px 44px; }
+    #asa-signup-root .card{ padding:20px 16px; }
+    #asa-signup-root .code-chip{ flex-wrap:wrap; }
+    #asa-signup-root button{ padding:12px 20px; }
+  }
+  @media (max-width:380px){
+    #asa-signup-root .phone-btn .ph-text{ display:none; }
+  }
+  #asa-signup-root .note{ margin-top:18px; font-size:0.76rem; color:var(--muted); line-height:1.5; border-top:1px solid var(--line); padding-top:13px; }
+</style>
+</head>
+<body>
+
+{%- comment -%} ---- Tracking code check (runs on the server) ---- {%- endcomment -%}
+{%- assign code_state = 'missing' -%}
+{%- assign code = request.params['trackingcode'] -%}
+{%- if code == null or code == '' -%}{%- assign code = request.params['code'] -%}{%- endif -%}
+{%- if code and code != '' -%}
+  {%- if code.size > 60 -%}
+    {%- assign code_state = 'invalid' -%}
+  {%- else -%}
+    {%- assign asa_cache_buster = now | date_add_minutes: 10 | date: 'yyyy-MM-ddTHH:mm:ss' -%}
+    {%- fetchxml asa_invite_q -%}
+    <fetch top="1">
+      <entity name="bnsw_signupinvite">
+        <attribute name="bnsw_trackingcode" />
+        <attribute name="bnsw_invitestatus" />
+        <attribute name="bnsw_expireson" />
+        <filter type="and">
+          <condition attribute="bnsw_trackingcode" operator="eq" value="{{ code | xml_escape }}" />
+          <condition attribute="statecode" operator="eq" value="0" />
+          {%- comment -%} Always true, but different every second, so the site can't reuse a
+              cached answer from before an invite was cancelled, used or expired. {%- endcomment -%}
+          <condition attribute="createdon" operator="le" value="{{ asa_cache_buster }}" />
+        </filter>
+      </entity>
+    </fetch>
+    {%- endfetchxml -%}
+    {%- assign invite = asa_invite_q.results.entities | first -%}
+    {%- if invite -%}
+      {%- assign invite_status = invite.bnsw_invitestatus.value -%}
+      {%- if invite_status == 2 -%}
+        {%- assign code_state = 'used' -%}
+      {%- elsif invite_status == 3 -%}
+        {%- assign code_state = 'cancelled' -%}
+      {%- else -%}
+        {%- assign code_state = 'ok' -%}
+        {%- if invite.bnsw_expireson -%}
+          {%- assign exp_day = invite.bnsw_expireson | date: 'yyyyMMdd' | integer -%}
+          {%- assign today_day = now | date: 'yyyyMMdd' | integer -%}
+          {%- if exp_day < today_day -%}{%- assign code_state = 'expired' -%}{%- endif -%}
+        {%- endif -%}
+      {%- endif -%}
+    {%- else -%}
+      {%- assign code_state = 'invalid' -%}
+    {%- endif -%}
+  {%- endif -%}
+{%- endif -%}
+
+{% if code_state == 'ok' %}
+<div id="asa-signup-root">
+<header class="asa-header">
+  <div class="hdr-inner">
+    <a class="brand" href="/" aria-label="Apprenticeship Support Australia">
+      {% if asa_logo_url != '' %}<img class="brand-logo" src="{{ asa_logo_url | escape }}" alt="Apprenticeship Support Australia">{% else %}{{ asa_logo_svg }}{% endif %}
+    </a>
+    <a class="phone-btn" href="tel:1300363831" aria-label="Call 1300 363 831"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z"/></svg><span class="ph-text">1300 363 831</span></a>
+  </div>
+</header>
+<section class="hero">
+  <div class="hero-inner">
+    <p class="eyebrow">Apprentice &amp; trainee sign-up</p>
+    <h1>Provide your details</h1>
+    <span class="bar"></span>
+    <p class="lede">Use this form to give Apprenticeship Support Australia (ASA) your details, ready for your sign-up. It takes about 10–15 minutes.</p>
+    <p class="date" id="asaTodayDate"></p>
+    <p class="code-chip" id="asaCodeChip" hidden>Your sign-up code <strong id="asaCodeChipValue"></strong></p>
+  </div>
+  <svg class="corner" viewBox="338 -2 101 98" aria-hidden="true"><path d="M341.087 49.8941L360.178 88.0973L393.302 49.5657L341.087 49.8941Z" fill="#F68D2E"/><path d="M436.781 50.4195L413.64 0L377.079 48.6681L377.517 49.5657L426.272 62.3731L436.781 50.4195Z" fill="#005E5D"/><path d="M341.24 49.8941L410.444 87.0246L436.781 50.4195L341.24 49.8941Z" fill="#FFB81C"/><path d="M419.551 93.0889L419.245 80.1502L412.743 88.8636L419.551 93.0889Z" fill="#279989"/><path d="M363.834 12.9169L341.087 49.8941L437 50.8136L363.834 12.9169Z" fill="#2DCCD3"/></svg>
+</section>
+<div class="wrap">
+
+  <div class="progress-block">
+    <div class="segments" id="asaSegments"></div>
+    <div class="progress-caption">
+      <span id="asaStepCaption"></span>
+      <span id="asaStepCount"></span>
+    </div>
+  </div>
+
+  <div class="card" id="asaCard"></div>
+
+  <div class="note">
+    Fields tagged <span class="tag-sensitive">Sensitive</span> contain personal information that is only visible to authorised ASA staff.
+  </div>
+</div>
+<footer class="asa-footer">
+  <div class="ftr-inner">
+    <span class="ftr-name">Apprenticeship Support Australia</span>
+    <span>For assistance call <a href="tel:1300363831">1300 363 831</a></span>
+    {% if asa_privacy_url != '' %}<a href="{{ asa_privacy_url | escape }}" target="_blank" rel="noopener">Privacy policy</a>{% endif %}
+  </div>
+</footer>
+</div>
+
+<script>
+// ---- Power Pages Web API helper (self-contained) ----------------------
+// Works with or without the site's header/footer: it does not need jQuery or the
+// Power Pages "shell" script. It fetches the anti-forgery token from the site's
+// standard token endpoint and sends it with the request.
+var asaApi = {
+  getToken: function(){
+    return fetch("/_layout/tokenhtml?_=" + Date.now(), { credentials: "same-origin", cache: "no-store" })
+      .then(function(r){ return r.text(); })
+      .then(function(html){
+        var m = html.match(/value="([^"]+)"/);
+        if (!m) throw new Error("Could not get a security token from the site");
+        return m[1];
+      });
+  },
+  post: function(url, body){
+    return asaApi.getToken().then(function(token){
+      return fetch(url, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+          "__RequestVerificationToken": token
+        },
+        body: body
+      });
+    }).then(function(res){
+      if (res.ok) return res;
+      return res.text().then(function(t){
+        var err = new Error("HTTP " + res.status); err.status = res.status; err.responseText = t; throw err;
+      });
+    });
+  }
+};
+
+(function(){
+  document.getElementById("asaTodayDate").textContent = new Date().toLocaleDateString("en-AU", { day:"numeric", month:"short", year:"numeric" });
+
+  // ---- Dataverse wiring -----------------------------------------------
+  var ENTITY_SET = "bnsw_apprenticesignups"; // plural logical name — verify in Table properties
+  var CONTACT_NAV = "bnsw_Contact";          // Contact lookup navigation property (schema name, case-sensitive)
+  var CONTACT_ID = "{{ user.id }}";          // signed-in portal user's Contact id, injected by Liquid
+  var LOCKED_CODE = "{{ invite.bnsw_trackingcode | escape }}"; // validated on the server; shown read-only
+  var LINK_CONTACT = false;                  // true = also set the Applicant (Contact) lookup on save.
+                                             // Needs Contact-scope permissions that Power Pages refused
+                                             // in testing (90040106) - leave false with the Global,
+                                             // Create-only table permission.
+  var AU_STATE_VALUES = { "NSW":1,"VIC":2,"QLD":3,"WA":4,"SA":5,"TAS":6,"ACT":7,"NT":8 };
+  var MONTH_VALUES = { "January":1,"February":2,"March":3,"April":4,"May":5,"June":6,"July":7,"August":8,"September":9,"October":10,"November":11,"December":12 };
+
+  function parseDMY(v){
+    // "dd/mm/yyyy" -> "yyyy-mm-dd" for Dataverse Date Only columns
+    if (!v) return null;
+    var m = v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (!m) return null;
+    var d = +m[1], mo = +m[2], y = +m[3];
+    var dt = new Date(Date.UTC(y, mo - 1, d));
+    if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== mo - 1 || dt.getUTCDate() !== d) return null; // e.g. 31/02
+    if (y < 1900 || y > 2100) return null;
+    return m[3] + "-" + m[2].padStart(2,"0") + "-" + m[1].padStart(2,"0");
+  }
+
+  function esc(v){
+    return String(v == null ? "" : v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+  }
+
+  // ---- Format rules (checked in addition to "required") ----------------
+  // Keyed by field id. Each returns an error message, or "" when valid.
+  function postcodeRule(v){ return /^\d{4}$/.test(v) ? "" : "Enter a 4-digit postcode."; }
+  function phoneRule(v){
+    var n = v.replace(/[\s()-]/g, "");
+    return /^(?:\+?61|0)[2-478]\d{8}$/.test(n) ? "" : "Enter an Australian phone number, e.g. 0412 345 678.";
+  }
+  function emailRule(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? "" : "Enter a valid email address."; }
+  var RULES = {
+    usiNumber: function(v){
+      // USI: 10 characters, letters and digits excluding I, O, 0 and 1
+      return /^[2-9A-HJ-NP-Z]{10}$/i.test(v.trim()) ? "" : "A USI is 10 letters/numbers (it never contains I, O, 0 or 1).";
+    },
+    homePostcode: postcodeRule, postalPostcode: postcodeRule, guardianPostcode: postcodeRule,
+    mobile: phoneRule, guardianMobile: phoneRule,
+    email: emailRule, guardianEmail: emailRule,
+    yearCompleted: function(v){
+      var y = parseInt(v, 10), now = new Date().getFullYear();
+      return /^\d{4}$/.test(v.trim()) && y >= 1950 && y <= now ? "" : "Enter a 4-digit year, e.g. 2023.";
+    },
+    priorHours: function(v){
+      var n = Number(v);
+      return /^\d{1,3}$/.test(v.trim()) && n >= 1 && n <= 168 ? "" : "Enter a whole number of hours between 1 and 168.";
+    }
+  };
+  function fieldError(f, raw){
+    var v = raw == null ? "" : raw.toString();
+    var empty = f.type === "checkboxes" ? (raw || []).length === 0 : v.trim() === "";
+    if (empty) return f.required ? defaultMsg(f) : "";
+    if (f.date && !parseDMY(v.trim())) return "Enter a real date as dd/mm/yyyy.";
+    if (RULES[f.id]) return RULES[f.id](v);
+    return "";
+  }
+  function defaultMsg(f){
+    if (f.type === "select") return "Please select an option.";
+    if (f.type === "scale") return "Please choose one option.";
+    if (f.type === "checkboxes") return "Please confirm this to continue.";
+    return "Please fill in this field.";
+  }
+
+  var AU_STATES = Object.keys(AU_STATE_VALUES);
+  var MONTHS = Object.keys(MONTH_VALUES);
+
+  // ---- Step / field definitions ----------------------------------------
+  // column = Dataverse logical name · bool = Two Options · values = Choice map · date = Date Only
+  var STEPS = [
+    { title:"Sign Up Tracking Code", sub:"Select Next to continue.", fields:[
+      { id:"trackingCode", column:"bnsw_trackingcode", type:"text", mono:true, required:true, label:"Sign Up Tracking Code",
+        hint:"This code comes from your sign-up email and links your information to other details already gathered. Don't share your link or code with anyone else.",
+        warning:"Do not delete or change this tracking code." }
+    ]},
+    { title:"Universal Student Identifier (USI)", sub:"Required for your training records.", fields:[
+      { id:"hasUSI", column:"bnsw_hasusi", type:"scale", bool:true, required:true, label:"Do you have a USI (Universal Student Identifier)?", options:["Yes","No"] },
+      { id:"usiNumber", column:"bnsw_usinumber", type:"text", mono:true, required:true, sensitive:true, label:"Your USI (Universal Student Identifier)", showIf:function(a){return a.hasUSI==="Yes";} },
+      { id:"usiPermission", column:"bnsw_usipermission", type:"checkboxes", bool:true, required:true, label:"USI permission", options:["I give permission for my USI to be verified with the USI Registry."] }
+    ]},
+    { title:"Your Details", sub:"Apprentice / trainee personal details.", fields:[
+      { id:"firstName", column:"bnsw_firstname", type:"text", required:true, label:"Your First Name (Apprentice/Trainee)" },
+      { id:"middleName", column:"bnsw_middlename", type:"text", label:"Your Middle Name(s) (Apprentice/Trainee)", optionalTag:true },
+      { id:"lastName", column:"bnsw_lastname", type:"text", required:true, label:"Your Last Name (Apprentice/Trainee)" },
+      { id:"previousName", column:"bnsw_previousname", type:"text", label:"Your Previous Name (Apprentice/Trainee)", optionalTag:true, hint:"If you have changed your name" },
+      { id:"dob", column:"bnsw_dateofbirth", type:"text", mono:true, required:true, sensitive:true, date:true, label:"Your Date of Birth (Apprentice/Trainee)", hint:"Format: dd/mm/yyyy" }
+    ]},
+    { title:"Home Address", sub:"Where you currently live.", fields:[
+      { id:"homeStreet", column:"bnsw_homestreet", type:"text", required:true, label:"Your Home Number/Street" },
+      { id:"homeSuburb", column:"bnsw_homesuburb", type:"text", required:true, label:"Your Home Suburb" },
+      { id:"homePostcode", column:"bnsw_homepostcode", type:"text", mono:true, required:true, label:"Your Home Postcode" },
+      { id:"homeState", column:"bnsw_homestate", type:"select", required:true, values:AU_STATE_VALUES, label:"Your Home State", options:AU_STATES }
+    ]},
+    { title:"Postal Address", sub:"Where we should send correspondence.", fields:[
+      { id:"postalSame", column:"bnsw_postalsame", type:"scale", bool:true, required:true, label:"Is Your Postal Address the Same as Your Home Address?", options:["Yes","No"] },
+      { id:"postalAddress", column:"bnsw_postaladdress", type:"text", required:true, label:"Your Postal Address", showIf:function(a){return a.postalSame==="No";} },
+      { id:"postalSuburb", column:"bnsw_postalsuburb", type:"text", required:true, label:"Your Postal Suburb", showIf:function(a){return a.postalSame==="No";} },
+      { id:"postalPostcode", column:"bnsw_postalpostcode", type:"text", mono:true, required:true, label:"Your Postal Postcode", showIf:function(a){return a.postalSame==="No";} }
+    ]},
+    { title:"Contact Details", sub:"How we and your employer can reach you.", fields:[
+      { id:"mobile", column:"bnsw_mobile", type:"tel", required:true, label:"Your Mobile Number" },
+      { id:"email", column:"bnsw_email", type:"email", required:true, label:"Your Email" }
+    ]},
+    { title:"Background", sub:"Standard training-sector demographic questions.", fields:[
+      { id:"gender", column:"bnsw_gender", type:"select", required:true, label:"Your Gender", values:{"Male":1,"Female":2,"Non-binary":3,"Prefer not to say":4,"Other":5}, options:["Male","Female","Non-binary","Prefer not to say","Other"] },
+      { id:"citizenship", column:"bnsw_citizenship", type:"select", required:true, sensitive:true, label:"Your Citizenship", values:{"Australian Citizen":1,"New Zealand Citizen":2,"Permanent Resident":3,"Other (visa required)":4}, options:["Australian Citizen","New Zealand Citizen","Permanent Resident","Other (visa required)"] },
+      { id:"visaDetails", column:"bnsw_visadetails", type:"textarea", required:true, sensitive:true, label:"Visa Details",
+        hint:"If you are not an Australian or New Zealand citizen and have been in Australia for more than 6 months, you need to provide your visa details.",
+        showIf:function(a){return a.citizenship==="Other (visa required)";} },
+      { id:"countryOfBirth", column:"bnsw_countryofbirth", type:"text", required:true, label:"Your Country of Birth" },
+      { id:"languageAtHome", column:"bnsw_languageathome", type:"select", required:true, label:"Language Spoken at Home", values:{"English Only":1,"Language other than English":2}, options:["English Only","Language other than English"] },
+      { id:"indigenous", column:"bnsw_indigenousstatus", type:"select", required:true, sensitive:true, label:"Are You Aboriginal or Torres Strait Islander?",
+        values:{"No":1,"Aboriginal":2,"Torres Strait Islander":3,"Both Aboriginal and Torres Strait Islander":4,"Prefer not to say":5},
+        options:["No","Aboriginal","Torres Strait Islander","Both Aboriginal and Torres Strait Islander","Prefer not to say"] },
+      { id:"disability", column:"bnsw_disability", type:"scale", bool:true, required:true, sensitive:true, label:"Do You Have a Disability, Impairment or Long Term Condition?", options:["Yes","No"] }
+    ]},
+    { title:"Schooling", sub:"Your education background.", fields:[
+      { id:"stillAtSchool", column:"bnsw_stillatschool", type:"scale", bool:true, required:true, label:"Are You Still Attending School?", options:["Yes","No"] },
+      { id:"schoolLevel", column:"bnsw_schoollevel", type:"select", required:true, label:"Currently at School — Which Level Are You In?",
+        values:{"Yr 7":7,"Yr 8":8,"Yr 9":9,"Yr 10":10,"Yr 11":11,"Yr 12":12}, options:["Yr 7","Yr 8","Yr 9","Yr 10","Yr 11","Yr 12"], showIf:function(a){return a.stillAtSchool==="Yes";} },
+      { id:"highestSchooling", column:"bnsw_highestschooling", type:"select", required:true, label:"Your Highest Level of Schooling Completed?",
+        values:{"Year 10 or below":1,"Year 11":2,"Year 12":3,"Certificate I / II":4,"Certificate III / IV":5,"Other":6},
+        options:["Year 10 or below","Year 11","Year 12","Certificate I / II","Certificate III / IV","Other"], showIf:function(a){return a.stillAtSchool==="No";} },
+      { id:"monthCompleted", column:"bnsw_monthcompletedschool", type:"select", required:true, label:"Month Completed School", values:MONTH_VALUES, options:MONTHS, showIf:function(a){return a.stillAtSchool==="No";} },
+      { id:"yearCompleted", column:"bnsw_yearcompletedschool", type:"text", mono:true, required:true, label:"Year Completed School", hint:"e.g. 2023", showIf:function(a){return a.stillAtSchool==="No";} }
+    ]},
+    { title:"Your Apprenticeship / Traineeship", sub:"Details of the role you're signing up for.", fields:[
+      { id:"employer", column:"bnsw_employer", type:"text", required:true, label:"Apprentice/Trainee — Employer" },
+      { id:"startDate", column:"bnsw_apprenticeshipstartdate", type:"text", mono:true, required:true, date:true, label:"Apprenticeship/Traineeship — Start Date", hint:"Format: dd/mm/yyyy" },
+      { id:"jobTitle", column:"bnsw_jobtitle", type:"text", required:true, label:"Apprenticeship/Traineeship — Job Title" },
+      { id:"qualification", column:"bnsw_qualification", type:"text", required:true, label:"Apprenticeship/Traineeship — Qualification" },
+      { id:"commencedBefore", column:"bnsw_commencedbefore", type:"scale", bool:true, required:true, label:"Did Your Apprenticeship/Traineeship Commence Before Today?", options:["Yes","No"] }
+    ]},
+    { title:"Prior Employment", sub:"Any history with the same employer.", fields:[
+      { id:"priorEmployer", column:"bnsw_previouslyworkedwithbusiness", type:"scale", bool:true, required:true, label:"Previously Worked With This Business?", options:["Yes","No"] },
+      { id:"priorStart", column:"bnsw_priorworkstarted", type:"text", mono:true, required:true, date:true, label:"Previously Worked — Started", hint:"Format: dd/mm/yyyy", showIf:function(a){return a.priorEmployer==="Yes";} },
+      { id:"priorEnd", column:"bnsw_priorworkended", type:"text", mono:true, required:true, date:true, label:"Previously Worked — Ended", hint:"Format: dd/mm/yyyy", showIf:function(a){return a.priorEmployer==="Yes";} },
+      { id:"priorEmploymentType", column:"bnsw_priorworkemploymenttype", type:"select", required:true, label:"Previously Worked — Employment Type",
+        values:{"Full Time":1,"Part Time":2,"Casual":3}, options:["Full Time","Part Time","Casual"], showIf:function(a){return a.priorEmployer==="Yes";} },
+      { id:"priorHours", column:"bnsw_priorworkhoursperweek", type:"text", number:true, label:"Average Hours per Week (if Part Time or Casual)",
+        showIf:function(a){return a.priorEmployer==="Yes" && a.priorEmploymentType && a.priorEmploymentType!=="Full Time";} }
+    ]},
+    { title:"Workplace", sub:"Where you'll actually be working day to day.", fields:[
+      { id:"workplaceName", column:"bnsw_workplacename", type:"text", required:true, label:"Workplace — Name" },
+      { id:"workplaceAddress", column:"bnsw_workplaceaddress", type:"textarea", required:true, label:"Workplace — Full Address" }
+    ]},
+    { title:"Prior Study", sub:"Other qualifications or current study.", fields:[
+      { id:"completedQual", column:"bnsw_completedqualification", type:"scale", bool:true, required:true, label:"Have You Completed a Qualification?", options:["Yes","No"] },
+      { id:"qualDetails", column:"bnsw_qualificationdetails", type:"textarea", required:true, label:"Qualification Details", showIf:function(a){return a.completedQual==="Yes";} },
+      { id:"qualStarted", column:"bnsw_qualificationstudystarted", type:"text", mono:true, required:true, date:true, label:"Completed Study — Started", hint:"Format: dd/mm/yyyy", showIf:function(a){return a.completedQual==="Yes";} },
+      { id:"qualFinished", column:"bnsw_qualificationstudyfinished", type:"text", mono:true, required:true, date:true, label:"Completed Study — Finished", hint:"Format: dd/mm/yyyy", showIf:function(a){return a.completedQual==="Yes";} },
+      { id:"currentlyStudying", column:"bnsw_currentlystudying", type:"scale", bool:true, required:true, label:"Currently Studying Now?", options:["Yes","No"] },
+      { id:"studyName", column:"bnsw_currentstudyname", type:"text", required:true, label:"Currently Studying — Name and Title", showIf:function(a){return a.currentlyStudying==="Yes";} },
+      { id:"studyStart", column:"bnsw_currentstudystartdate", type:"text", mono:true, required:true, date:true, label:"Currently Studying — Start Date", hint:"Format: dd/mm/yyyy", showIf:function(a){return a.currentlyStudying==="Yes";} }
+    ]},
+    { title:"Parent / Guardian", sub:"Required only if you're under 18.", fields:[
+      { id:"under18", column:"bnsw_under18", type:"scale", bool:true, required:true, label:"Are You Under 18 Years of Age?", options:["Yes","No"] },
+      { id:"guardianFirst", column:"bnsw_guardianfirstname", type:"text", required:true, sensitive:true, label:"Parent/Guardian — First Name", showIf:function(a){return a.under18==="Yes";} },
+      { id:"guardianLast", column:"bnsw_guardianlastname", type:"text", required:true, sensitive:true, label:"Parent/Guardian — Last Name", showIf:function(a){return a.under18==="Yes";} },
+      { id:"guardianAddress", column:"bnsw_guardianaddress", type:"text", required:true, sensitive:true, label:"Parent/Guardian — Address", showIf:function(a){return a.under18==="Yes";} },
+      { id:"guardianSuburb", column:"bnsw_guardiansuburb", type:"text", required:true, sensitive:true, label:"Parent/Guardian — Suburb", showIf:function(a){return a.under18==="Yes";} },
+      { id:"guardianState", column:"bnsw_guardianstate", type:"select", required:true, sensitive:true, label:"Parent/Guardian — State", values:AU_STATE_VALUES, options:AU_STATES, showIf:function(a){return a.under18==="Yes";} },
+      { id:"guardianPostcode", column:"bnsw_guardianpostcode", type:"text", mono:true, required:true, sensitive:true, label:"Parent/Guardian — Postcode", showIf:function(a){return a.under18==="Yes";} },
+      { id:"guardianMobile", column:"bnsw_guardianmobile", type:"tel", required:true, sensitive:true, label:"Parent/Guardian — Mobile Number", showIf:function(a){return a.under18==="Yes";} },
+      { id:"guardianEmail", column:"bnsw_guardianemail", type:"email", required:true, sensitive:true, label:"Parent/Guardian — Email", showIf:function(a){return a.under18==="Yes";} }
+    ]}
+  ];
+
+  var answers = {};
+  var current = 0;
+
+  // Pre-fill the tracking code from the email link (?trackingcode=...)
+  try {
+    var qs = new URLSearchParams(window.location.search);
+    var tc = qs.get("trackingcode") || qs.get("code");
+    if (tc) answers.trackingCode = tc.trim();
+  } catch (e) { /* very old browser — applicant pastes the code manually */ }
+  if (LOCKED_CODE) answers.trackingCode = LOCKED_CODE;
+  // With a validated code from the link, skip the tracking-code step and show the code in the banner
+  var TRACKING_COLUMN = STEPS[0].fields[0].column;
+  if (LOCKED_CODE) {
+    STEPS = STEPS.slice(1);
+    document.getElementById("asaCodeChipValue").textContent = LOCKED_CODE;
+    document.getElementById("asaCodeChip").hidden = false;
+  }
+  var card = document.getElementById("asaCard");
+  var segmentsEl = document.getElementById("asaSegments");
+
+  for (var s=0; s<STEPS.length; s++){
+    var seg = document.createElement("div"); seg.className = "segment"; segmentsEl.appendChild(seg);
+  }
+
+  function visibleFields(step){ return step.fields.filter(function(f){ return !f.showIf || f.showIf(answers); }); }
+  function tagHTML(f){ return f.sensitive ? '<span class="tag-sensitive">Sensitive</span>' : ""; }
+
+  function fieldHTML(f){
+    var reqClass = f.required ? "req" : "";
+    var hint = f.hint ? '<span class="hint">' + f.hint + '</span>' : (f.optionalTag ? '<span class="hint">Optional</span>' : "");
+    var warning = f.warning ? '<div class="warning">' + f.warning + '</div>' : "";
+    var monoAttr = f.mono ? ' data-mono' : "";
+
+    if (f.type === "text" || f.type === "email" || f.type === "tel"){
+      return '<div class="field" data-field="' + f.id + '">' +
+        '<label class="' + reqClass + '" for="' + f.id + '">' + f.label + tagHTML(f) + hint + '</label>' +
+        '<input type="' + f.type + '" id="' + f.id + '"' + monoAttr + ((f.id === "trackingCode" && LOCKED_CODE) ? ' readonly' : '') + ' value="' + esc(answers[f.id] || "") + '">' +
+        warning + '<div class="error">Please fill in this field.</div></div>';
+    }
+    if (f.type === "select"){
+      var opts = '<option value="" disabled ' + (!answers[f.id] ? "selected" : "") + '>Select one…</option>';
+      f.options.forEach(function(o){ opts += '<option value="' + esc(o) + '" ' + (answers[f.id]===o?"selected":"") + '>' + esc(o) + '</option>'; });
+      return '<div class="field" data-field="' + f.id + '">' +
+        '<label class="' + reqClass + '" for="' + f.id + '">' + f.label + tagHTML(f) + hint + '</label>' +
+        '<select id="' + f.id + '">' + opts + '</select>' +
+        '<div class="error">Please select an option.</div></div>';
+    }
+    if (f.type === "textarea"){
+      return '<div class="field" data-field="' + f.id + '">' +
+        '<label class="' + reqClass + '" for="' + f.id + '">' + f.label + tagHTML(f) + hint + '</label>' +
+        '<textarea id="' + f.id + '">' + esc(answers[f.id] || "") + '</textarea>' +
+        '<div class="error">Please fill in this field.</div></div>';
+    }
+    if (f.type === "scale"){
+      var choices = f.options.map(function(o){
+        var checked = answers[f.id] === o ? "checked" : "";
+        return '<label class="choice"><input type="radio" name="' + f.id + '" value="' + esc(o) + '" ' + checked + '><span><span class="dot"></span>' + esc(o) + '</span></label>';
+      }).join("");
+      return '<div class="field" data-field="' + f.id + '">' +
+        '<fieldset><legend class="' + reqClass + '">' + f.label + tagHTML(f) + hint + '</legend>' +
+        '<div class="scale-row">' + choices + '</div></fieldset>' +
+        '<div class="error">Please choose one option.</div></div>';
+    }
+    if (f.type === "checkboxes"){
+      var selected = answers[f.id] || [];
+      var choices = f.options.map(function(o){
+        var checked = selected.indexOf(o) > -1 ? "checked" : "";
+        return '<label class="choice stack"><input type="checkbox" data-group="' + f.id + '" value="' + esc(o) + '" ' + checked + '><span><span class="box"></span>' + esc(o) + '</span></label>';
+      }).join("");
+      return '<div class="field" data-field="' + f.id + '">' +
+        '<fieldset><legend class="' + reqClass + '">' + f.label + tagHTML(f) + hint + '</legend>' +
+        '<div class="choice-row stack">' + choices + '</div></fieldset>' +
+        '<div class="error">Please confirm this to continue.</div></div>';
+    }
+    return "";
+  }
+
+  function render(){
+    var step = STEPS[current];
+    var fields = visibleFields(step);
+    var html = '<h2>' + step.title + '</h2><p class="step-sub">' + step.sub + '</p>';
+    fields.forEach(function(f){ html += fieldHTML(f); });
+    html += '<div class="actions">' +
+      '<button type="button" class="btn-ghost" id="asaBack"' + (current===0?" disabled":"") + '>Back</button>' +
+      '<button type="button" class="btn-primary" id="asaNext">' + (current===STEPS.length-1 ? "Submit" : "Next") + '</button>' +
+    '</div>';
+    card.innerHTML = html;
+
+    fields.forEach(function(f){
+      if (f.type==="text"||f.type==="email"||f.type==="tel"||f.type==="textarea"){
+        document.getElementById(f.id).addEventListener("input", function(e){ answers[e.target.id] = e.target.value; });
+      }
+      if (f.type==="select"){
+        document.getElementById(f.id).addEventListener("change", function(e){ answers[e.target.id] = e.target.value; render(); });
+      }
+      if (f.type==="scale"){
+        card.querySelectorAll('input[name="' + f.id + '"]').forEach(function(r){
+          r.addEventListener("change", function(e){ answers[f.id] = e.target.value; render(); });
+        });
+      }
+      if (f.type==="checkboxes"){
+        var boxes = card.querySelectorAll('input[data-group="' + f.id + '"]');
+        boxes.forEach(function(b){
+          b.addEventListener("change", function(){
+            var vals = Array.prototype.slice.call(boxes).filter(function(x){return x.checked;}).map(function(x){return x.value;});
+            answers[f.id] = vals;
+          });
+        });
+      }
+    });
+
+    document.getElementById("asaBack").addEventListener("click", function(){ if (current>0){ current--; render(); updateProgress(); } });
+    document.getElementById("asaNext").addEventListener("click", function(){
+      if (validateStep(fields)){
+        if (current === STEPS.length-1){ submit(); } else { current++; render(); updateProgress(); }
+      }
+    });
+    updateProgress();
+  }
+
+  function validateStep(fields){
+    var ok = true, firstBad = null;
+    fields.forEach(function(f){
+      var el = card.querySelector('[data-field="' + f.id + '"]');
+      var msg = fieldError(f, answers[f.id]);
+      el.classList.toggle("invalid", !!msg);
+      if (msg){
+        el.querySelector(".error").textContent = msg;
+        ok = false;
+        if (!firstBad) firstBad = el;
+      }
+    });
+    if (firstBad){
+      var input = firstBad.querySelector("input, select, textarea");
+      if (input) input.focus();
+    }
+    return ok;
+  }
+
+  function updateProgress(){
+    var segs = segmentsEl.children;
+    for (var i=0;i<segs.length;i++){ segs[i].className = "segment" + (i<current ? " done" : (i===current ? " current" : "")); }
+    document.getElementById("asaStepCaption").textContent = STEPS[current].title;
+    document.getElementById("asaStepCount").textContent = "Section " + (current+1) + " / " + STEPS.length;
+  }
+
+  // ---- Build the Dataverse payload and POST via Web API ----------------
+  function buildPayload(){
+    var payload = {};
+    // Only send fields that are currently shown — answers to questions the
+    // applicant later hid (e.g. a USI typed before switching to "No") are dropped.
+    var visible = STEPS.reduce(function(acc, s){ return acc.concat(visibleFields(s)); }, []);
+    if (LOCKED_CODE) payload[TRACKING_COLUMN] = LOCKED_CODE;
+    visible.forEach(function(f){
+      var raw = answers[f.id];
+      if (typeof raw === "string") raw = raw.trim();
+      if (raw === undefined || raw === null || raw === "") return;
+      if (f.type === "checkboxes" && f.bool){ payload[f.column] = raw.length > 0; return; }
+      if (f.bool){ payload[f.column] = raw === "Yes"; return; }
+      if (f.values){ payload[f.column] = f.values[raw]; return; }
+      if (f.date){ payload[f.column] = parseDMY(raw); return; }
+      if (f.number){ payload[f.column] = parseInt(raw, 10); return; }
+      if (f.id === "usiNumber"){ payload[f.column] = raw.toUpperCase(); return; }
+      payload[f.column] = raw;
+    });
+    // Link the record to the signed-in applicant (needed for the Contact-scoped Table Permission)
+    if (LINK_CONTACT) payload[CONTACT_NAV + "@odata.bind"] = "/contacts(" + CONTACT_ID + ")";
+    return payload;
+  }
+
+  function submit(){
+    var nextBtn = document.getElementById("asaNext");
+    nextBtn.disabled = true;
+    nextBtn.textContent = "Submitting…";
+
+    asaApi.post("/_api/" + ENTITY_SET, JSON.stringify(buildPayload())).then(function(){
+      showConfirmation(true);
+    }, function(err){
+      var status = (err && err.status) || 0;
+      var text = (err && err.responseText) || "";
+      var msg = text;
+      try {
+        var e = JSON.parse(text).error;
+        msg = (e.code ? e.code + ": " : "") + (e.message || "");
+        if (e.innererror && e.innererror.message) msg += " | " + e.innererror.message;
+      } catch (ignore) { /* not JSON - keep raw text */ }
+      if (!msg) msg = status ? "No response body" : ("Request did not reach the server - " + ((err && err.message) || "network problem"));
+      console.error("Apprentice sign-up submit failed", status, text || err);
+      showConfirmation(false, "HTTP " + status + " - " + msg.substring(0, 600));
+    });
+  }
+
+  function showConfirmation(success, detail){
+    for (var i=0;i<segmentsEl.children.length;i++){ segmentsEl.children[i].className = "segment done"; }
+    document.getElementById("asaStepCaption").textContent = success ? "Complete" : "Error";
+    document.getElementById("asaStepCount").textContent = STEPS.length + " / " + STEPS.length;
+
+    if (success){
+      card.innerHTML = '<div class="confirm">' +
+        '<div class="mark2">&#10003;</div>' +
+        '<h2>Thanks — your sign-up is recorded</h2>' +
+        '<p>ASA has received your apprentice/trainee details' + (answers.firstName ? " for " + esc(answers.firstName) : "") + '.</p>' +
+        '<p>A confirmation would normally be emailed to ' + esc(answers.email || "your address") + '.</p></div>';
+    } else {
+      card.innerHTML = '<div class="confirm is-error">' +
+        '<div class="mark2">!</div>' +
+        '<h2>Something went wrong</h2>' +
+        '<p>Your details weren\'t saved. Please try Submit again, or call 1300 363 831 if the problem continues.</p>' +
+        '<button type="button" class="restart" id="asaRetry">Try again</button>' +
+        (detail ? '<details class="tech"><summary>Technical details (for support)</summary><pre>' + esc(detail) + '</pre></details>' : '') +
+        '</div>';
+      document.getElementById("asaRetry").addEventListener("click", function(){ render(); updateProgress(); });
+    }
+  }
+
+  render();
+})();
+</script>
+{% else %}
+<div id="asa-signup-root">
+<header class="asa-header">
+  <div class="hdr-inner">
+    <a class="brand" href="/" aria-label="Apprenticeship Support Australia">
+      {% if asa_logo_url != '' %}<img class="brand-logo" src="{{ asa_logo_url | escape }}" alt="Apprenticeship Support Australia">{% else %}{{ asa_logo_svg }}{% endif %}
+    </a>
+    <a class="phone-btn" href="tel:1300363831" aria-label="Call 1300 363 831"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z"/></svg><span class="ph-text">1300 363 831</span></a>
+  </div>
+</header>
+<section class="hero">
+  <div class="hero-inner">
+    <p class="eyebrow">Apprentice &amp; trainee sign-up</p>
+    <h1>Provide your details</h1>
+    <span class="bar"></span>
+    <p class="lede">Apprenticeship Support Australia (ASA) uses this page to collect your details for your apprenticeship or traineeship sign-up.</p>
+  </div>
+  <svg class="corner" viewBox="338 -2 101 98" aria-hidden="true"><path d="M341.087 49.8941L360.178 88.0973L393.302 49.5657L341.087 49.8941Z" fill="#F68D2E"/><path d="M436.781 50.4195L413.64 0L377.079 48.6681L377.517 49.5657L426.272 62.3731L436.781 50.4195Z" fill="#005E5D"/><path d="M341.24 49.8941L410.444 87.0246L436.781 50.4195L341.24 49.8941Z" fill="#FFB81C"/><path d="M419.551 93.0889L419.245 80.1502L412.743 88.8636L419.551 93.0889Z" fill="#279989"/><path d="M363.834 12.9169L341.087 49.8941L437 50.8136L363.834 12.9169Z" fill="#2DCCD3"/></svg>
+</section>
+<div class="wrap">
+  <div class="msg-card">
+  {% if code_state == 'used' %}
+    <h2>Already submitted</h2>
+    <p>This sign-up has already been submitted — thank you.</p>
+    <p>If you need to change any of your details, please give us a call.</p>
+  {% elsif code_state == 'cancelled' %}
+    <h2>This sign-up link is no longer active</h2>
+    <p>Please call us and we'll send you a new one.</p>
+  {% elsif code_state == 'expired' %}
+    <h2>This link has expired</h2>
+    <p>Please call us and we'll send you a new sign-up link.</p>
+  {% elsif code_state == 'invalid' %}
+    <h2>We couldn't find this sign-up link</h2>
+    <p>Please open the link exactly as it appears in your sign-up email. If it still doesn't work, give us a call.</p>
+  {% else %}
+    <h2>Use the link in your email</h2>
+    <p>To provide your details, please open the personal sign-up link in the email ASA sent you. Each link is unique to you.</p>
+  {% endif %}
+    <p class="help"><a class="btn-teal" href="tel:1300363831">Call 1300 363 831</a></p>
+  </div>
+</div>
+<footer class="asa-footer">
+  <div class="ftr-inner">
+    <span class="ftr-name">Apprenticeship Support Australia</span>
+    <span>For assistance call <a href="tel:1300363831">1300 363 831</a></span>
+    {% if asa_privacy_url != '' %}<a href="{{ asa_privacy_url | escape }}" target="_blank" rel="noopener">Privacy policy</a>{% endif %}
+  </div>
+</footer>
+</div>
+{% endif %}
+</body>
+</html>

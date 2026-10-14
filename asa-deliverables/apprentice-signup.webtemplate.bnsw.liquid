@@ -24,6 +24,8 @@
      be open to everyone (no page permission); anonymous visitors need Read on
      bnsw_signupinvite (for the check below) and Create on bnsw_apprenticesignup.
      Do NOT enable the Web API for bnsw_signupinvite.
+  8. Pre-fill (optional): run Enable-Prefill.ps1 BEFORE pasting this template - the code
+     check reads the invite's bnsw_prefilldata column. See PREFILL.md.
 
   Applicants get a personal link from their sign-up email:
      https://<your-site>/<page-path>?trackingcode=ABC123
@@ -202,6 +204,23 @@
   @media (max-width:380px){
     #asa-signup-root .phone-btn .ph-text{ display:none; }
   }
+  /* Pre-fill notice and review page */
+  #asa-signup-root .prefill-note{ background:#FFF6E0; border-left:4px solid var(--asa-amber); border-radius:4px; padding:12px 14px; margin-bottom:20px; font-size:0.92rem; line-height:1.5; }
+  #asa-signup-root .prefill-note strong{ display:block; margin-bottom:2px; }
+  #asa-signup-root .rv-section{ border-top:1px solid var(--line); padding:14px 0 6px; }
+  #asa-signup-root .rv-section:first-of-type{ border-top:none; }
+  #asa-signup-root .rv-head{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:6px; }
+  #asa-signup-root .rv-head h3{ margin:0; font-size:1rem; font-weight:800; color:var(--charcoal); }
+  #asa-signup-root button.rv-edit{ background:none; border:1px solid var(--asa-teal); color:var(--asa-teal-dark); padding:6px 14px; font-size:0.85rem; }
+  #asa-signup-root button.rv-edit:hover{ background:var(--accent-tint); }
+  #asa-signup-root .rv-list{ margin:0; }
+  #asa-signup-root .rv-row{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.2fr); gap:4px 16px; padding:7px 0; font-size:0.9rem; border-bottom:1px dashed #ECECEC; }
+  #asa-signup-root .rv-row:last-child{ border-bottom:none; }
+  #asa-signup-root .rv-row dt{ color:var(--muted); }
+  #asa-signup-root .rv-row dd{ margin:0; font-weight:600; overflow-wrap:anywhere; }
+  #asa-signup-root .rv-empty{ color:var(--muted); font-weight:400; font-style:italic; }
+  #asa-signup-root .chg{ display:inline-block; margin-left:6px; font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--asa-teal-dark); background:var(--accent-tint); border-radius:3px; padding:1px 6px; vertical-align:middle; }
+  @media (max-width:560px){ #asa-signup-root .rv-row{ grid-template-columns:1fr; gap:2px; } }
   #asa-signup-root .note{ margin-top:18px; font-size:0.76rem; color:var(--muted); line-height:1.5; border-top:1px solid var(--line); padding-top:13px; }
 </style>
 </head>
@@ -222,6 +241,7 @@
         <attribute name="bnsw_trackingcode" />
         <attribute name="bnsw_invitestatus" />
         <attribute name="bnsw_expireson" />
+        <attribute name="bnsw_prefilldata" />
         <filter type="and">
           <condition attribute="bnsw_trackingcode" operator="eq" value="{{ code | xml_escape }}" />
           <condition attribute="statecode" operator="eq" value="0" />
@@ -275,6 +295,12 @@
   <svg class="corner" viewBox="338 -2 101 98" aria-hidden="true"><path d="M341.087 49.8941L360.178 88.0973L393.302 49.5657L341.087 49.8941Z" fill="#F68D2E"/><path d="M436.781 50.4195L413.64 0L377.079 48.6681L377.517 49.5657L426.272 62.3731L436.781 50.4195Z" fill="#005E5D"/><path d="M341.24 49.8941L410.444 87.0246L436.781 50.4195L341.24 49.8941Z" fill="#FFB81C"/><path d="M419.551 93.0889L419.245 80.1502L412.743 88.8636L419.551 93.0889Z" fill="#279989"/><path d="M363.834 12.9169L341.087 49.8941L437 50.8136L363.834 12.9169Z" fill="#2DCCD3"/></svg>
 </section>
 <div class="wrap">
+
+  <div class="prefill-note" id="asaPrefillNote" hidden>
+    <strong>We've filled in the details we already have.</strong>
+    Please check each section, correct anything that's wrong and complete any blanks. You'll see everything again before you submit.
+  </div>
+  <textarea id="asaPrefill" hidden aria-hidden="true">{{ invite.bnsw_prefilldata | escape }}</textarea>
 
   <div class="progress-block">
     <div class="segments" id="asaSegments"></div>
@@ -344,6 +370,8 @@ var asaApi = {
   var CONTACT_NAV = "bnsw_Contact";          // Contact lookup navigation property (schema name, case-sensitive)
   var CONTACT_ID = "{{ user.id }}";          // signed-in portal user's Contact id, injected by Liquid
   var LOCKED_CODE = "{{ invite.bnsw_trackingcode | escape }}"; // validated on the server; shown read-only
+  var PREFILLED_COLUMN = "bnsw_prefilled";   // Yes/No: the form started from pre-filled data
+  var CHANGES_COLUMN = "bnsw_prefillchanges"; // text: what the applicant changed from the pre-filled data
   var LINK_CONTACT = false;                  // true = also set the Applicant (Contact) lookup on save.
                                              // Needs Contact-scope permissions that Power Pages refused
                                              // in testing (90040106) - leave false with the Global,
@@ -554,8 +582,80 @@ var asaApi = {
   var card = document.getElementById("asaCard");
   var segmentsEl = document.getElementById("asaSegments");
 
-  for (var s=0; s<STEPS.length; s++){
+  var REVIEW = STEPS.length;   // the "Review your details" page comes after the last section
+  var returnToReview = false;  // true while editing a section from the review page
+  for (var s=0; s<=STEPS.length; s++){
     var seg = document.createElement("div"); seg.className = "segment"; segmentsEl.appendChild(seg);
+  }
+
+  function cleanDigits(f, v){
+    var c = String(v == null ? "" : v);
+    if (f.type === "tel") c = c.replace(/^\s*\+\s*61\s*\(?0?\)?/, "0"); // +61 412... -> 0412...
+    return c.replace(/\D/g, "").slice(0, f.digits);
+  }
+
+  // ---- Pre-fill -----------------------------------------------------------
+  // The invite's Prefill Data column holds a JSON copy of the applicant's existing record
+  // (written by the "prefill invite" flow), keyed by this table's column names. Each value is
+  // turned back into the form's answer format. Consent checkboxes are never pre-filled.
+  var original = {};   // field id -> pre-filled answer, to work out what the applicant changed
+  var prefilled = false;
+  function fromDataverse(f, v){
+    if (v === null || v === undefined || v === "") return undefined;
+    if (f.type === "checkboxes") return undefined;
+    if (f.bool) return v === true || v === "true" ? "Yes" : (v === false || v === "false" ? "No" : undefined);
+    if (f.values){ for (var k in f.values){ if (f.values[k] === Number(v)) return k; } return undefined; }
+    if (f.type === "date") return parseISODate(String(v).slice(0, 10)) || undefined;
+    if (f.type === "select") return f.options.indexOf(String(v)) > -1 ? String(v) : undefined;
+    if (f.digits) return cleanDigits(f, v) || undefined;
+    return String(v).trim() || undefined;
+  }
+  try {
+    var pfEl = document.getElementById("asaPrefill");
+    var pfText = pfEl ? pfEl.value.trim() : "";
+    if (pfText){
+      var pf = JSON.parse(pfText);
+      STEPS.forEach(function(step){ step.fields.forEach(function(f){
+        if (f.column === TRACKING_COLUMN) return;
+        var v = fromDataverse(f, pf[f.column]);
+        if (v !== undefined){ answers[f.id] = v; original[f.id] = v; prefilled = true; }
+      }); });
+    }
+  } catch (e) { console.warn("Pre-fill data couldn't be read - starting with a blank form.", e); }
+  if (prefilled) document.getElementById("asaPrefillNote").hidden = false;
+
+  function isoToDMY(v){ var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || ""); return m ? m[3] + "/" + m[2] + "/" + m[1] : (v || ""); }
+  function shown(f, v){
+    if (v === undefined || v === null) return "";
+    if (Array.isArray(v)) return f.bool ? (v.length ? "Agreed" : "") : v.join(", ");
+    if (f.type === "date") return isoToDMY(v);
+    return String(v).trim();
+  }
+  function isVisible(f){ return !f.showIf || f.showIf(answers); }
+
+  // Plain-text summary of what the applicant changed, saved with the submission for staff.
+  // Values of Sensitive fields are not written out - only that they changed.
+  function changeSummary(){
+    var changed = [], added = [], count = 0;
+    STEPS.forEach(function(step){ step.fields.forEach(function(f){
+      var label = f.label.replace(/\s+/g, " ");
+      var was = shown(f, original[f.id]), now = isVisible(f) ? shown(f, answers[f.id]) : "";
+      if (f.id in original){
+        count++;
+        if (was === now) return;
+        if (!isVisible(f)) changed.push(label + ": removed (no longer applies)");
+        else if (f.sensitive) changed.push(label + ": changed (sensitive - value not shown here)");
+        else if (now === "") changed.push(label + ': "' + was + '" → removed');
+        else changed.push(label + ': "' + was + '" → "' + now + '"');
+      } else if (now !== "" && f.type !== "checkboxes" && f.column !== TRACKING_COLUMN){
+        added.push(label);
+      }
+    }); });
+    var out = "Pre-filled " + count + " field" + (count === 1 ? "" : "s") + ". ";
+    out += changed.length ? "Applicant changed " + changed.length + "." : "Applicant made no changes to pre-filled answers.";
+    if (changed.length) out += "\n\nChanged:\n- " + changed.join("\n- ");
+    if (added.length) out += "\n\nFilled in by applicant (was blank):\n- " + added.join("\n- ");
+    return out.length > 3900 ? out.substring(0, 3890) + "\n..." : out;
   }
 
   function visibleFields(step){ return step.fields.filter(function(f){ return !f.showIf || f.showIf(answers); }); }
@@ -616,14 +716,46 @@ var asaApi = {
     return "";
   }
 
+  function renderReview(){
+    var html = '<h2>Review your details</h2><p class="step-sub">Please check everything below. Select <strong>Edit</strong> to change a section, then <strong>Submit</strong>.</p>';
+    STEPS.forEach(function(step, i){
+      var rows = visibleFields(step).map(function(f){
+        var v = shown(f, answers[f.id]);
+        var tag = (prefilled && (f.id in original) && shown(f, original[f.id]) !== v) ? '<span class="chg">Updated</span>' : "";
+        return '<div class="rv-row"><dt>' + f.label + '</dt><dd>' + (v ? esc(v) : '<span class="rv-empty">Not provided</span>') + tag + '</dd></div>';
+      }).join("");
+      html += '<section class="rv-section"><div class="rv-head"><h3>' + step.title + '</h3>' +
+        '<button type="button" class="rv-edit" data-step="' + i + '" aria-label="Edit ' + esc(step.title) + '">Edit</button></div>' +
+        '<dl class="rv-list">' + rows + '</dl></section>';
+    });
+    html += '<div class="actions">' +
+      '<button type="button" class="btn-ghost" id="asaBack">Back</button>' +
+      '<button type="button" class="btn-primary" id="asaNext">Submit</button></div>';
+    card.innerHTML = html;
+    card.querySelectorAll(".rv-edit").forEach(function(b){
+      b.addEventListener("click", function(){ current = +b.getAttribute("data-step"); returnToReview = true; render(); window.scrollTo(0, 0); });
+    });
+    document.getElementById("asaBack").addEventListener("click", function(){ current = REVIEW - 1; returnToReview = false; render(); });
+    document.getElementById("asaNext").addEventListener("click", function(){
+      // Re-check every section (an edit can make questions in other sections apply)
+      for (var i = 0; i < STEPS.length; i++){
+        var bad = visibleFields(STEPS[i]).some(function(f){ return !!fieldError(f, answers[f.id]); });
+        if (bad){ current = i; returnToReview = true; render(); validateStep(visibleFields(STEPS[i])); return; }
+      }
+      submit();
+    });
+    updateProgress();
+  }
+
   function render(){
+    if (current === REVIEW) return renderReview();
     var step = STEPS[current];
     var fields = visibleFields(step);
     var html = '<h2>' + step.title + '</h2><p class="step-sub">' + step.sub + '</p>';
     fields.forEach(function(f){ html += fieldHTML(f); });
     html += '<div class="actions">' +
       '<button type="button" class="btn-ghost" id="asaBack"' + (current===0?" disabled":"") + '>Back</button>' +
-      '<button type="button" class="btn-primary" id="asaNext">' + (current===STEPS.length-1 ? "Submit" : "Next") + '</button>' +
+      '<button type="button" class="btn-primary" id="asaNext">' + (returnToReview ? "Save and review" : (current===STEPS.length-1 ? "Review" : "Next")) + '</button>' +
     '</div>';
     card.innerHTML = html;
 
@@ -633,9 +765,7 @@ var asaApi = {
         var save = function(e){
           // Numbers-only fields: drop anything that isn't a digit as it's typed or pasted
           if (f.digits){
-            var clean = e.target.value;
-            if (f.type === "tel") clean = clean.replace(/^\s*\+\s*61\s*\(?0?\)?/, "0"); // +61 412... -> 0412...
-            clean = clean.replace(/\D/g, "").slice(0, f.digits);
+            var clean = cleanDigits(f, e.target.value);
             if (clean !== e.target.value) e.target.value = clean;
           }
           answers[e.target.id] = e.target.value;
@@ -665,7 +795,8 @@ var asaApi = {
     document.getElementById("asaBack").addEventListener("click", function(){ if (current>0){ current--; render(); updateProgress(); } });
     document.getElementById("asaNext").addEventListener("click", function(){
       if (validateStep(fields)){
-        if (current === STEPS.length-1){ submit(); } else { current++; render(); updateProgress(); }
+        if (returnToReview){ returnToReview = false; current = REVIEW; } else { current++; }
+        render(); window.scrollTo(0, 0);
       }
     });
     updateProgress();
@@ -693,8 +824,8 @@ var asaApi = {
   function updateProgress(){
     var segs = segmentsEl.children;
     for (var i=0;i<segs.length;i++){ segs[i].className = "segment" + (i<current ? " done" : (i===current ? " current" : "")); }
-    document.getElementById("asaStepCaption").textContent = STEPS[current].title;
-    document.getElementById("asaStepCount").textContent = "Section " + (current+1) + " / " + STEPS.length;
+    document.getElementById("asaStepCaption").textContent = current === REVIEW ? "Review your details" : STEPS[current].title;
+    document.getElementById("asaStepCount").textContent = current === REVIEW ? "Final check" : "Section " + (current+1) + " / " + STEPS.length;
   }
 
   // ---- Build the Dataverse payload and POST via Web API ----------------
@@ -720,6 +851,9 @@ var asaApi = {
     });
     // Link the record to the signed-in applicant (needed for the Contact-scoped Table Permission)
     if (LINK_CONTACT) payload[CONTACT_NAV + "@odata.bind"] = "/contacts(" + CONTACT_ID + ")";
+    // Pre-filled forms also record what the applicant changed (columns added by Enable-Prefill.ps1;
+    // only sent when there was pre-fill data, so the form still works without them)
+    if (prefilled){ payload[PREFILLED_COLUMN] = true; payload[CHANGES_COLUMN] = changeSummary(); }
     return payload;
   }
 
@@ -748,7 +882,7 @@ var asaApi = {
   function showConfirmation(success, detail){
     for (var i=0;i<segmentsEl.children.length;i++){ segmentsEl.children[i].className = "segment done"; }
     document.getElementById("asaStepCaption").textContent = success ? "Complete" : "Error";
-    document.getElementById("asaStepCount").textContent = STEPS.length + " / " + STEPS.length;
+    document.getElementById("asaStepCount").textContent = "";
 
     if (success){
       card.innerHTML = '<div class="confirm">' +

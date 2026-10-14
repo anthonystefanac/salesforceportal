@@ -184,7 +184,8 @@
   #asa-signup-root .asa-footer{ background:var(--charcoal-band); color:#fff; }
   #asa-signup-root .ftr-inner{ max-width:1100px; margin:0 auto; padding:22px 18px; display:flex; flex-wrap:wrap; gap:8px 24px; justify-content:space-between; align-items:center; font-size:0.9rem; }
   #asa-signup-root .asa-footer a{ color:#fff; font-weight:700; }
-  #asa-signup-root .asa-footer .ftr-name{ font-weight:700; }
+  #asa-signup-root .asa-footer .ftr-name{ font-weight:700; text-decoration:none; }
+  #asa-signup-root .asa-footer .ftr-name:hover{ text-decoration:underline; }
 
   @media (max-width:640px){
     #asa-signup-root .hdr-inner{ padding:10px 16px; }
@@ -291,7 +292,7 @@
 </div>
 <footer class="asa-footer">
   <div class="ftr-inner">
-    <span class="ftr-name">Apprenticeship Support Australia</span>
+    <a class="ftr-name" href="https://www.apprenticeshipsupport.com.au/" target="_blank" rel="noopener">Apprenticeship Support Australia</a>
     <span>For assistance call <a href="tel:1300363831">1300 363 831</a></span>
     {% if asa_privacy_url != '' %}<a href="{{ asa_privacy_url | escape }}" target="_blank" rel="noopener">Privacy policy</a>{% endif %}
   </div>
@@ -813,7 +814,7 @@ var asaApi = {
 </div>
 <footer class="asa-footer">
   <div class="ftr-inner">
-    <span class="ftr-name">Apprenticeship Support Australia</span>
+    <a class="ftr-name" href="https://www.apprenticeshipsupport.com.au/" target="_blank" rel="noopener">Apprenticeship Support Australia</a>
     <span>For assistance call <a href="tel:1300363831">1300 363 831</a></span>
     {% if asa_privacy_url != '' %}<a href="{{ asa_privacy_url | escape }}" target="_blank" rel="noopener">Privacy policy</a>{% endif %}
   </div>

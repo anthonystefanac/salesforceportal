@@ -96,6 +96,9 @@
   #asa-signup-root .field > label, #asa-signup-root .field legend{ display:flex; align-items:center; flex-wrap:wrap; gap:7px; font-weight:600; font-size:0.88rem; margin-bottom:7px; padding:0; }
   #asa-signup-root .field .hint{ display:block; width:100%; font-weight:400; color:var(--muted); font-size:0.78rem; margin-top:3px; }
   #asa-signup-root .req::after{ content:" *"; color:var(--danger); }
+  /* Keep the * next to the question; the hint wraps underneath */
+  #asa-signup-root .req::after{ order:1; margin-left:-4px; }
+  #asa-signup-root .field .hint{ order:2; }
   #asa-signup-root .tag-sensitive{ font-family:ui-monospace, "Cascadia Mono", Consolas, monospace; font-size:0.6rem; letter-spacing:0.05em; text-transform:uppercase; color:var(--sensitive); background:var(--sensitive-tint); border-radius:5px; padding:2px 6px; font-weight:600; }
   #asa-signup-root .field fieldset{ border:none; margin:0; padding:0; }
   #asa-signup-root .warning{ background:var(--danger-tint); color:var(--danger); border-radius:8px; padding:9px 12px; font-size:0.8rem; font-weight:600; margin-top:8px; }
@@ -359,6 +362,21 @@ var asaApi = {
     return m[3] + "-" + m[2].padStart(2,"0") + "-" + m[1].padStart(2,"0");
   }
 
+  // Date picker values arrive as "yyyy-mm-dd". Returns the same string if it's a real date, else null.
+  function parseISODate(v){
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || "");
+    if (!m) return null;
+    var y = +m[1], mo = +m[2], d = +m[3];
+    var dt = new Date(Date.UTC(y, mo - 1, d));
+    if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== mo - 1 || dt.getUTCDate() !== d) return null;
+    if (y < 1900 || y > 2100) return null;
+    return v;
+  }
+  function todayISO(){
+    var t = new Date();
+    return t.getFullYear() + "-" + String(t.getMonth() + 1).padStart(2, "0") + "-" + String(t.getDate()).padStart(2, "0");
+  }
+
   function esc(v){
     return String(v == null ? "" : v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
   }
@@ -366,11 +384,12 @@ var asaApi = {
   // ---- Format rules (checked in addition to "required") ----------------
   // Keyed by field id. Each returns an error message, or "" when valid.
   function postcodeRule(v){ return /^\d{4}$/.test(v) ? "" : "Enter a 4-digit postcode."; }
-  function phoneRule(v){
-    var n = v.replace(/[\s()-]/g, "");
-    return /^(?:\+?61|0)[2-478]\d{8}$/.test(n) ? "" : "Enter an Australian phone number, e.g. 0412 345 678.";
+  function phoneRule(v){ return /^0\d{9}$/.test(v.replace(/\s/g, "")) ? "" : "Enter a 10-digit mobile number starting with 0 (numbers only), e.g. 0412345678."; }
+  function emailRule(v){
+    v = v.trim();
+    return /^[A-Za-z0-9.!#$%&'*+\/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)*\.[A-Za-z]{2,}$/.test(v) && v.indexOf("..") === -1
+      ? "" : "Enter a valid email address, e.g. name@example.com.";
   }
-  function emailRule(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? "" : "Enter a valid email address."; }
   var RULES = {
     usiNumber: function(v){
       // USI: 10 characters, letters and digits excluding I, O, 0 and 1
@@ -393,6 +412,11 @@ var asaApi = {
     var empty = f.type === "checkboxes" ? (raw || []).length === 0 : v.trim() === "";
     if (empty) return f.required ? defaultMsg(f) : "";
     if (f.date && !parseDMY(v.trim())) return "Enter a real date as dd/mm/yyyy.";
+    if (f.type === "date"){
+      if (!parseISODate(v)) return "Choose a date from the calendar, or enter a complete date.";
+      if (f.pastOnly && v >= todayISO()) return "Your date of birth must be in the past.";
+    }
+    if (f.digits && !new RegExp("^\\d{" + f.digits + "}$").test(v.replace(/\s/g, ""))) return RULES[f.id] ? RULES[f.id](v) : "Enter " + f.digits + " digits (numbers only).";
     if (RULES[f.id]) return RULES[f.id](v);
     return "";
   }
@@ -424,23 +448,23 @@ var asaApi = {
       { id:"middleName", column:"bnsw_middlename", type:"text", label:"Your Middle Name(s) (Apprentice/Trainee)", optionalTag:true },
       { id:"lastName", column:"bnsw_lastname", type:"text", required:true, label:"Your Last Name (Apprentice/Trainee)" },
       { id:"previousName", column:"bnsw_previousname", type:"text", label:"Your Previous Name (Apprentice/Trainee)", optionalTag:true, hint:"If you have changed your name" },
-      { id:"dob", column:"bnsw_dateofbirth", type:"text", mono:true, required:true, sensitive:true, date:true, label:"Your Date of Birth (Apprentice/Trainee)", hint:"Format: dd/mm/yyyy" }
+      { id:"dob", column:"bnsw_dateofbirth", type:"date", required:true, sensitive:true, pastOnly:true, autocomplete:"bday", label:"Your Date of Birth (Apprentice/Trainee)", hint:"Pick a date, or type it as day / month / year" }
     ]},
     { title:"Home Address", sub:"Where you currently live.", fields:[
       { id:"homeStreet", column:"bnsw_homestreet", type:"text", required:true, label:"Your Home Number/Street" },
       { id:"homeSuburb", column:"bnsw_homesuburb", type:"text", required:true, label:"Your Home Suburb" },
-      { id:"homePostcode", column:"bnsw_homepostcode", type:"text", mono:true, required:true, label:"Your Home Postcode" },
+      { id:"homePostcode", column:"bnsw_homepostcode", type:"text", mono:true, required:true, digits:4, autocomplete:"postal-code", label:"Your Home Postcode", hint:"4 digits, e.g. 2000" },
       { id:"homeState", column:"bnsw_homestate", type:"select", required:true, values:AU_STATE_VALUES, label:"Your Home State", options:AU_STATES }
     ]},
     { title:"Postal Address", sub:"Where we should send correspondence.", fields:[
       { id:"postalSame", column:"bnsw_postalsame", type:"scale", bool:true, required:true, label:"Is Your Postal Address the Same as Your Home Address?", options:["Yes","No"] },
       { id:"postalAddress", column:"bnsw_postaladdress", type:"text", required:true, label:"Your Postal Address", showIf:function(a){return a.postalSame==="No";} },
       { id:"postalSuburb", column:"bnsw_postalsuburb", type:"text", required:true, label:"Your Postal Suburb", showIf:function(a){return a.postalSame==="No";} },
-      { id:"postalPostcode", column:"bnsw_postalpostcode", type:"text", mono:true, required:true, label:"Your Postal Postcode", showIf:function(a){return a.postalSame==="No";} }
+      { id:"postalPostcode", column:"bnsw_postalpostcode", type:"text", mono:true, required:true, digits:4, label:"Your Postal Postcode", hint:"4 digits, e.g. 2000", showIf:function(a){return a.postalSame==="No";} }
     ]},
     { title:"Contact Details", sub:"How we and your employer can reach you.", fields:[
-      { id:"mobile", column:"bnsw_mobile", type:"tel", required:true, label:"Your Mobile Number" },
-      { id:"email", column:"bnsw_email", type:"email", required:true, label:"Your Email" }
+      { id:"mobile", column:"bnsw_mobile", type:"tel", required:true, digits:10, autocomplete:"tel", label:"Your Mobile Number", hint:"10 digits, e.g. 0412345678" },
+      { id:"email", column:"bnsw_email", type:"email", required:true, autocomplete:"email", label:"Your Email", hint:"e.g. name@example.com" }
     ]},
     { title:"Background", sub:"Standard training-sector demographic questions.", fields:[
       { id:"gender", column:"bnsw_gender", type:"select", required:true, label:"Your Gender", values:{"Male":1,"Female":2,"Non-binary":3,"Prefer not to say":4,"Other":5}, options:["Male","Female","Non-binary","Prefer not to say","Other"] },
@@ -467,7 +491,7 @@ var asaApi = {
     ]},
     { title:"Your Apprenticeship / Traineeship", sub:"Details of the role you're signing up for.", fields:[
       { id:"employer", column:"bnsw_employer", type:"text", required:true, label:"Apprentice/Trainee — Employer" },
-      { id:"startDate", column:"bnsw_apprenticeshipstartdate", type:"text", mono:true, required:true, date:true, label:"Apprenticeship/Traineeship — Start Date", hint:"Format: dd/mm/yyyy" },
+      { id:"startDate", column:"bnsw_apprenticeshipstartdate", type:"date", required:true, label:"Apprenticeship/Traineeship — Start Date", hint:"Pick a date, or type it as day / month / year" },
       { id:"jobTitle", column:"bnsw_jobtitle", type:"text", required:true, label:"Apprenticeship/Traineeship — Job Title" },
       { id:"qualification", column:"bnsw_qualification", type:"text", required:true, label:"Apprenticeship/Traineeship — Qualification" },
       { id:"commencedBefore", column:"bnsw_commencedbefore", type:"scale", bool:true, required:true, label:"Did Your Apprenticeship/Traineeship Commence Before Today?", options:["Yes","No"] }
@@ -501,8 +525,8 @@ var asaApi = {
       { id:"guardianAddress", column:"bnsw_guardianaddress", type:"text", required:true, sensitive:true, label:"Parent/Guardian — Address", showIf:function(a){return a.under18==="Yes";} },
       { id:"guardianSuburb", column:"bnsw_guardiansuburb", type:"text", required:true, sensitive:true, label:"Parent/Guardian — Suburb", showIf:function(a){return a.under18==="Yes";} },
       { id:"guardianState", column:"bnsw_guardianstate", type:"select", required:true, sensitive:true, label:"Parent/Guardian — State", values:AU_STATE_VALUES, options:AU_STATES, showIf:function(a){return a.under18==="Yes";} },
-      { id:"guardianPostcode", column:"bnsw_guardianpostcode", type:"text", mono:true, required:true, sensitive:true, label:"Parent/Guardian — Postcode", showIf:function(a){return a.under18==="Yes";} },
-      { id:"guardianMobile", column:"bnsw_guardianmobile", type:"tel", required:true, sensitive:true, label:"Parent/Guardian — Mobile Number", showIf:function(a){return a.under18==="Yes";} },
+      { id:"guardianPostcode", column:"bnsw_guardianpostcode", type:"text", mono:true, required:true, digits:4, hint:"4 digits, e.g. 2000", sensitive:true, label:"Parent/Guardian — Postcode", showIf:function(a){return a.under18==="Yes";} },
+      { id:"guardianMobile", column:"bnsw_guardianmobile", type:"tel", required:true, sensitive:true, digits:10, hint:"10 digits, e.g. 0412345678", label:"Parent/Guardian — Mobile Number", showIf:function(a){return a.under18==="Yes";} },
       { id:"guardianEmail", column:"bnsw_guardianemail", type:"email", required:true, sensitive:true, label:"Parent/Guardian — Email", showIf:function(a){return a.under18==="Yes";} }
     ]}
   ];
@@ -540,10 +564,15 @@ var asaApi = {
     var warning = f.warning ? '<div class="warning">' + f.warning + '</div>' : "";
     var monoAttr = f.mono ? ' data-mono' : "";
 
-    if (f.type === "text" || f.type === "email" || f.type === "tel"){
+    if (f.type === "text" || f.type === "email" || f.type === "tel" || f.type === "date"){
+      var extra = "";
+      if (f.digits) extra += ' inputmode="numeric" pattern="[0-9]*"'; // no maxlength: a pasted "0412 345 678" is trimmed to digits first
+      if (f.autocomplete) extra += ' autocomplete="' + f.autocomplete + '"';
+      if (f.type === "email") extra += ' autocapitalize="off" spellcheck="false"';
+      if (f.type === "date") extra += ' min="1900-01-01" max="' + (f.pastOnly ? todayISO() : "2100-12-31") + '"';
       return '<div class="field" data-field="' + f.id + '">' +
         '<label class="' + reqClass + '" for="' + f.id + '">' + f.label + tagHTML(f) + hint + '</label>' +
-        '<input type="' + f.type + '" id="' + f.id + '"' + monoAttr + ((f.id === "trackingCode" && LOCKED_CODE) ? ' readonly' : '') + ' value="' + esc(answers[f.id] || "") + '">' +
+        '<input type="' + f.type + '" id="' + f.id + '"' + monoAttr + extra + ((f.id === "trackingCode" && LOCKED_CODE) ? ' readonly' : '') + ' value="' + esc(answers[f.id] || "") + '">' +
         warning + '<div class="error">Please fill in this field.</div></div>';
     }
     if (f.type === "select"){
@@ -596,8 +625,20 @@ var asaApi = {
     card.innerHTML = html;
 
     fields.forEach(function(f){
-      if (f.type==="text"||f.type==="email"||f.type==="tel"||f.type==="textarea"){
-        document.getElementById(f.id).addEventListener("input", function(e){ answers[e.target.id] = e.target.value; });
+      if (f.type==="text"||f.type==="email"||f.type==="tel"||f.type==="textarea"||f.type==="date"){
+        var inputEl = document.getElementById(f.id);
+        var save = function(e){
+          // Numbers-only fields: drop anything that isn't a digit as it's typed or pasted
+          if (f.digits){
+            var clean = e.target.value;
+            if (f.type === "tel") clean = clean.replace(/^\s*\+\s*61\s*\(?0?\)?/, "0"); // +61 412... -> 0412...
+            clean = clean.replace(/\D/g, "").slice(0, f.digits);
+            if (clean !== e.target.value) e.target.value = clean;
+          }
+          answers[e.target.id] = e.target.value;
+        };
+        inputEl.addEventListener("input", save);
+        inputEl.addEventListener("change", save);
       }
       if (f.type==="select"){
         document.getElementById(f.id).addEventListener("change", function(e){ answers[e.target.id] = e.target.value; render(); });
@@ -668,6 +709,8 @@ var asaApi = {
       if (f.bool){ payload[f.column] = raw === "Yes"; return; }
       if (f.values){ payload[f.column] = f.values[raw]; return; }
       if (f.date){ payload[f.column] = parseDMY(raw); return; }
+      if (f.type === "date"){ payload[f.column] = parseISODate(raw); return; }
+      if (f.digits){ payload[f.column] = raw.replace(/\s/g, ""); return; }
       if (f.number){ payload[f.column] = parseInt(raw, 10); return; }
       if (f.id === "usiNumber"){ payload[f.column] = raw.toUpperCase(); return; }
       payload[f.column] = raw;

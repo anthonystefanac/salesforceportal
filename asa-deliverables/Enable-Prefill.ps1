@@ -271,8 +271,19 @@ if (-not $setting) {
         Write-Host "  $settingName already includes the pre-fill columns" -ForegroundColor DarkGray; $skipped++
     } elseif ($PSCmdlet.ShouldProcess($settingName, "Add $($missingCols -join ', ')")) {
         $newValue = (@($list) + $missingCols) -join ','
-        Invoke-Dv PATCH "$($settingMeta.Set)($($setting.($settingMeta.Id)))" @{ "${P}_value" = $newValue } | Out-Null
-        Write-Host "  $settingName - added $($missingCols -join ', ')" -ForegroundColor Green; $created++
+        # The enhanced data model (mspp_) refuses an update that only has the value
+        # (0x80040224 "The given key was not present in the dictionary"), so send the
+        # setting's name and website too.
+        $siteNv = ($settingMeta.M2O | Where-Object { $_.ReferencingAttribute -eq "${P}_websiteid" } | Select-Object -First 1).ReferencingEntityNavigationPropertyName
+        $patch = @{ $settingMeta.Name = $settingName; "${P}_value" = $newValue }
+        if ($siteNv) { $patch["$siteNv@odata.bind"] = "/$($siteMeta.Set)($siteId)" }
+        try {
+            Invoke-Dv PATCH "$($settingMeta.Set)($($setting.($settingMeta.Id)))" $patch | Out-Null
+            Write-Host "  $settingName - added $($missingCols -join ', ')" -ForegroundColor Green; $created++
+        } catch {
+            Write-Warning "Couldn't update $settingName automatically: $($_.Exception.Message)"
+            $manual += "In Power Pages Management > Site Settings, open '$settingName' and set Value to:`n      $newValue`n    then Save and Sync in Studio"
+        }
     }
 }
 

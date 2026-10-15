@@ -179,6 +179,13 @@ them. To see them in a list, add them to the *Active Apprentice Sign Ups* view.
 7. **Fix an invite's email** to one that has a record. **Prefill Data** fills within a minute.
 
 ## Troubleshooting
+- **`Enable-Prefill.ps1` stops with 0x80040224 "The given key was not present in the
+  dictionary":** fixed in this version. If the script still can't update the setting, it
+  prints the exact value to set by hand:
+  1. In **Power Pages Management → Site Settings**, open
+     `Webapi/bnsw_apprenticesignup/fields`.
+  2. Add `,bnsw_prefilled,bnsw_prefillchanges` to the end of **Value**.
+  3. Click **Save**, then **Sync** in Studio.
 - **Every code says "couldn't find":** the template was pasted before step 1 ran, so the
   Prefill Data column doesn't exist yet. Run the script, then **Sync**.
 - **The form opens blank although Prefill Data is filled:**

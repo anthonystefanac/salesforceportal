@@ -121,14 +121,23 @@ row is added, modified or deleted**, then click **Create**.
 4. **Condition:** expression `length(outputs('Find_invite')?['body/value'])` **is greater
    than** `0`.
 
-   **If yes** (already sent, so refresh it): **Dataverse → Update a row**:
-   - Table: **Sign Up Invites**.
-   - Row ID: `first(outputs('Find_invite')?['body/value'])?['bnsw_signupinviteid']`
-   - Prefill Data: `string(outputs('Get_draft')?['body'])`
-   - Email Sent To: the trigger's **Email**.
-   - Applicant Name: `trim(concat(triggerOutputs()?['body/bnsw_firstname'], ' ', triggerOutputs()?['body/bnsw_lastname']))`
-
-   If staff changed the email address, the email flow sends the link to the new address.
+   **If yes** (already sent, so refresh it):
+   1. **Dataverse → Update a row:**
+      - Table: **Sign Up Invites**.
+      - Row ID: `first(outputs('Find_invite')?['body/value'])?['bnsw_signupinviteid']`
+      - Prefill Data: `string(outputs('Get_draft')?['body'])`
+      - Applicant Name: `trim(concat(triggerOutputs()?['body/bnsw_firstname'], ' ', triggerOutputs()?['body/bnsw_lastname']))`
+      - **Leave Email Sent To blank here.** Writing it on every save, even with the same
+        value, makes the email flow re-send the link each time.
+   2. **Condition** (has the email changed?). Left (expression), operator **is equal to**,
+      right `false`:
+      ```
+      equals(toLower(trim(coalesce(first(outputs('Find_invite')?['body/value'])?['bnsw_inviteemail'], ''))), toLower(trim(coalesce(triggerOutputs()?['body/bnsw_email'], ''))))
+      ```
+      - **If yes:** **Dataverse → Update a row**, table **Sign Up Invites**, the same Row ID,
+        **Email Sent To** = the trigger's **Email**. The email flow then sends the link to
+        the new address.
+      - **If no:** nothing.
 
    **If no** (first send):
    1. **Dataverse → Add a new row.** Rename the step to **Create invite**.
@@ -148,7 +157,8 @@ row is added, modified or deleted**, then click **Create**.
       This shows the code on the draft.
 
 5. **Save.** The existing **email invite link** flow sends the email when the invite is
-   created. Nothing to change there except, optionally, the wording (step 6).
+   created. **Check its trigger's Select columns is exactly `bnsw_inviteemail`.** If it's
+   blank, every refresh of the invite re-sends the link. Nothing to change there except, optionally, the wording (step 6).
 
 > The flow runs twice on the first send, because its last step updates the draft. The second
 > run just refreshes the invite. That's expected.
@@ -268,6 +278,10 @@ form.
    on submit.
 
 ## Troubleshooting
+- **The link is re-sent every time staff save the draft:**
+  - the refresh step writes **Email Sent To** (step 4, If yes; it must only be written when
+    the email changes); or
+  - the email flow's trigger has no **Select columns** (it must be `bnsw_inviteemail`).
 - **No invite or email after setting "Sent to applicant":** check the *send to applicant*
   flow's run history. Common causes:
   - the trigger condition has a typo;

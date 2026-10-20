@@ -153,6 +153,11 @@ row is added, modified or deleted**, then click **Create**.
 > run just refreshes the invite. That's expected.
 
 ### 5. Add the draft steps to the verification flow
+> **The complete, current flow is in `VERIFY-FLOW.md`.** Use it to check or rebuild yours.
+> **Important:** add the trigger condition
+> `@not(empty(triggerOutputs()?['body/bnsw_trackingcode']))`. Without it, the flow also runs
+> on new staff drafts and marks them "Invalid code".
+
 Open `ASA Sign Up – verify tracking code`.
 
 **a. Mark the submission as Submitted.** In the last **Update a row** (the one that sets

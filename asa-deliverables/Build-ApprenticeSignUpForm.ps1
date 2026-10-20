@@ -80,7 +80,7 @@ $Stamp        = Get-Date -Format 'yyyyMMdd-HHmmss'
 # ---------------------------------------------------------------------------
 $Layout = @(
     @{ Tab = 'Applicant'; Sections = @(
-        @{ Name = 'Sign-Up';         Cols = 2; Fields = @('trackingcode', 'stage', 'contact', 'ownerid', 'staffdraft') }
+        @{ Name = 'Sign-Up';         Cols = 2; Fields = @('trackingcode', 'stage', 'staffdraft', 'ownerid') }
         @{ Name = 'Pre-fill';        Cols = 1; Fields = @('prefilled', 'prefillchanges') }
         @{ Name = 'USI';             Cols = 2; Fields = @('hasusi', 'usinumber', 'usipermission') }
         @{ Name = 'Your Details';    Cols = 2; Fields = @('firstname', 'middlename', 'lastname', 'previousname', 'dateofbirth') }
@@ -126,7 +126,13 @@ foreach ($k in $OptionalFields.Keys) { $csv[$k] = [pscustomobject]@{ DisplayName
 # Every CSV column must be placed exactly once
 $placed = @($Layout | ForEach-Object { $_.Sections } | ForEach-Object { $_.Fields })
 $dupes  = @($placed | Group-Object | Where-Object { $_.Count -gt 1 } | ForEach-Object { $_.Name })
-$missing = @($csv.Keys | Where-Object { $placed -notcontains $_ })
+# Columns deliberately left off the form:
+#   contact - Applicant (Contact) lookup, only used by the old sign-in design (LINK_CONTACT = false).
+#             The applicant's details are in Your Details / Contact Details instead.
+$NotOnForm = @('contact')
+# Set by the website or the flows - shown read-only so staff don't change them by accident
+$ReadOnlyFields = @('staffdraft', 'prefilled', 'prefillchanges')
+$missing = @($csv.Keys | Where-Object { $placed -notcontains $_ -and $NotOnForm -notcontains $_ })
 $unknown = @($placed | Where-Object { -not $csv.ContainsKey($_) })
 if ($dupes -or $missing -or $unknown) {
     throw "Layout/CSV mismatch. Duplicates: $($dupes -join ', ')  Not placed: $($missing -join ', ')  Not in CSV: $($unknown -join ', ')"
@@ -178,7 +184,8 @@ function New-TabsXml {
                         $info = $csv[$short]
                         [void]$sb.Append("<cell id=`"$(New-Id)`" showlabel=`"true`" locklevel=`"0`">")
                         [void]$sb.Append((Label $info.DisplayName))
-                        [void]$sb.Append("<control id=`"$logical`" classid=`"$(Get-ClassId $info.Type)`" datafieldname=`"$logical`" disabled=`"false`" />")
+                        $disabled = if ($ReadOnlyFields -contains $short) { 'true' } else { 'false' }
+                        [void]$sb.Append("<control id=`"$logical`" classid=`"$(Get-ClassId $info.Type)`" datafieldname=`"$logical`" disabled=`"$disabled`" />")
                         [void]$sb.Append('</cell>')
                     } else {
                         [void]$sb.Append("<cell id=`"$(New-Id)`" showlabel=`"false`" locklevel=`"0`">$(Label '')</cell>")

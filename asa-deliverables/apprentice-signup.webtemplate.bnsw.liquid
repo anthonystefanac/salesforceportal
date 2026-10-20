@@ -219,6 +219,7 @@
   #asa-signup-root .rv-row dt{ color:var(--muted); }
   #asa-signup-root .rv-row dd{ margin:0; font-weight:600; overflow-wrap:anywhere; }
   #asa-signup-root .rv-empty{ color:var(--muted); font-weight:400; font-style:italic; }
+  #asa-signup-root .rv-confirm{ margin:18px 0 0; padding-top:16px; border-top:1px solid var(--line); }
   #asa-signup-root .chg{ display:inline-block; margin-left:6px; font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--asa-teal-dark); background:var(--accent-tint); border-radius:3px; padding:1px 6px; vertical-align:middle; }
   @media (max-width:560px){ #asa-signup-root .rv-row{ grid-template-columns:1fr; gap:2px; } }
   #asa-signup-root .note{ margin-top:18px; font-size:0.76rem; color:var(--muted); line-height:1.5; border-top:1px solid var(--line); padding-top:13px; }
@@ -584,6 +585,7 @@ var asaApi = {
 
   var REVIEW = STEPS.length;   // the "Review your details" page comes after the last section
   var returnToReview = false;  // true while editing a section from the review page
+  var confirmed = false;       // "I confirm the details above are correct" on the review page
   for (var s=0; s<=STEPS.length; s++){
     var seg = document.createElement("div"); seg.className = "segment"; segmentsEl.appendChild(seg);
   }
@@ -717,7 +719,7 @@ var asaApi = {
   }
 
   function renderReview(){
-    var html = '<h2>Review your details</h2><p class="step-sub">Please check everything below. Select <strong>Edit</strong> to change a section, then <strong>Submit</strong>.</p>';
+    var html = '<h2>Review your details</h2><p class="step-sub">Please check everything below. Select <strong>Edit</strong> to change a section. When it\'s all correct, confirm and select <strong>Approve and submit</strong>.</p>';
     STEPS.forEach(function(step, i){
       var rows = visibleFields(step).map(function(f){
         var v = shown(f, answers[f.id]);
@@ -728,15 +730,27 @@ var asaApi = {
         '<button type="button" class="rv-edit" data-step="' + i + '" aria-label="Edit ' + esc(step.title) + '">Edit</button></div>' +
         '<dl class="rv-list">' + rows + '</dl></section>';
     });
+    html += '<div class="field rv-confirm" data-field="asaConfirm"><label class="choice stack"><input type="checkbox" id="asaConfirm"' + (confirmed ? ' checked' : '') + '>' +
+      '<span><span class="box"></span>I confirm the details above are correct.</span></label>' +
+      '<div class="error">Please confirm your details are correct.</div></div>';
     html += '<div class="actions">' +
       '<button type="button" class="btn-ghost" id="asaBack">Back</button>' +
-      '<button type="button" class="btn-primary" id="asaNext">Submit</button></div>';
+      '<button type="button" class="btn-primary" id="asaNext">Approve and submit</button></div>';
     card.innerHTML = html;
     card.querySelectorAll(".rv-edit").forEach(function(b){
       b.addEventListener("click", function(){ current = +b.getAttribute("data-step"); returnToReview = true; render(); window.scrollTo(0, 0); });
     });
+    document.getElementById("asaConfirm").addEventListener("change", function(e){
+      confirmed = e.target.checked;
+      if (confirmed) card.querySelector(".rv-confirm").classList.remove("invalid");
+    });
     document.getElementById("asaBack").addEventListener("click", function(){ current = REVIEW - 1; returnToReview = false; render(); });
     document.getElementById("asaNext").addEventListener("click", function(){
+      if (!confirmed){
+        var c = card.querySelector(".rv-confirm"); c.classList.add("invalid");
+        document.getElementById("asaConfirm").focus();
+        return;
+      }
       // Re-check every section (an edit can make questions in other sections apply)
       for (var i = 0; i < STEPS.length; i++){
         var bad = visibleFields(STEPS[i]).some(function(f){ return !!fieldError(f, answers[f.id]); });

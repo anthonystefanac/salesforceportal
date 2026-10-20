@@ -20,7 +20,6 @@ Allow half a day for the first move, plus time for licensing and approvals.
 | **Shared mailbox**, with Send As for the service account | Sends the invite emails | M365 admin |
 | **Privacy sign-off** on which fields are pre-filled | Anyone with a link sees those values | Privacy officer |
 | **Custom domain** (optional), e.g. `signup.apprenticeshipsupport.com.au` | A trusted address for applicants; needs a production site and a DNS record | IT / web team |
-| **The real source table** for pre-fill | The flow must point at it instead of the test copy | You / data owner |
 
 ---
 
@@ -37,7 +36,7 @@ Allow half a day for the first move, plus time for licensing and approvals.
    | Tables | **Apprentice Sign Up**, **Sign Up Invite** (with all columns, forms, views, keys). **Not** *Applicant Record (test)*. |
    | App | The staff model-driven app |
    | Security | The staff **security role**, and the **ASA Case Managers** column security profile |
-   | Cloud flows | Verify tracking code, Email invite link, Prefill invite |
+   | Cloud flows | Verify tracking code, Email invite link, Send to applicant (not the old email-matching *Prefill invite* flow) |
    | Site | **Site → ASA Sign Up**. On the enhanced data model this brings the web templates, page templates, web pages, site settings, table permissions and web roles. |
 
    When asked, choose **Include required components**.
@@ -46,10 +45,9 @@ Allow half a day for the first move, plus time for licensing and approvals.
    - **Email flow:** the link uses `https://site-9diru.powerappsportals.com`. Create an
      **environment variable** in the solution (**New → More → Environment variable**, type
      Text), named `ASA Sign-up site URL`. Use it in the email body in place of the address.
-   - **Prefill flow:** it reads *Applicant Records (test)*. Before exporting, either:
-     - point it at the **real source table** with the column mapping (see `PREFILL.md`,
-       "Switching to your real table"); or
-     - leave it **out** of this release and add it in a later version.
+   - **Prefill:** staff drafts (`STAFF-DRAFTS.md`) need no source table. Leave the old
+     email-matching *Prefill invite* flow and the *Applicant Record (test)* table out of the
+     solution.
    - **Connection references:** flows built inside the solution already use them, and you
      pick the prod connections on import. If a flow was built outside the solution, open it
      from the solution, then **Edit → Remove from this solution → Add existing** so it picks
@@ -133,6 +131,12 @@ Solutions don't carry over people, data or some site security links. Check each 
 
 ## Part E: Smoke test in prod (fresh private window)
 
+0. **Staff draft:** as a caseworker, create a draft with your email and set **Sent to applicant**.
+   Then check:
+   - the tracking code appears and the email arrives;
+   - after you approve on the website, the draft shows **Replaced** and the new record keeps
+     the same owner.
+
 1. **Opening the form:**
    1. Create an invite for yourself. The email arrives, and the link opens the form with
       the code in the banner.
@@ -186,7 +190,8 @@ solution, you can rebuild prod the same way dev was built:
    - `Configure-ApprenticeSignUpSecurity.ps1`
    - `Enable-TrackingCodeCheck.ps1`
    - `Enable-Prefill.ps1`
+   - `Enable-StaffDrafts.ps1`
 2. Create the prod site and paste the template.
-3. Rebuild the three flows from the guides.
+3. Rebuild the three flows from the guides (verify, email, send to applicant).
 
 This works, but every later change has to be repeated by hand, so prefer the solution route.

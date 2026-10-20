@@ -1,5 +1,11 @@
 # Pre-fill: applicants review details you already hold
 
+> **Superseded by `STAFF-DRAFTS.md`.** Staff now prepare the form themselves and send it.
+> - **Still needed:** `Enable-Prefill.ps1` (step 1 below) and the page's pre-fill, review page
+>   and change log.
+> - **No longer needed:** the email-matching prefill flow (step 4 below; turn it **off**) and
+>   the *Applicant Record (test)* table.
+
 When staff create a Sign Up Invite, a flow looks for the applicant's existing record **by
 email address** and copies their details onto the invite. When the applicant opens their
 link, the form is already filled in. They check each section, fix anything that's wrong,

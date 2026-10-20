@@ -131,9 +131,9 @@ first(outputs('List_rows')?['body/value'])
            3. **Update a row.** Rename it to **Link submission to draft**.
               - Table: **Apprentice Sign Ups**.
               - Row ID: the trigger's **Apprentice Sign Up** (Dynamic content).
-              - **Staff Draft (Apprentice Sign Ups):**
+              - **Staff Draft (Apprentice Sign Ups):** expression (in the **fx** editor):
                 ```
-                bnsw_apprenticesignups(@{outputs('Invite')?['_bnsw_draft_value']})
+                concat('bnsw_apprenticesignups(', outputs('Invite')?['_bnsw_draft_value'], ')')
                 ```
               - **Owner** (*Enter custom value*, expression):
                 ```
@@ -147,9 +147,9 @@ first(outputs('List_rows')?['body/value'])
 inside **If yes**.
 - Table: **Apprentice Sign Ups**.
 - Row ID: the trigger's **Apprentice Sign Up**.
-- **Sign Up Invite (Sign Up Invites):**
+- **Sign Up Invite (Sign Up Invites):** expression (in the **fx** editor):
   ```
-  bnsw_signupinvites(@{outputs('Invite')?['bnsw_signupinviteid']})
+  concat('bnsw_signupinvites(', outputs('Invite')?['bnsw_signupinviteid'], ')')
   ```
 
 #### If no
@@ -177,7 +177,8 @@ Common reasons a hand-built version misbehaves:
 | Invite not marked Used | **Mark invite used** is in the wrong branch. It belongs in Case 1 → Expired? → **If no**. |
 | Draft not replaced | The invite has no **Draft** set (it wasn't created by the send-to-applicant flow), or **Has draft?** compares to `true` instead of `false`. |
 | Error setting Owner | The Owner expression must give `systemusers(<id>)` or `teams(<id>)`. Use **Enter custom value** and paste the expression as is. |
-| "Resource not found for the segment" | The lookup value must use the table's **plural** name: `bnsw_apprenticesignups(…)` / `bnsw_signupinvites(…)`. |
+| A lookup line is rejected as an invalid expression | In the **fx** editor, use the `concat('bnsw_…s(', …, ')')` form shown. The `bnsw_…s(@{…})` form only works typed as plain text in the box. |
+| "Resource not found for the segment" | The lookup value must use the table's **plural** (entity set) name: `bnsw_apprenticesignups(…)` / `bnsw_signupinvites(…)`. Check it in Tables → table → Properties → Advanced → *Entity set name*. |
 
 ## Testing
 1. **Valid code from a staff draft:** submission **Verified**, Stage Submitted. Invite Used,

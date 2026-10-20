@@ -137,7 +137,8 @@ row is added, modified or deleted**, then click **Create**.
       - Email Sent To: the trigger's **Email**.
       - Invite Status: **Issued**.
       - Prefill Data: `string(outputs('Get_draft')?['body'])`
-      - **Draft (Apprentice Sign Ups):** `bnsw_apprenticesignups(<Apprentice Sign Up id>)`
+      - **Draft (Apprentice Sign Ups):** expression (in the **fx** editor):
+        `concat('bnsw_apprenticesignups(', triggerOutputs()?['body/bnsw_apprenticesignupid'], ')')`
       - *Optional:* Expires On: `addDays(utcNow(), 30, 'yyyy-MM-dd')`
    2. **Dataverse → Update a row:**
       - Table: **Apprentice Sign Ups**.
@@ -180,7 +181,8 @@ row** that marks the invite **Used**, add:
    3. **Dataverse → Update a row** (the submission):
       - Table: **Apprentice Sign Ups**.
       - Row ID: the trigger's **Apprentice Sign Up**.
-      - **Staff Draft:** `bnsw_apprenticesignups(@{outputs('Invite')?['_bnsw_draft_value']})`
+      - **Staff Draft:** expression (in the **fx** editor):
+        `concat('bnsw_apprenticesignups(', outputs('Invite')?['_bnsw_draft_value'], ')')`
       - **Owner** (*Enter custom value*):
         ```
         if(equals(outputs('Get_draft')?['body/_ownerid_value@Microsoft.Dynamics.CRM.lookuplogicalname'], 'team'), concat('teams(', outputs('Get_draft')?['body/_ownerid_value'], ')'), concat('systemusers(', outputs('Get_draft')?['body/_ownerid_value'], ')'))

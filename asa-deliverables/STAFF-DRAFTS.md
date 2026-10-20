@@ -97,7 +97,7 @@ row is added, modified or deleted**, then click **Create**.
 1. **Trigger:** Change type **Added or Modified**, table **Apprentice Sign Ups**, scope
    **Organization**. Under **… → Settings → Trigger conditions**, add:
    ```
-   @equals(triggerOutputs()?['body/bnsw_stage'], 2)
+   @and(equals(triggerOutputs()?['body/bnsw_stage'], 2), not(empty(triggerOutputs()?['body/bnsw_email'])))
    ```
    The flow then runs only for records at *Sent to applicant*. Saving a draft that's
    already sent refreshes what the applicant sees.
@@ -202,7 +202,24 @@ In the email flow, the message can now say the form has been started for them, f
 >
 > This link is personal to you. For help call 1300 363 831.
 
-### 7. Paste the updated web template
+### 7. Require an email before sending (business rule, about 5 minutes)
+The flow ignores drafts with no email (step 4's trigger condition), but staff wouldn't know
+why nothing happened. This rule stops the save and tells them.
+1. In make.powerapps.com, go to **Solutions → ASATestAIApp → Tables → Apprentice Sign Up →
+   Business rules → + New business rule**.
+2. Click the **Condition** box, and in the panel on the right:
+   - Rule 1: **Entity** · Field **Stage** · Operator **Equals** · Type **Value** · Value
+     **Sent to applicant**.
+   - **+ New**, Rule 2: Field **Email** · Operator **Does not contain data**.
+   - Logic **AND**, then click **Apply**.
+3. From **Components**, drag **Show Error Message** onto the **✓** side. Field **Email**,
+   Message `Enter the applicant's email before sending.`, then click **Apply**.
+4. At the top right, set **Scope = Entity**, so it's checked on the server too.
+5. Name it `Require email before sending`, then click **Save** and **Activate**.
+
+To also require names before sending, repeat with **First Name** and **Last Name**.
+
+### 8. Paste the updated web template
 **Web Templates → Apprentice Sign Up → Source:** paste the new
 `apprentice-signup.webtemplate.bnsw.liquid`, **Save**, then **Sync**. It adds the *"I
 confirm"* tick and the **Approve and submit** button.
@@ -254,8 +271,8 @@ form.
 - **No invite or email after setting "Sent to applicant":** check the *send to applicant*
   flow's run history. Common causes:
   - the trigger condition has a typo;
-  - the draft has no email: the invite is created but no email is sent. Copy the link
-    from the code instead.
+  - the draft has no email: the flow skips it. Add the email and save again. The business
+    rule (step 7) stops this happening.
 - **The form opens blank for a sent draft:** the old email-matching prefill flow is still on
   and overwrote Prefill Data (step 3). Turn it off, then save the draft again to refresh.
 - **Staff can't save a draft ("required field"):** a column is still Business Required.

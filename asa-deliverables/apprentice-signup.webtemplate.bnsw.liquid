@@ -402,6 +402,17 @@ var asaApi = {
     if (y < 1900 || y > 2100) return null;
     return v;
   }
+  // Month pickers give "yyyy-mm"; browsers without one get a text box, so also accept
+  // "mm/yyyy" and "mm/yy". Returns "yyyy-mm", or null.
+  function parseMonth(v){
+    v = String(v || "").trim();
+    var m = /^(\d{4})-(\d{1,2})$/.exec(v), y, mo;
+    if (m){ y = +m[1]; mo = +m[2]; }
+    else if ((m = /^(\d{1,2})\s*[\/.-]\s*(\d{2}|\d{4})$/.exec(v))){ mo = +m[1]; y = +m[2]; if (y < 100) y += 2000; }
+    else return null;
+    if (mo < 1 || mo > 12 || y < 1900 || y > 2100) return null;
+    return y + "-" + String(mo).padStart(2, "0");
+  }
   function todayISO(){
     var t = new Date();
     return t.getFullYear() + "-" + String(t.getMonth() + 1).padStart(2, "0") + "-" + String(t.getDate()).padStart(2, "0");
@@ -421,6 +432,8 @@ var asaApi = {
       ? "" : "Enter a valid email address, e.g. name@example.com.";
   }
   var RULES = {
+    quizLiteracy: function(v){ return /^[0-5]$/.test(v.trim()) ? "" : "Enter a number from 0 to 5."; },
+    quizNumeracy: function(v){ return /^[0-5]$/.test(v.trim()) ? "" : "Enter a number from 0 to 5."; },
     usiNumber: function(v){
       // USI: 10 characters, letters and digits excluding I, O, 0 and 1
       return /^[2-9A-HJ-NP-Z]{10}$/i.test(v.trim()) ? "" : "A USI is 10 letters/numbers (it never contains I, O, 0 or 1).";
@@ -442,6 +455,12 @@ var asaApi = {
     var empty = f.type === "checkboxes" ? (raw || []).length === 0 : v.trim() === "";
     if (empty) return f.required ? defaultMsg(f) : "";
     if (f.date && !parseDMY(v.trim())) return "Enter a real date as dd/mm/yyyy.";
+    if (f.type === "month"){
+      var mv = parseMonth(v);
+      if (!mv) return "Enter the month and year, e.g. 03/2022.";
+      if (f.notFuture && mv > todayISO().slice(0, 7)) return "This can't be in the future.";
+      if (f.notBefore && parseMonth(answers[f.notBefore]) && mv < parseMonth(answers[f.notBefore])) return "This can't be before the start month.";
+    }
     if (f.type === "date"){
       if (!parseISODate(v)) return "Choose a date from the calendar, or enter a complete date.";
       if (f.pastOnly && v >= todayISO()) return "Your date of birth must be in the past.";
@@ -464,33 +483,47 @@ var asaApi = {
 
   // ---- Step / field definitions ----------------------------------------
   // column = Dataverse logical name · bool = Two Options · values = Choice map · date = Date Only
+  var USI_LINK = '<a href="https://www.usi.gov.au/" target="_blank" rel="noopener">usi.gov.au</a>';
+  var QUIZ_LINK = '<a href="https://www.apprenticeships.gov.au/apprentices/how-to-find-and-prepare-for-an-apprenticeship/check-your-literacy-and-numeracy-skills/Support%20indicator" target="_blank" rel="noopener">Support Indicator quiz</a>';
+  var PICK_DATE = "Pick a date, or type it as day / month / year";
+  var PICK_MONTH = "Month and year, e.g. 03/2022";
   var STEPS = [
     { title:"Sign Up Tracking Code", sub:"Select Next to continue.", fields:[
       { id:"trackingCode", column:"bnsw_trackingcode", type:"text", mono:true, required:true, label:"Sign Up Tracking Code",
         hint:"This code comes from your sign-up email and links your information to other details already gathered. Don't share your link or code with anyone else.",
         warning:"Do not delete or change this tracking code." }
     ]},
-    { title:"Universal Student Identifier (USI)", sub:"Required for your training records.", fields:[
-      { id:"hasUSI", column:"bnsw_hasusi", type:"scale", bool:true, required:true, label:"Do you have a USI (Universal Student Identifier)?", options:["Yes","No"] },
-      { id:"usiNumber", column:"bnsw_usinumber", type:"text", mono:true, required:true, sensitive:true, label:"Your USI (Universal Student Identifier)", showIf:function(a){return a.hasUSI==="Yes";} },
-      { id:"usiPermission", column:"bnsw_usipermission", type:"checkboxes", bool:true, required:true, label:"USI permission", options:["I give permission for my USI to be verified with the USI Registry."] }
+    { title:"Government Requirements", sub:"Government legislation requires this before your sign-up can go ahead. " +
+        "First complete the " + QUIZ_LINK + " (it opens in a new tab), then come back here. " +
+        "Read the questions carefully and note your Quiz ID and results - you can have them emailed to you from the quiz.", fields:[
+      { id:"quizId", column:"bnsw_quizid", type:"text", mono:true, required:true, label:"Support Indicator Quiz ID",
+        hint:"The Quiz ID you get after completing the Apprenticeship/Traineeship Support Indicator quiz." },
+      { id:"quizLiteracy", column:"bnsw_quizliteracy", type:"text", number:true, digits:1, required:true, label:"Quiz - Literacy (Reading) result", hint:"Result number only, 0 to 5" },
+      { id:"quizNumeracy", column:"bnsw_quiznumeracy", type:"text", number:true, digits:1, required:true, label:"Quiz - Numeracy (Maths) result", hint:"Result number only, 0 to 5" }
     ]},
-    { title:"Your Details", sub:"Apprentice / trainee personal details.", fields:[
+    { title:"Universal Student Identifier (USI)", sub:"ASA will need your USI at sign-up.", fields:[
+      { id:"hasUSI", column:"bnsw_hasusi", type:"scale", bool:true, required:true, label:"Do you know your USI (Universal Student Identifier)?", options:["Yes","No"],
+        hint:"If you don't have a USI, you can create one (or check yours) at " + USI_LINK + "." },
+      { id:"usiNumber", column:"bnsw_usinumber", type:"text", mono:true, required:true, sensitive:true, label:"Your USI (Universal Student Identifier)", showIf:function(a){return a.hasUSI==="Yes";} },
+      { id:"usiPermission", column:"bnsw_usipermission", type:"scale", bool:true, yes:"Yes - I give permission", required:true, label:"Do you give ASA permission to look up your USI?", options:["Yes - I give permission","No"] }
+    ]},
+    { title:"Your Details", sub:"These details will be recorded on your Training Contract, so they must be the same as on your identification (your legal details). " +
+        "If any are pre-filled, they were provided by your employer - change them to match your ID.", fields:[
       { id:"firstName", column:"bnsw_firstname", type:"text", required:true, label:"Your First Name (Apprentice/Trainee)" },
       { id:"middleName", column:"bnsw_middlename", type:"text", label:"Your Middle Name(s) (Apprentice/Trainee)", optionalTag:true },
-      { id:"lastName", column:"bnsw_lastname", type:"text", required:true, label:"Your Last Name (Apprentice/Trainee)" },
-      { id:"previousName", column:"bnsw_previousname", type:"text", label:"Your Previous Name (Apprentice/Trainee)", optionalTag:true, hint:"If you have changed your name" },
-      { id:"dob", column:"bnsw_dateofbirth", type:"date", required:true, sensitive:true, pastOnly:true, autocomplete:"bday", label:"Your Date of Birth (Apprentice/Trainee)", hint:"Pick a date, or type it as day / month / year" }
+      { id:"lastName", column:"bnsw_lastname", type:"text", required:true, label:"Your Last Name(s) (Apprentice/Trainee)" },
+      { id:"previousName", column:"bnsw_previousname", type:"text", label:"Your Previous Name (Apprentice/Trainee)", optionalTag:true, hint:"If you have been known by another name before" },
+      { id:"dob", column:"bnsw_dateofbirth", type:"date", required:true, sensitive:true, pastOnly:true, autocomplete:"bday", label:"Your Date of Birth (Apprentice/Trainee)", hint:PICK_DATE }
     ]},
-    { title:"Home Address", sub:"Where you currently live.", fields:[
-      { id:"homeStreet", column:"bnsw_homestreet", type:"text", required:true, label:"Your Home Number/Street" },
+    { title:"Home Address", sub:"These details will be recorded on your Training Contract.", fields:[
+      { id:"homeStreet", column:"bnsw_homestreet", type:"text", required:true, label:"Your Home Number/Street", hint:"Number and name, e.g. 21 Test Ave or 346/12 The Heights" },
       { id:"homeSuburb", column:"bnsw_homesuburb", type:"text", required:true, label:"Your Home Suburb" },
       { id:"homePostcode", column:"bnsw_homepostcode", type:"text", mono:true, required:true, digits:4, autocomplete:"postal-code", label:"Your Home Postcode", hint:"4 digits, e.g. 2000" },
       { id:"homeState", column:"bnsw_homestate", type:"select", required:true, values:AU_STATE_VALUES, label:"Your Home State", options:AU_STATES }
     ]},
     { title:"Postal Address", sub:"Where we should send correspondence.", fields:[
       { id:"postalSame", column:"bnsw_postalsame", type:"scale", bool:true, required:true, label:"Is Your Postal Address the Same as Your Home Address?", options:["Yes","No"] },
-      { id:"postalAddress", column:"bnsw_postaladdress", type:"text", required:true, label:"Your Postal Address", showIf:function(a){return a.postalSame==="No";} },
+      { id:"postalAddress", column:"bnsw_postaladdress", type:"text", required:true, label:"Your Postal Address", hint:"e.g. PO Box 45", showIf:function(a){return a.postalSame==="No";} },
       { id:"postalSuburb", column:"bnsw_postalsuburb", type:"text", required:true, label:"Your Postal Suburb", showIf:function(a){return a.postalSame==="No";} },
       { id:"postalPostcode", column:"bnsw_postalpostcode", type:"text", mono:true, required:true, digits:4, label:"Your Postal Postcode", hint:"4 digits, e.g. 2000", showIf:function(a){return a.postalSame==="No";} }
     ]},
@@ -499,59 +532,72 @@ var asaApi = {
       { id:"email", column:"bnsw_email", type:"email", required:true, autocomplete:"email", label:"Your Email", hint:"e.g. name@example.com" }
     ]},
     { title:"Background", sub:"Standard training-sector demographic questions.", fields:[
-      { id:"gender", column:"bnsw_gender", type:"select", required:true, label:"Your Gender", values:{"Male":1,"Female":2,"Non-binary":3,"Prefer not to say":4,"Other":5}, options:["Male","Female","Non-binary","Prefer not to say","Other"] },
-      { id:"citizenship", column:"bnsw_citizenship", type:"select", required:true, sensitive:true, label:"Your Citizenship", values:{"Australian Citizen":1,"New Zealand Citizen":2,"Permanent Resident":3,"Other (visa required)":4}, options:["Australian Citizen","New Zealand Citizen","Permanent Resident","Other (visa required)"] },
+      { id:"gender", column:"bnsw_gender", type:"select", required:true, label:"Your Gender", values:{"Female":2,"Male":1,"Prefer not to say":4}, options:["Female","Male","Prefer not to say"] },
+      { id:"citizenship", column:"bnsw_citizenship", type:"select", required:true, sensitive:true, label:"Your Citizenship",
+        values:{"Australian Citizen or Permanent Resident":1,"NZ citizen in Australia > 6 months":2,"Other":4},
+        options:["Australian Citizen or Permanent Resident","NZ citizen in Australia > 6 months","Other"] },
+      { id:"citizenshipCountry", column:"bnsw_citizenshipcountry", type:"text", required:true, label:"Country You Are a Legal Resident Of",
+        hint:"If not Australia or New Zealand, the country you are a legal resident of.", showIf:function(a){return a.citizenship==="Other";} },
       { id:"visaDetails", column:"bnsw_visadetails", type:"textarea", required:true, sensitive:true, label:"Visa Details",
-        hint:"If you are not an Australian or New Zealand citizen and have been in Australia for more than 6 months, you need to provide your visa details.",
-        showIf:function(a){return a.citizenship==="Other (visa required)";} },
-      { id:"countryOfBirth", column:"bnsw_countryofbirth", type:"text", required:true, label:"Your Country of Birth" },
-      { id:"languageAtHome", column:"bnsw_languageathome", type:"select", required:true, label:"Language Spoken at Home", values:{"English Only":1,"Language other than English":2}, options:["English Only","Language other than English"] },
+        hint:"You need to provide your visa details if you are not an Australian citizen or a NZ citizen in Australia for more than 6 months: your current visa number, subclass and expiry date.",
+        showIf:function(a){return a.citizenship==="Other";} },
+      { id:"bornAustralia", column:"bnsw_bornaustralia", type:"scale", required:true, label:"Your Country of Birth", values:{"Australia":1,"Other":2}, options:["Australia","Other"] },
+      { id:"countryOfBirth", column:"bnsw_countryofbirth", type:"text", required:true, label:"Which Country Were You Born In?", showIf:function(a){return a.bornAustralia==="Other";} },
+      { id:"languageAtHome", column:"bnsw_languageathome", type:"select", required:true, label:"Language Spoken at Home", values:{"English Only":1,"Other":2}, options:["English Only","Other"] },
+      { id:"languageOther", column:"bnsw_languageother", type:"text", required:true, label:"Which Language Do You Speak at Home?", showIf:function(a){return a.languageAtHome==="Other";} },
       { id:"indigenous", column:"bnsw_indigenousstatus", type:"select", required:true, sensitive:true, label:"Are You Aboriginal or Torres Strait Islander?",
-        values:{"No":1,"Aboriginal":2,"Torres Strait Islander":3,"Both Aboriginal and Torres Strait Islander":4,"Prefer not to say":5},
-        options:["No","Aboriginal","Torres Strait Islander","Both Aboriginal and Torres Strait Islander","Prefer not to say"] },
+        values:{"No":1,"Aboriginal":2,"Torres Strait Islander":3,"Both Aboriginal and Torres Strait Islander":4},
+        options:["No","Aboriginal","Torres Strait Islander","Both Aboriginal and Torres Strait Islander"] },
       { id:"disability", column:"bnsw_disability", type:"scale", bool:true, required:true, sensitive:true, label:"Do You Have a Disability, Impairment or Long Term Condition?", options:["Yes","No"] }
     ]},
     { title:"Schooling", sub:"Your education background.", fields:[
       { id:"stillAtSchool", column:"bnsw_stillatschool", type:"scale", bool:true, required:true, label:"Are You Still Attending School?", options:["Yes","No"] },
       { id:"schoolLevel", column:"bnsw_schoollevel", type:"select", required:true, label:"Currently at School — Which Level Are You In?",
-        values:{"Yr 7":7,"Yr 8":8,"Yr 9":9,"Yr 10":10,"Yr 11":11,"Yr 12":12}, options:["Yr 7","Yr 8","Yr 9","Yr 10","Yr 11","Yr 12"], showIf:function(a){return a.stillAtSchool==="Yes";} },
+        values:{"Yr 8 or below":8,"Yr 9":9,"Yr 10":10,"Yr 11":11,"Yr 12":12}, options:["Yr 8 or below","Yr 9","Yr 10","Yr 11","Yr 12"], showIf:function(a){return a.stillAtSchool==="Yes";} },
       { id:"highestSchooling", column:"bnsw_highestschooling", type:"select", required:true, label:"Your Highest Level of Schooling Completed?",
-        values:{"Year 10 or below":1,"Year 11":2,"Year 12":3,"Certificate I / II":4,"Certificate III / IV":5,"Other":6},
-        options:["Year 10 or below","Year 11","Year 12","Certificate I / II","Certificate III / IV","Other"], showIf:function(a){return a.stillAtSchool==="No";} },
+        values:{"Did not go to school":2,"Yr 8 or below":8,"Yr 9 or equivalent":9,"Yr 10 or equivalent":10,"Yr 11 or equivalent":11,"Yr 12 or equivalent":12},
+        options:["Did not go to school","Yr 8 or below","Yr 9 or equivalent","Yr 10 or equivalent","Yr 11 or equivalent","Yr 12 or equivalent"], showIf:function(a){return a.stillAtSchool==="No";} },
       { id:"monthCompleted", column:"bnsw_monthcompletedschool", type:"select", required:true, label:"Month Completed School", values:MONTH_VALUES, options:MONTHS, showIf:function(a){return a.stillAtSchool==="No";} },
       { id:"yearCompleted", column:"bnsw_yearcompletedschool", type:"text", mono:true, required:true, label:"Year Completed School", hint:"e.g. 2023", showIf:function(a){return a.stillAtSchool==="No";} }
     ]},
-    { title:"Your Apprenticeship / Traineeship", sub:"Details of the role you're signing up for.", fields:[
-      { id:"employer", column:"bnsw_employer", type:"text", required:true, label:"Apprentice/Trainee — Employer" },
-      { id:"startDate", column:"bnsw_apprenticeshipstartdate", type:"date", required:true, label:"Apprenticeship/Traineeship — Start Date", hint:"Pick a date, or type it as day / month / year" },
-      { id:"jobTitle", column:"bnsw_jobtitle", type:"text", required:true, label:"Apprenticeship/Traineeship — Job Title" },
-      { id:"qualification", column:"bnsw_qualification", type:"text", required:true, label:"Apprenticeship/Traineeship — Qualification" },
-      { id:"commencedBefore", column:"bnsw_commencedbefore", type:"scale", bool:true, required:true, label:"Did Your Apprenticeship/Traineeship Commence Before Today?", options:["Yes","No"] }
+    { title:"Your Apprenticeship / Traineeship", sub:"Details of your apprenticeship or traineeship and its qualification. " +
+        "If these have been filled in for you, they can't be changed here - call us on 1300 363 831 if something is wrong. Otherwise, complete them as best you can.", fields:[
+      { id:"employer", column:"bnsw_employer", type:"text", lockIfPrefilled:true, label:"Apprentice/Trainee — Employer", optionalTag:true, hint:"The business that is employing you as an apprentice/trainee" },
+      { id:"startDate", column:"bnsw_apprenticeshipstartdate", type:"date", lockIfPrefilled:true, label:"Apprenticeship/Traineeship — Start Date", optionalTag:true,
+        hint:"If you know it - it will be confirmed with your employer. " + PICK_DATE },
+      { id:"jobTitle", column:"bnsw_jobtitle", type:"text", lockIfPrefilled:true, label:"Apprenticeship/Traineeship — Job Title", optionalTag:true, hint:"What you will be once you complete it, e.g. Electrician" },
+      { id:"qualification", column:"bnsw_qualification", type:"text", lockIfPrefilled:true, required:true, label:"Apprenticeship/Traineeship — Qualification", hint:"The qualification you will be undertaking" },
+      { id:"commencedBefore", column:"bnsw_commencedbefore", type:"scale", bool:true, yes:"Yes - I've started this qualification before", required:true,
+        label:"Have You Commenced the Qualification Above Before as an Apprentice/Trainee?", options:["No","Yes - I've started this qualification before"] }
     ]},
     { title:"Prior Employment", sub:"Any history with the same employer.", fields:[
-      { id:"priorEmployer", column:"bnsw_previouslyworkedwithbusiness", type:"scale", bool:true, required:true, label:"Previously Worked With This Business?", options:["Yes","No"] },
-      { id:"priorStart", column:"bnsw_priorworkstarted", type:"date", required:true, notFuture:true, label:"Previously Worked — Started", hint:"Pick a date, or type it as day / month / year", showIf:function(a){return a.priorEmployer==="Yes";} },
-      { id:"priorEnd", column:"bnsw_priorworkended", type:"date", required:true, notFuture:true, notBefore:"priorStart", label:"Previously Worked — Ended", hint:"Pick a date, or type it as day / month / year", showIf:function(a){return a.priorEmployer==="Yes";} },
+      { id:"priorEmployer", column:"bnsw_previouslyworkedwithbusiness", type:"scale", bool:true, required:true, label:"Have You Worked for This Business Before Your Apprenticeship/Traineeship?", options:["Yes","No"],
+        hint:"Before this new apprenticeship/traineeship starts - for example a trial, part-time or casual work, or full time in another role." },
+      { id:"priorStart", column:"bnsw_priorworkstarted", type:"date", required:true, notFuture:true, label:"Previously Worked — Started", hint:"When did you start with the business? " + PICK_DATE, showIf:function(a){return a.priorEmployer==="Yes";} },
+      { id:"priorEnd", column:"bnsw_priorworkended", type:"date", required:true, notBefore:"priorStart", label:"Previously Worked — Ended",
+        hint:"When did you finish with the business? If you're still employed there, use the day BEFORE your apprenticeship start date. " + PICK_DATE, showIf:function(a){return a.priorEmployer==="Yes";} },
       { id:"priorEmploymentType", column:"bnsw_priorworkemploymenttype", type:"select", required:true, label:"Previously Worked — Employment Type",
         values:{"Full Time":1,"Part Time":2,"Casual":3}, options:["Full Time","Part Time","Casual"], showIf:function(a){return a.priorEmployer==="Yes";} },
-      { id:"priorHours", column:"bnsw_priorworkhoursperweek", type:"text", number:true, label:"Average Hours per Week (if Part Time or Casual)",
+      { id:"priorHours", column:"bnsw_priorworkhoursperweek", type:"text", number:true, required:true, label:"Average Hours per Week (if Part Time or Casual)", hint:"Your estimate",
         showIf:function(a){return a.priorEmployer==="Yes" && a.priorEmploymentType && a.priorEmploymentType!=="Full Time";} }
     ]},
-    { title:"Workplace", sub:"Where you'll actually be working day to day.", fields:[
-      { id:"workplaceName", column:"bnsw_workplacename", type:"text", required:true, label:"Workplace — Name" },
-      { id:"workplaceAddress", column:"bnsw_workplaceaddress", type:"textarea", required:true, label:"Workplace — Full Address" }
+    { title:"Workplace", sub:"Where you'll actually be working day to day. This can differ from the business's head office - e.g. a depot or workshop.", fields:[
+      { id:"workplaceName", column:"bnsw_workplacename", type:"text", label:"Workplace — Name", optionalTag:true },
+      { id:"workplaceAddress", column:"bnsw_workplaceaddress", type:"textarea", required:true, label:"Workplace — Full Address", hint:"e.g. U12/1 Test Ave, Testville NSW" }
     ]},
     { title:"Prior Study", sub:"Other qualifications or current study.", fields:[
-      { id:"completedQual", column:"bnsw_completedqualification", type:"scale", bool:true, required:true, label:"Have You Completed a Qualification?", options:["Yes","No"] },
-      { id:"qualDetails", column:"bnsw_qualificationdetails", type:"textarea", required:true, label:"Qualification Details", showIf:function(a){return a.completedQual==="Yes";} },
-      { id:"qualStarted", column:"bnsw_qualificationstudystarted", type:"date", required:true, notFuture:true, label:"Completed Study — Started", hint:"Pick a date, or type it as day / month / year", showIf:function(a){return a.completedQual==="Yes";} },
-      { id:"qualFinished", column:"bnsw_qualificationstudyfinished", type:"date", required:true, notFuture:true, notBefore:"qualStarted", label:"Completed Study — Finished", hint:"Pick a date, or type it as day / month / year", showIf:function(a){return a.completedQual==="Yes";} },
-      { id:"currentlyStudying", column:"bnsw_currentlystudying", type:"scale", bool:true, required:true, label:"Currently Studying Now?", options:["Yes","No"] },
-      { id:"studyName", column:"bnsw_currentstudyname", type:"text", required:true, label:"Currently Studying — Name and Title", showIf:function(a){return a.currentlyStudying==="Yes";} },
-      { id:"studyStart", column:"bnsw_currentstudystartdate", type:"date", required:true, notFuture:true, label:"Currently Studying — Start Date", hint:"Pick a date, or type it as day / month / year", showIf:function(a){return a.currentlyStudying==="Yes";} }
+      { id:"completedQual", column:"bnsw_completedqualification", type:"scale", bool:true, required:true, label:"Have You Completed a Qualification?", options:["Yes","No"],
+        hint:"Not your school qualification - e.g. Cert II in Business issued by TAFE NSW, or a Diploma of Nursing" },
+      { id:"qualDetails", column:"bnsw_qualificationdetails", type:"textarea", required:true, label:"Qualification Details", hint:"Name of the qualification", showIf:function(a){return a.completedQual==="Yes";} },
+      { id:"qualStarted", column:"bnsw_qualificationstudystarted", type:"month", required:true, notFuture:true, label:"Completed Study — Started", hint:PICK_MONTH, showIf:function(a){return a.completedQual==="Yes";} },
+      { id:"qualFinished", column:"bnsw_qualificationstudyfinished", type:"month", required:true, notFuture:true, notBefore:"qualStarted", label:"Completed Study — Finished", hint:PICK_MONTH, showIf:function(a){return a.completedQual==="Yes";} },
+      { id:"currentlyStudying", column:"bnsw_currentlystudying", type:"scale", bool:true, required:true, label:"Are You Currently Undertaking Any Other Study?", options:["Yes","No"] },
+      { id:"studyName", column:"bnsw_currentstudyname", type:"text", required:true, label:"Currently Studying — Name and Title", hint:"Title and level, e.g. Cert III in Child Studies", showIf:function(a){return a.currentlyStudying==="Yes";} },
+      { id:"studyStart", column:"bnsw_currentstudystartdate", type:"date", required:true, notFuture:true, label:"Currently Studying — Start Date", hint:PICK_DATE, showIf:function(a){return a.currentlyStudying==="Yes";} }
     ]},
     { title:"Parent / Guardian", sub:"Required only if you're under 18.", fields:[
-      { id:"under18", column:"bnsw_under18", type:"scale", bool:true, required:true, label:"Are You Under 18 Years of Age?", options:["Yes","No"] },
+      { id:"under18", column:"bnsw_under18", type:"scale", bool:true, required:true, label:"Are You Under 18 Years of Age?", options:["Yes","No"],
+        hint:"If you are under 18, a parent or guardian will need to co-sign your Training Contract." },
       { id:"guardianFirst", column:"bnsw_guardianfirstname", type:"text", required:true, sensitive:true, label:"Parent/Guardian — First Name", showIf:function(a){return a.under18==="Yes";} },
       { id:"guardianLast", column:"bnsw_guardianlastname", type:"text", required:true, sensitive:true, label:"Parent/Guardian — Last Name", showIf:function(a){return a.under18==="Yes";} },
       { id:"guardianAddress", column:"bnsw_guardianaddress", type:"text", required:true, sensitive:true, label:"Parent/Guardian — Address", showIf:function(a){return a.under18==="Yes";} },
@@ -605,9 +651,14 @@ var asaApi = {
   function fromDataverse(f, v){
     if (v === null || v === undefined || v === "") return undefined;
     if (f.type === "checkboxes") return undefined;
-    if (f.bool) return v === true || v === "true" ? "Yes" : (v === false || v === "false" ? "No" : undefined);
+    if (f.bool){
+      var yes = f.yes || "Yes", no = f.options ? f.options.filter(function(o){ return o !== yes; })[0] : "No";
+      return v === true || v === "true" ? yes : (v === false || v === "false" ? no : undefined);
+    }
     if (f.values){ for (var k in f.values){ if (f.values[k] === Number(v)) return k; } return undefined; }
     if (f.type === "date") return parseISODate(String(v).slice(0, 10)) || undefined;
+    if (f.type === "month") return parseMonth(String(v).slice(0, 7)) || undefined;
+    if (f.number) return String(v);
     if (f.type === "select") return f.options.indexOf(String(v)) > -1 ? String(v) : undefined;
     if (f.digits) return cleanDigits(f, v) || undefined;
     return String(v).trim() || undefined;
@@ -624,6 +675,11 @@ var asaApi = {
       }); });
     }
   } catch (e) { console.warn("Pre-fill data couldn't be read - starting with a blank form.", e); }
+  // Older drafts may have a typed country of birth but no "Australia / Other" answer - work it out
+  if (answers.countryOfBirth && !answers.bornAustralia){
+    answers.bornAustralia = /^\s*australia\s*$/i.test(answers.countryOfBirth) ? "Australia" : "Other";
+    original.bornAustralia = answers.bornAustralia;
+  }
   if (prefilled) document.getElementById("asaPrefillNote").hidden = false;
 
   function isoToDMY(v){ var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || ""); return m ? m[3] + "/" + m[2] + "/" + m[1] : (v || ""); }
@@ -631,6 +687,7 @@ var asaApi = {
     if (v === undefined || v === null) return "";
     if (Array.isArray(v)) return f.bool ? (v.length ? "Agreed" : "") : v.join(", ");
     if (f.type === "date") return isoToDMY(v);
+    if (f.type === "month"){ var pm = parseMonth(v); return pm ? pm.slice(5) + "/" + pm.slice(0, 4) : String(v); }
     return String(v).trim();
   }
   function isVisible(f){ return !f.showIf || f.showIf(answers); }
@@ -669,8 +726,14 @@ var asaApi = {
     var warning = f.warning ? '<div class="warning">' + f.warning + '</div>' : "";
     var monoAttr = f.mono ? ' data-mono' : "";
 
-    if (f.type === "text" || f.type === "email" || f.type === "tel" || f.type === "date"){
+    if (f.type === "text" || f.type === "email" || f.type === "tel" || f.type === "date" || f.type === "month"){
       var extra = "";
+      var locked = f.lockIfPrefilled && (f.id in original);
+      if (locked){
+        extra += " readonly";
+        hint = '<span class="hint">Provided by your employer. If it\'s wrong, call us on 1300 363 831.</span>';
+      }
+      if (f.type === "month") extra += ' min="1900-01" max="' + (f.notFuture ? todayISO().slice(0, 7) : "2100-12") + '" placeholder="mm/yyyy"';
       if (f.digits) extra += ' inputmode="numeric" pattern="[0-9]*"'; // no maxlength: a pasted "0412 345 678" is trimmed to digits first
       if (f.autocomplete) extra += ' autocomplete="' + f.autocomplete + '"';
       if (f.type === "email") extra += ' autocapitalize="off" spellcheck="false"';
@@ -774,7 +837,7 @@ var asaApi = {
     card.innerHTML = html;
 
     fields.forEach(function(f){
-      if (f.type==="text"||f.type==="email"||f.type==="tel"||f.type==="textarea"||f.type==="date"){
+      if (f.type==="text"||f.type==="email"||f.type==="tel"||f.type==="textarea"||f.type==="date"||f.type==="month"){
         var inputEl = document.getElementById(f.id);
         var save = function(e){
           // Numbers-only fields: drop anything that isn't a digit as it's typed or pasted
@@ -854,16 +917,19 @@ var asaApi = {
       if (typeof raw === "string") raw = raw.trim();
       if (raw === undefined || raw === null || raw === "") return;
       if (f.type === "checkboxes" && f.bool){ payload[f.column] = raw.length > 0; return; }
-      if (f.bool){ payload[f.column] = raw === "Yes"; return; }
+      if (f.bool){ payload[f.column] = raw === (f.yes || "Yes"); return; }
       if (f.values){ payload[f.column] = f.values[raw]; return; }
       if (f.date){ payload[f.column] = parseDMY(raw); return; }
       if (f.type === "date"){ payload[f.column] = parseISODate(raw); return; }
-      if (f.digits){ payload[f.column] = raw.replace(/\s/g, ""); return; }
+      if (f.type === "month"){ payload[f.column] = parseMonth(raw) + "-01"; return; }   // stored as the 1st of the month
       if (f.number){ payload[f.column] = parseInt(raw, 10); return; }
+      if (f.digits){ payload[f.column] = raw.replace(/\s/g, ""); return; }
       if (f.id === "usiNumber"){ payload[f.column] = raw.toUpperCase(); return; }
       payload[f.column] = raw;
     });
     // Link the record to the signed-in applicant (needed for the Contact-scoped Table Permission)
+    var cob = STEPS.reduce(function(acc, st){ return acc.concat(st.fields); }, []).filter(function(f){ return f.id === "countryOfBirth"; })[0];
+    if (cob && answers.bornAustralia === "Australia") payload[cob.column] = "Australia";
     if (LINK_CONTACT) payload[CONTACT_NAV + "@odata.bind"] = "/contacts(" + CONTACT_ID + ")";
     // Pre-filled forms also record what the applicant changed (columns added by Enable-Prefill.ps1;
     // only sent when there was pre-fill data, so the form still works without them)

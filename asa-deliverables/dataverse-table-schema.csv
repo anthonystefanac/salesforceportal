@@ -1,0 +1,69 @@
+Section,Display Name,Logical Name (asa_ prefix — replace with your publisher prefix),Data Type,Choice Values (label=value),Required (Dataverse setting),Sensitive,Shown When,Original MS Forms Column
+Applicant,Applicant (Contact),asa_contact,Lookup (Contact) — schema name asa_Contact,,No (set automatically by the page),No,Always,(new) Links each submission to the signed-in applicant; required by the Contact-scoped Table Permission
+Sign Up Tracking Code,Sign Up Tracking Code,asa_trackingcode,Single Line of Text (100),,No (website requires it),No,Always,Sign Up Tracking Code
+Government Requirements,Support Indicator Quiz ID,asa_quizid,Single Line of Text (50),,No (website requires it),No,Always,Quiz - Support Indicator ID
+Government Requirements,Quiz Literacy (Reading) Result,asa_quizliteracy,Whole Number,,No (website requires it),No,Always,Quiz - Literacy (Reading) result (0-5)
+Government Requirements,Quiz Numeracy (Maths) Result,asa_quiznumeracy,Whole Number,,No (website requires it),No,Always,Quiz - Numeracy (Maths) result (0-5)
+USI,Knows USI?,asa_hasusi,Two Options (Yes/No),,No (website requires it),No,Always,USI - Universal Student Identifier
+USI,Your USI,asa_usinumber,Single Line of Text (10),,No (form enforces when shown),Yes,hasusi = Yes,Your USI (Universal Student Identifier)
+USI,USI permission given,asa_usipermission,Two Options (Yes/No),,No (website requires it),No,Always,USI - Permission
+Your Details,First Name,asa_firstname,Single Line of Text (100),,No (website requires it),No,Always,Your First Name (Apprentice/Trainee)
+Your Details,Middle Name(s),asa_middlename,Single Line of Text (100),,No,No,Always,Your Middle Name (s) (Apprentice/Trainee)
+Your Details,Last Name,asa_lastname,Single Line of Text (100),,No (website requires it),No,Always,Your Last Name (Apprentice/Trainee)
+Your Details,Previous Name,asa_previousname,Single Line of Text (100),,No,No,Always,Your Previous Name (Apprentice/Trainee)
+Your Details,Date of Birth,asa_dateofbirth,Date Only,,No (website requires it),Yes,Always,Your Date of Birth (dd/mm/yyyy) (Apprentice/Trainee)
+Home Address,Home Street,asa_homestreet,Single Line of Text (200),,No (website requires it),No,Always,Your home number/Street (Apprentice/Trainee)
+Home Address,Home Suburb,asa_homesuburb,Single Line of Text (100),,No (website requires it),No,Always,Your home Suburb
+Home Address,Home Postcode,asa_homepostcode,Single Line of Text (4),,No (website requires it),No,Always,Your home Postcode
+Home Address,Home State,asa_homestate,Choice,NSW=1|VIC=2|QLD=3|WA=4|SA=5|TAS=6|ACT=7|NT=8,No (website requires it),No,Always,Your home State
+Postal Address,Postal same as home,asa_postalsame,Two Options (Yes/No),,No (website requires it),No,Always,Is Your Postal Address the same as your Home Address
+Postal Address,Postal Address,asa_postaladdress,Single Line of Text (200),,No (form enforces when shown),No,postalsame = No,Your Postal Address
+Postal Address,Postal Suburb,asa_postalsuburb,Single Line of Text (100),,No (form enforces when shown),No,postalsame = No,Your Postal Suburb
+Postal Address,Postal Postcode,asa_postalpostcode,Single Line of Text (4),,No (form enforces when shown),No,postalsame = No,Your Postal Postcode
+Contact Details,Mobile Number,asa_mobile,Phone,,No (website requires it),No,Always,Your Mobile Number
+Contact Details,Email,asa_email,Email,,No (website requires it),No,Always,Your Email
+Background,Gender,asa_gender,Choice,Female=2|Male=1|Prefer not to say=4,No (website requires it),No,Always,Your Gender
+Background,Citizenship,asa_citizenship,Choice,Australian Citizen or Permanent Resident=1|NZ citizen in Australia > 6 months=2|Other=4,No (website requires it),Yes,Always,Your Citizenship
+Background,Visa Details,asa_visadetails,Multiple Lines of Text,,No (form enforces when shown),Yes,citizenship = Other,If you are NOT Australian Citizen or NZ Citizen... VISA details
+Background,Country of Legal Residence,asa_citizenshipcountry,Single Line of Text (100),,No (form enforces when shown),No,citizenship = Other,Citizenship Other - country you are a legal resident of
+Background,Born in Australia?,asa_bornaustralia,Choice,Australia=1|Other=2,No (website requires it),No,Always,Your Country of Birth (Australia / Other)
+Background,Country of Birth,asa_countryofbirth,Single Line of Text (100),,No (form enforces when shown),No,bornaustralia = Other,Your Country of Birth
+Background,Language Spoken at Home,asa_languageathome,Choice,English Only=1|Other=2,No (website requires it),No,Always,Your - Language Spoken at Home
+Background,Language Spoken at Home (Other),asa_languageother,Single Line of Text (100),,No (form enforces when shown),No,languageathome = Other,Non English language spoken at home
+Background,Aboriginal or Torres Strait Islander,asa_indigenousstatus,Choice,No=1|Aboriginal=2|Torres Strait Islander=3|Both Aboriginal and Torres Strait Islander=4,No (website requires it),Yes,Always,Are you Aboriginal or Torres Strait Islander
+Background,Disability/Impairment/Long Term Condition,asa_disability,Two Options (Yes/No),,No (website requires it),Yes,Always,"Do you have a Disability, Impairment or Long Term Condition"
+Schooling,Still Attending School,asa_stillatschool,Two Options (Yes/No),,No (website requires it),No,Always,Are You Still attending School
+Schooling,Current School Level,asa_schoollevel,Choice,Yr 8 or below=8|Yr 9=9|Yr 10=10|Yr 11=11|Yr 12=12,No (form enforces when shown),No,stillatschool = Yes,Currently at School - Which level are you in?
+Schooling,Highest Schooling Completed,asa_highestschooling,Choice,Did not go to school=2|Yr 8 or below=8|Yr 9 or equivalent=9|Yr 10 or equivalent=10|Yr 11 or equivalent=11|Yr 12 or equivalent=12,No (form enforces when shown),No,stillatschool = No,Your Highest Level of Schooling completed?
+Schooling,Month Completed School,asa_monthcompletedschool,Choice,January=1|February=2|March=3|April=4|May=5|June=6|July=7|August=8|September=9|October=10|November=11|December=12,No (form enforces when shown),No,stillatschool = No,Month completed School
+Schooling,Year Completed School,asa_yearcompletedschool,Single Line of Text (4),,No (form enforces when shown),No,stillatschool = No,Year completed School
+Apprenticeship,Employer,asa_employer,Single Line of Text (200),,No,No,Always,Apprentice/Trainee - Employer
+Apprenticeship,Apprenticeship Start Date,asa_apprenticeshipstartdate,Date Only,,No,No,Always,Apprenticeship/Traineeship - Start Date
+Apprenticeship,Job Title,asa_jobtitle,Single Line of Text (100),,No,No,Always,Apprenticeship/Traineehip - Job Title
+Apprenticeship,Qualification,asa_qualification,Single Line of Text (200),,No (website requires it),No,Always,Apprenticeship/Traineehip - Qualification
+Apprenticeship,Commenced This Qualification Before,asa_commencedbefore,Two Options (Yes/No),,No (website requires it),No,Always,Apprenticeship/Traineehip - Commenced Before
+Prior Employment,Previously Worked With This Business,asa_previouslyworkedwithbusiness,Two Options (Yes/No),,No (website requires it),No,Always,Previously Worked - with Business
+Prior Employment,Previously Worked - Started,asa_priorworkstarted,Date Only,,No (form enforces when shown),No,previouslyworkedwithbusiness = Yes,Previously Worked - Started
+Prior Employment,Previously Worked - Ended,asa_priorworkended,Date Only,,No (form enforces when shown),No,previouslyworkedwithbusiness = Yes,Previously Worked - Ended
+Prior Employment,Previously Worked - Employment Type,asa_priorworkemploymenttype,Choice,Full Time=1|Part Time=2|Casual=3,No (form enforces when shown),No,previouslyworkedwithbusiness = Yes,Previously Worked - Employment Type
+Prior Employment,Previously Worked - Avg Hours/Week,asa_priorworkhoursperweek,Whole Number,,No (form enforces when shown),No,previouslyworkedwithbusiness = Yes AND employmenttype <> Full Time,Previously Worked - Part Time or Casual
+Workplace,Workplace Name,asa_workplacename,Single Line of Text (200),,No,No,Always,Workplace - Name
+Workplace,Workplace Full Address,asa_workplaceaddress,Multiple Lines of Text,,No (website requires it),No,Always,Workplace - Full Address
+Prior Study,Completed a Qualification,asa_completedqualification,Two Options (Yes/No),,No (website requires it),No,Always,Have you Completed a Qualification
+Prior Study,Qualification Details,asa_qualificationdetails,Multiple Lines of Text,,No (form enforces when shown),No,completedqualification = Yes,If you have completed a Qualification - please provide details
+Prior Study,Qualification Study Started,asa_qualificationstudystarted,Date Only,,No (form enforces when shown),No,completedqualification = Yes,Qualification - Completed Study - Started
+Prior Study,Qualification Study Finished,asa_qualificationstudyfinished,Date Only,,No (form enforces when shown),No,completedqualification = Yes,Qualification - Completed Study - Finished
+Prior Study,Currently Studying Now,asa_currentlystudying,Two Options (Yes/No),,No (website requires it),No,Always,CURRENTLY Studying - Now
+Prior Study,Currently Studying - Name and Title,asa_currentstudyname,Single Line of Text (200),,No (form enforces when shown),No,currentlystudying = Yes,Currently Studying - Name and Title
+Prior Study,Currently Studying - Start Date,asa_currentstudystartdate,Date Only,,No (form enforces when shown),No,currentlystudying = Yes,Currently Studying - Start Date
+Parent/Guardian,Under 18 Years of Age,asa_under18,Two Options (Yes/No),,No (website requires it),No,Always,Are you UNDER 18 years of Age
+Parent/Guardian,Guardian First Name,asa_guardianfirstname,Single Line of Text (100),,No (form enforces when shown),Yes,under18 = Yes,Under 18 ? First Name of Your Parent/Guardian
+Parent/Guardian,Guardian Last Name,asa_guardianlastname,Single Line of Text (100),,No (form enforces when shown),Yes,under18 = Yes,Under 18 ? LAST Name of Your Parent/Guardian
+Parent/Guardian,Guardian Address,asa_guardianaddress,Single Line of Text (200),,No (form enforces when shown),Yes,under18 = Yes,Under 18 ? Address of Your Parent/Guardian
+Parent/Guardian,Guardian Suburb,asa_guardiansuburb,Single Line of Text (100),,No (form enforces when shown),Yes,under18 = Yes,Under 18 ? Suburb of Your Parent/Guardian
+Parent/Guardian,Guardian State,asa_guardianstate,Choice,NSW=1|VIC=2|QLD=3|WA=4|SA=5|TAS=6|ACT=7|NT=8,No (form enforces when shown),Yes,under18 = Yes,Under 18 ? State of Your Parent/Guardian
+Parent/Guardian,Guardian Postcode,asa_guardianpostcode,Single Line of Text (4),,No (form enforces when shown),Yes,under18 = Yes,Under 18 ? Postcode of Your Parent/Guardian
+Parent/Guardian,Guardian Mobile,asa_guardianmobile,Phone,,No (form enforces when shown),Yes,under18 = Yes,Under 18 ? Mobile Number of Your Parent/Guardian
+Parent/Guardian,Guardian Email,asa_guardianemail,Email,,No (form enforces when shown),Yes,under18 = Yes,Under 18 ? Email of Your Parent/Guardian
+Pre-fill,Pre-filled,asa_prefilled,Two Options (Yes/No),,No (set by the page),No,Pre-filled forms only,(new) Yes when the form started from the applicant's existing details
+Pre-fill,Changes From Pre-fill,asa_prefillchanges,Multiple Lines of Text,,No (set by the page),No,Pre-filled forms only,(new) What the applicant changed from the pre-filled details (sensitive values are not written out)

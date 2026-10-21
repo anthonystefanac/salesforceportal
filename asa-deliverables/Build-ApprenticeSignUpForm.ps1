@@ -82,6 +82,7 @@ $Layout = @(
     @{ Tab = 'Applicant'; Sections = @(
         @{ Name = 'Sign-Up';         Cols = 2; Fields = @('trackingcode', 'stage', 'staffdraft', 'ownerid') }
         @{ Name = 'Pre-fill';        Cols = 1; Fields = @('prefilled', 'prefillchanges') }
+        @{ Name = 'Government Requirements'; Cols = 2; Fields = @('quizid', 'quizliteracy', 'quiznumeracy') }
         @{ Name = 'USI';             Cols = 2; Fields = @('hasusi', 'usinumber', 'usipermission') }
         @{ Name = 'Your Details';    Cols = 2; Fields = @('firstname', 'middlename', 'lastname', 'previousname', 'dateofbirth') }
         @{ Name = 'Contact Details'; Cols = 2; Fields = @('mobile', 'email') }
@@ -89,7 +90,7 @@ $Layout = @(
         @{ Name = 'Postal Address';  Cols = 2; Fields = @('postalsame', 'postaladdress', 'postalsuburb', 'postalpostcode') }
     )}
     @{ Tab = 'Background & Schooling'; Sections = @(
-        @{ Name = 'Background'; Cols = 2; Fields = @('gender', 'citizenship', 'visadetails', 'countryofbirth', 'languageathome', 'indigenousstatus', 'disability') }
+        @{ Name = 'Background'; Cols = 2; Fields = @('gender', 'citizenship', 'citizenshipcountry', 'visadetails', 'bornaustralia', 'countryofbirth', 'languageathome', 'languageother', 'indigenousstatus', 'disability') }
         @{ Name = 'Schooling';  Cols = 2; Fields = @('stillatschool', 'schoollevel', 'highestschooling', 'monthcompletedschool', 'yearcompletedschool') }
     )}
     @{ Tab = 'Employment'; Sections = @(

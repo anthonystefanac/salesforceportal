@@ -87,14 +87,10 @@ data fix.
 Questions 1, 6, 8–15, 17–22, 25, 29, 30, 34, 38, 40, 41, 43, 46–48, 51, 52, 54–58, 60–62
 already match in field, type and rule. Some labels differ slightly, but the meaning is the same.
 
-## Decisions needed
-1. **USI permission (Q7):** allow "No", as the MS Form does, or keep it compulsory?
-2. **No USI (Q5 = No):**
-   - Option 1 (closest to the form's intent: *"create a USI and then return and add your
-     new USI"*): show the usi.gov.au link and still require the USI before submitting.
-   - Option 2 (current): let them submit without one.
-3. **Gender:** match the form's 3 options? National VET reporting also has an *X / other*
-   category, if the business wants it.
-4. **Pre-filled apprenticeship details (Q35–38):** the form says *"do not change or delete"*.
-   Lock them (read-only) when staff pre-filled them, or leave them editable with that
-   instruction?
+## Decisions (agreed 21 Oct 2026) - applied, see `FORM-UPDATE-2026-10.md`
+1. **USI permission:** Yes / No, as on the form. "No" is allowed.
+2. **No USI:** the applicant can submit without one. The usi.gov.au link is shown, and staff
+   follow up.
+3. **Gender:** Female, Male, Prefer not to say, exactly as on the form.
+4. **Pre-filled apprenticeship details** (employer, start date, job title, qualification):
+   locked when staff filled them in, editable when blank.

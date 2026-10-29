@@ -196,7 +196,7 @@ row** that marks the invite **Used**, add:
         `concat('bnsw_apprenticesignups(', outputs('Invite')?['_bnsw_draft_value'], ')')`
       - **Owner** (*Enter custom value*):
         ```
-        if(equals(outputs('Get_draft')?['body/_ownerid_value@Microsoft.Dynamics.CRM.lookuplogicalname'], 'team'), concat('teams(', outputs('Get_draft')?['body/_ownerid_value'], ')'), concat('systemusers(', outputs('Get_draft')?['body/_ownerid_value'], ')'))
+        concat(outputs('Get_draft')?['body/_ownerid_type'], '(', outputs('Get_draft')?['body/_ownerid_value'], ')')
         ```
 3. **Save.**
 

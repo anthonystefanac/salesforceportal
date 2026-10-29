@@ -184,7 +184,7 @@ row** that marks the invite **Used**, add:
    1. **Dataverse → Get a row by ID.** Rename the step to **Get draft**.
       - Table: **Apprentice Sign Ups**.
       - Row ID: `outputs('Invite')?['_bnsw_draft_value']`
-      - Select columns: `ownerid`
+      - Select columns: `_ownerid_value` (a lookup must be listed by its `_…_value` name; `ownerid` returns nothing)
    2. **Dataverse → Update a row** (the draft):
       - Table: **Apprentice Sign Ups**.
       - Row ID: `outputs('Invite')?['_bnsw_draft_value']`
@@ -196,7 +196,7 @@ row** that marks the invite **Used**, add:
         `concat('bnsw_apprenticesignups(', outputs('Invite')?['_bnsw_draft_value'], ')')`
       - **Owner** (*Enter custom value*):
         ```
-        concat(outputs('Get_draft')?['body/_ownerid_type'], '(', outputs('Get_draft')?['body/_ownerid_value'], ')')
+        concat(coalesce(outputs('Get_draft')?['body/_ownerid_type'], 'systemusers'), '(', outputs('Get_draft')?['body/_ownerid_value'], ')')
         ```
 3. **Save.**
 

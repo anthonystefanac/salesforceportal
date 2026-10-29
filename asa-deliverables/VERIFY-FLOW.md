@@ -123,7 +123,7 @@ first(outputs('List_rows')?['body/value'])
            1. **Get a row by ID (Dataverse).** Rename it to **Get draft**.
               - Table: **Apprentice Sign Ups**.
               - Row ID: `outputs('Invite')?['_bnsw_draft_value']`
-              - Select columns: `ownerid`
+              - Select columns: `_ownerid_value` (a lookup must be listed by its `_…_value` name; `ownerid` returns nothing)
            2. **Update a row.** Rename it to **Replace draft**.
               - Table: **Apprentice Sign Ups**.
               - Row ID: `outputs('Invite')?['_bnsw_draft_value']`
@@ -137,7 +137,7 @@ first(outputs('List_rows')?['body/value'])
                 ```
               - **Owner** (*Enter custom value*, expression):
                 ```
-                concat(outputs('Get_draft')?['body/_ownerid_type'], '(', outputs('Get_draft')?['body/_ownerid_value'], ')')
+                concat(coalesce(outputs('Get_draft')?['body/_ownerid_type'], 'systemusers'), '(', outputs('Get_draft')?['body/_ownerid_value'], ')')
                 ```
          - **If no:** nothing. This was an invite created without a draft.
 - **Case 2:** Equals `2` (Used): **Set variable** `Result` = `4`.
@@ -176,7 +176,7 @@ Common reasons a hand-built version misbehaves:
 | Expired codes come out Verified | The **Expired?** condition's right side must be `true` with **is equal to**. Check Expires On is a *Date only* column. |
 | Invite not marked Used | **Mark invite used** is in the wrong branch. It belongs in Case 1 → Expired? → **If no**. |
 | Draft not replaced | The invite has no **Draft** set (it wasn't created by the send-to-applicant flow), or **Has draft?** compares to `true` instead of `false`. |
-| Error setting Owner, e.g. "`systemusers()` is invalid" | The Owner value came out empty: the step isn't named exactly **Get draft**, so `outputs('Get_draft')` finds nothing. Rename the step, or change `Get_draft` in the expression to your step's name. Check **Get draft → Show raw outputs** has `_ownerid_value` and `_ownerid_type`. |
+| Error setting Owner, e.g. "`systemusers()` is invalid" | The Owner value came out empty: the step isn't named exactly **Get draft**, so `outputs('Get_draft')` finds nothing. Rename the step, or change `Get_draft` in the expression to your step's name. Check **Get draft → Show raw outputs** has `_ownerid_value`. If the body only has the record id, **Select columns** says `ownerid`: change it to `_ownerid_value`. |
 | A lookup line is rejected as an invalid expression | In the **fx** editor, use the `concat('bnsw_…s(', …, ')')` form shown. The `bnsw_…s(@{…})` form only works typed as plain text in the box. |
 | "Resource not found for the segment" | The lookup value must use the table's **plural** (entity set) name: `bnsw_apprenticesignups(…)` / `bnsw_signupinvites(…)`. Check it in Tables → table → Properties → Advanced → *Entity set name*. |
 

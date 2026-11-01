@@ -102,6 +102,11 @@ row is added, modified or deleted**, then click **Create**.
    The flow then runs only for records at *Sent to applicant*. Saving a draft that's
    already sent refreshes what the applicant sees.
 
+   **Also turn on Concurrency Control** in the same **Settings** panel: **Limit = On**,
+   **Degree of Parallelism = 1**. Changing Stage often saves the record twice in quick
+   succession (auto-save, then Save). Without this, two runs start together, both find no
+   invite, and both create one: two codes, two emails.
+
 2. **Dataverse → Get a row by ID.** Rename the step to **Get draft**.
    - Table: **Apprentice Sign Ups**.
    - Row ID: the trigger's **Apprentice Sign Up** (unique identifier).
@@ -279,6 +284,11 @@ form.
    on submit.
 
 ## Troubleshooting
+- **The link is emailed twice when Stage is set to Sent to applicant:**
+  - **Two invites with different codes:** two send-flow runs ran at once. Turn on Concurrency
+    Control (step 4.1), and cancel the extra invite.
+  - **One invite but two emails:** the email flow's trigger has no **Select columns** (it must
+    be `bnsw_inviteemail`), or a second copy of the email flow is switched on.
 - **The link is re-sent every time staff save the draft:**
   - the refresh step writes **Email Sent To** (step 4, If yes; it must only be written when
     the email changes); or

@@ -39,21 +39,13 @@ only *create* records. Letting anonymous visitors edit existing ones would let a
 learned a record ID change it. So the approved version is a fresh record that replaces the
 draft. Staff still see one active record per applicant.
 
-**What is pre-filled:** everything staff entered, sensitive fields included, **except the
-Yes/No questions**:
-- Do you have a USI?
-- Postal same as home?
-- Disability
-- Still at school?
-- Commenced before today?
-- Previously worked with this business?
-- Completed a qualification?
-- Currently studying?
-- Under 18?
-
-Dataverse Yes/No columns are never blank, so an unanswered one reads as "No". Pre-filling
-them would show "No" answers nobody gave. The applicant answers these themselves, which
-takes seconds. Consent boxes are never pre-filled either.
+**What is pre-filled:** everything staff entered, sensitive fields included. For **Yes/No
+questions**, only a **Yes** is pre-filled. A Dataverse Yes/No column is never empty, so an
+untouched draft reads "No", and the page can't tell that from a real "No". A "No" is left
+blank for the applicant to answer. **USI permission** and other consent questions are never
+pre-filled: the applicant gives consent themselves. **Tip for staff:** set the Yes answers you
+know (e.g. *Knows USI = Yes*, *Previously worked with the business = Yes*) so the related
+questions appear pre-filled too.
 
 ## Setup (about 45 minutes)
 
@@ -110,10 +102,10 @@ row is added, modified or deleted**, then click **Create**.
 2. **Dataverse → Get a row by ID.** Rename the step to **Get draft**.
    - Table: **Apprentice Sign Ups**.
    - Row ID: the trigger's **Apprentice Sign Up** (unique identifier).
-   - Select columns: paste this list, which is everything except the Yes/No questions
-     (updated for the October 2026 form changes):
+   - Select columns: paste this list. It's every question except USI permission, which the
+     applicant gives themselves (updated November 2026 to include the Yes/No questions):
      ```
-     bnsw_quizid,bnsw_quizliteracy,bnsw_quiznumeracy,bnsw_usinumber,bnsw_firstname,bnsw_middlename,bnsw_lastname,bnsw_previousname,bnsw_dateofbirth,bnsw_homestreet,bnsw_homesuburb,bnsw_homepostcode,bnsw_homestate,bnsw_postaladdress,bnsw_postalsuburb,bnsw_postalpostcode,bnsw_mobile,bnsw_email,bnsw_gender,bnsw_citizenship,bnsw_visadetails,bnsw_citizenshipcountry,bnsw_bornaustralia,bnsw_countryofbirth,bnsw_languageathome,bnsw_languageother,bnsw_indigenousstatus,bnsw_schoollevel,bnsw_highestschooling,bnsw_monthcompletedschool,bnsw_yearcompletedschool,bnsw_employer,bnsw_apprenticeshipstartdate,bnsw_jobtitle,bnsw_qualification,bnsw_priorworkstarted,bnsw_priorworkended,bnsw_priorworkemploymenttype,bnsw_priorworkhoursperweek,bnsw_workplacename,bnsw_workplaceaddress,bnsw_qualificationdetails,bnsw_qualificationstudystarted,bnsw_qualificationstudyfinished,bnsw_currentstudyname,bnsw_currentstudystartdate,bnsw_guardianfirstname,bnsw_guardianlastname,bnsw_guardianaddress,bnsw_guardiansuburb,bnsw_guardianstate,bnsw_guardianpostcode,bnsw_guardianmobile,bnsw_guardianemail
+     bnsw_quizid,bnsw_quizliteracy,bnsw_quiznumeracy,bnsw_hasusi,bnsw_usinumber,bnsw_firstname,bnsw_middlename,bnsw_lastname,bnsw_previousname,bnsw_dateofbirth,bnsw_homestreet,bnsw_homesuburb,bnsw_homepostcode,bnsw_homestate,bnsw_postalsame,bnsw_postaladdress,bnsw_postalsuburb,bnsw_postalpostcode,bnsw_mobile,bnsw_email,bnsw_gender,bnsw_citizenship,bnsw_visadetails,bnsw_citizenshipcountry,bnsw_bornaustralia,bnsw_countryofbirth,bnsw_languageathome,bnsw_languageother,bnsw_indigenousstatus,bnsw_disability,bnsw_stillatschool,bnsw_schoollevel,bnsw_highestschooling,bnsw_monthcompletedschool,bnsw_yearcompletedschool,bnsw_employer,bnsw_apprenticeshipstartdate,bnsw_jobtitle,bnsw_qualification,bnsw_commencedbefore,bnsw_previouslyworkedwithbusiness,bnsw_priorworkstarted,bnsw_priorworkended,bnsw_priorworkemploymenttype,bnsw_priorworkhoursperweek,bnsw_workplacename,bnsw_workplaceaddress,bnsw_completedqualification,bnsw_qualificationdetails,bnsw_qualificationstudystarted,bnsw_qualificationstudyfinished,bnsw_currentlystudying,bnsw_currentstudyname,bnsw_currentstudystartdate,bnsw_under18,bnsw_guardianfirstname,bnsw_guardianlastname,bnsw_guardianaddress,bnsw_guardiansuburb,bnsw_guardianstate,bnsw_guardianpostcode,bnsw_guardianmobile,bnsw_guardianemail
      ```
 
 3. **Dataverse → List rows.** Rename the step to **Find invite**.
@@ -266,7 +258,7 @@ form.
       and **Prefill Data** filled, and the email arrives.
 2. **Open the link:**
    - The fields are pre-filled, including the date of birth.
-   - The Yes/No questions are blank.
+   - Yes/No questions show **Yes** where the draft had Yes, and are blank where it had No.
    - USI permission isn't ticked.
 3. **Change after sending:** edit the draft's employer and save. Reload the link, and the new
    employer shows.

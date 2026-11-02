@@ -505,7 +505,7 @@ var asaApi = {
       { id:"hasUSI", column:"bnsw_hasusi", type:"scale", bool:true, required:true, label:"Do you know your USI (Universal Student Identifier)?", options:["Yes","No"],
         hint:"If you don't have a USI, you can create one (or check yours) at " + USI_LINK + "." },
       { id:"usiNumber", column:"bnsw_usinumber", type:"text", mono:true, required:true, sensitive:true, label:"Your USI (Universal Student Identifier)", showIf:function(a){return a.hasUSI==="Yes";} },
-      { id:"usiPermission", column:"bnsw_usipermission", type:"scale", bool:true, yes:"Yes - I give permission", required:true, label:"Do you give ASA permission to look up your USI?", options:["Yes - I give permission","No"] }
+      { id:"usiPermission", column:"bnsw_usipermission", type:"scale", bool:true, noPrefill:true /* consent: the applicant gives it */, yes:"Yes - I give permission", required:true, label:"Do you give ASA permission to look up your USI?", options:["Yes - I give permission","No"] }
     ]},
     { title:"Your Details", sub:"These details will be recorded on your Training Contract, so they must be the same as on your identification (your legal details). " +
         "If any are pre-filled, they were provided by your employer - change them to match your ID.", fields:[
@@ -650,11 +650,10 @@ var asaApi = {
   var prefilled = false;
   function fromDataverse(f, v){
     if (v === null || v === undefined || v === "") return undefined;
-    if (f.type === "checkboxes") return undefined;
-    if (f.bool){
-      var yes = f.yes || "Yes", no = f.options ? f.options.filter(function(o){ return o !== yes; })[0] : "No";
-      return v === true || v === "true" ? yes : (v === false || v === "false" ? no : undefined);
-    }
+    if (f.type === "checkboxes" || f.noPrefill) return undefined;
+    // Yes/No columns are never empty in Dataverse - an untouched draft reads "No". So only a
+    // "Yes" is pre-filled (staff must have set it); "No" is left for the applicant to answer.
+    if (f.bool) return (v === true || v === "true") ? (f.yes || "Yes") : undefined;
     if (f.values){ for (var k in f.values){ if (f.values[k] === Number(v)) return k; } return undefined; }
     if (f.type === "date") return parseISODate(String(v).slice(0, 10)) || undefined;
     if (f.type === "month") return parseMonth(String(v).slice(0, 7)) || undefined;

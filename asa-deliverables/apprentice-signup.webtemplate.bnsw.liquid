@@ -78,11 +78,16 @@
   #asa-signup-root .hero{ position:relative; background:#fff; overflow:hidden; border-bottom:1px solid var(--line); }
   #asa-signup-root .hero-inner{ position:relative; z-index:1; max-width:760px; margin:0 auto; padding:34px 18px 38px; }
   #asa-signup-root .eyebrow{ margin:0 0 8px; font-size:0.8rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--asa-teal); }
-  #asa-signup-root .hero h1{ margin:0; font-size:clamp(1.7rem,5vw,2.5rem); font-weight:800; line-height:1.1; text-transform:uppercase; letter-spacing:0.01em; color:var(--charcoal); max-width:16ch; }
+  #asa-signup-root .hero h1{ margin:0; font-size:clamp(1.7rem,5vw,2.5rem); font-weight:800; line-height:1.1; text-transform:uppercase; letter-spacing:0.01em; color:var(--charcoal); }
   #asa-signup-root .bar{ display:block; width:56px; height:5px; background:var(--asa-amber); border-radius:3px; margin:16px 0 16px; }
-  #asa-signup-root .hero .lede{ margin:0; font-size:1.02rem; line-height:1.55; color:var(--muted); max-width:48ch; }
+  #asa-signup-root .hero .lede{ margin:0; font-size:1.02rem; line-height:1.55; color:var(--muted); }
   #asa-signup-root .hero .date{ margin:10px 0 0; font-size:0.85rem; color:var(--muted); }
   #asa-signup-root .corner{ position:absolute; right:-6px; bottom:-4px; width:230px; height:auto; z-index:0; pointer-events:none; }
+  /* Text uses the full 760px column, like the form below. On mid-size screens the corner
+     graphic would sit under the text, so keep the text clear of it (no effect on wide screens). */
+  @media (min-width:641px){
+    #asa-signup-root .hero-inner{ padding-right:max(18px, calc(244px - (100vw - 760px) / 2)); }
+  }
   #asa-signup-root .badge{ display:inline-flex; align-items:center; gap:5px; font-family:ui-monospace, "Cascadia Mono", Consolas, monospace; font-size:0.66rem; letter-spacing:0.07em; text-transform:uppercase; color:var(--accent-strong); background:var(--accent-tint); border:1px solid var(--accent); border-radius:999px; padding:4px 10px; margin-bottom:16px; }
   #asa-signup-root .progress-block{ margin-bottom:22px; }
   #asa-signup-root .segments{ display:grid; grid-auto-flow:column; gap:3px; }
